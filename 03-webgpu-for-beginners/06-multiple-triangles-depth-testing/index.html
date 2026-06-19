@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Multiple Triangles + Depth Testing | WebGPU for Beginners | WebGPU Playground</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.min.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <hgroup>
+          <h1>Multiple Triangles + Depth Testing</h1>
+          <p
+            >Implementation of <a target="_blank" href="https://www.youtube.com/watch?v=P2aWwaQv91o">WebGPU for Beginners: Multiple Triangles</a> and
+            <a target="_blank" href="https://www.youtube.com/watch?v=LpilBGSVRo0">WebGPU for Beginners: Depth Testing</a></p
+          >
+        </hgroup>
+      </header>
+      <section>
+        <canvas style="outline: 1px solid black" width="800" height="600"></canvas>
+      </section>
+      <footer>
+        <ul>
+          <li
+            >Use <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> keys to control the camera &bull; <small>﹝<kbd id="event-keypress"></kbd>﹞</small></li
+          >
+          <li
+            >Click the
+            <mark data-placement="right" data-tooltip="The Pointer Lock API is not supported on touch-only mobile devices like phones and tablets."
+              >canvas</mark
+            >
+            to activate pointer lock &bull; <small>﹝<kbd id="event-mousemove">0 x 0</kbd>﹞</small></li
+          >
+          <li>Triangle images source: <a href="https://picsum.photos/" target="_blank">Picsum</a></li>
+        </ul>
+      </footer>
+    </main>
+    <script type="module" src="./script.js"></script>
+  </body>
+</html>
