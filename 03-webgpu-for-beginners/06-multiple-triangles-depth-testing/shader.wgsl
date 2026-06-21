@@ -13,10 +13,10 @@ struct Fragment {
     @location(1) @interpolate(flat) TextureIndex: u32,
 };
 
-@binding(0) @group(0) var<uniform> transform: TransformData;
-@binding(1) @group(0) var imageTextureArray: texture_2d_array<f32>;
-@binding(2) @group(0) var imageSampler: sampler;
-@binding(3) @group(0) var<storage, read> objects: ObjectData;
+@group(0) @binding(0) var<uniform> transform: TransformData;
+@group(0) @binding(1) var imageTextureArray: texture_2d_array<f32>;
+@group(0) @binding(2) var imageSampler: sampler;
+@group(0) @binding(3) var<storage, read> objects: ObjectData;
 
 @vertex
 fn vertexMain(

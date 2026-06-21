@@ -194,8 +194,8 @@ export class FirstPersonCamera {
       Math.sin(theta) * Math.cos(phi), // sin(theta) * cos(phi)
       Math.sin(phi), // sin(phi)
     ];
-    this.right = vec3.cross(this.forward, [0, 0, 1]);
-    this.up = vec3.cross(this.right, this.forward);
+    this.right = vec3.normalize(vec3.cross(this.forward, [0, 0, 1]));
+    this.up = vec3.normalize(vec3.cross(this.right, this.forward));
 
     const target = vec3.add(this.position, this.forward);
     this.view = mat4.lookAt(this.position, target, this.up);

@@ -9,9 +9,9 @@ struct Fragment {
     @location(0) Texture: vec2<f32>,
 };
 
-@binding(0) @group(0) var<uniform> transform: TransformData;
-@binding(1) @group(0) var imageTexture: texture_2d<f32>;
-@binding(2) @group(0) var imageSampler: sampler;
+@group(0) @binding(0) var<uniform> transform: TransformData;
+@group(0) @binding(1) var imageTexture: texture_2d<f32>;
+@group(0) @binding(2) var imageSampler: sampler;
 
 @vertex
 fn vertexMain(@location(0) positions: vec3<f32>, @location(1) textures: vec2<f32>) -> Fragment {

@@ -1,0 +1,1 @@
+[Qwantani Night (Pure Sky)](https://polyhaven.com/a/qwantani_night_puresky) from [Poly Haven](https://polyhaven.com/)

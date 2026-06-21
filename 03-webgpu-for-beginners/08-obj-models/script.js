@@ -1,4 +1,4 @@
-import { initGPU, makeShaderModule, makeImagesTexture } from "./library/helper/webgpu.js";
+import { initGPU, makeShaderModule, makeImagesTexture, makeDepthStencilSettings } from "./library/helper/webgpu.js";
 import { loadResources, parseObjCode } from "./library/helper/utility.js";
 import { resourceArray, vertexMap } from "./config.js";
 import { FirstPersonCamera } from "./library/component/FirstPersonCamera.js";
@@ -48,28 +48,7 @@ const objectBuffer = device.createBuffer({
 });
 
 // --- Set up depth stencil
-const depthStencilTexture = device.createTexture({
-  size: {
-    width: canvas.width,
-    height: canvas.height,
-    depthOrArrayLayers: 1,
-  },
-  format: "depth24plus-stencil8",
-  usage: GPUTextureUsage.RENDER_ATTACHMENT,
-});
-const depthStencilView = depthStencilTexture.createView({
-  format: "depth24plus-stencil8",
-  dimension: "2d",
-  aspect: "all",
-});
-const depthStencilAttachment = {
-  view: depthStencilView,
-  depthClearValue: 1.0,
-  depthLoadOp: "clear",
-  depthStoreOp: "store",
-  stencilLoadOp: "clear",
-  stencilStoreOp: "discard",
-};
+const { depthStencil, depthStencilTexture, depthStencilView, depthStencilAttachment } = makeDepthStencilSettings(context);
 
 // --- Set up bind groups and layouts
 const vertexBindGroupLayout = device.createBindGroupLayout({
@@ -124,11 +103,7 @@ const pipeline = device.createRenderPipeline({
   primitive: {
     topology: "triangle-list",
   },
-  depthStencil: {
-    format: "depth24plus-stencil8",
-    depthWriteEnabled: true,
-    depthCompare: "less-equal",
-  },
+  depthStencil,
 });
 
 function render() {

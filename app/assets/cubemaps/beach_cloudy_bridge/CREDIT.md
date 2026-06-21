@@ -1,0 +1,1 @@
+[Beach Cloudy Bridge](https://polyhaven.com/a/beach_cloudy_bridge) from [Poly Haven](https://polyhaven.com/)

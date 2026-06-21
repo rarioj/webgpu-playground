@@ -1,11 +1,25 @@
 /**
+ * @type {Object.<string, number>}
+ */
+const __gpuLabelCounts = {
+  shaderModule: 0,
+  depthTexture: 0,
+  depthView: 0,
+  imageTexture: 0,
+  imageView: 0,
+  imageSampler: 0,
+  imageBindGroupLayout: 0,
+  imageBindGroup: 0,
+};
+
+/**
  * @async
  * @param {Object} [options]
  * @param {HTMLCanvasElement} [options.canvas]
  * @param {Object} [options.adapterOptions] {@link https://developer.mozilla.org/en-US/docs/Web/API/GPU/requestAdapter|GPU: requestAdapter() method}
  * @param {Object} [options.deviceDescriptor] {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUAdapter/requestDevice|GPUAdapter: requestDevice() method}
- * @param {function(GPUDeviceLostInfo): void} [options.deviceLostCallback] {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/lost|GPUDevice: lost property}
  * @param {Object} [options.canvasContextConfig] {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCanvasContext/configure|GPUCanvasContext: configure() method}
+ * @param {function(GPUDeviceLostInfo): void} [options.deviceLostCallback] {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/lost|GPUDevice: lost property}
  * @returns {{adapter: GPUAdapter, device: GPUDevice, context: GPUCanvasContext}}
  */
 export async function initGPU(options = {}) {
@@ -15,37 +29,52 @@ export async function initGPU(options = {}) {
 
   const {
     canvas = null,
-    adapterOptions = {
-      featureLevel: "core",
-      powerPreference: "high-performance",
-    },
-    deviceDescriptor = {
-      defaultQueue: { label: "Default GPUQueue" },
-      label: "Default GPUDevice",
-      requiredFeatures: ["core-features-and-limits"],
-      requiredLimits: { maxBindGroups: 4 },
-    },
+    adapterOptions = {},
+    deviceDescriptor = {},
+    canvasContextConfig = {},
     deviceLostCallback = (info) => {
       if (info.reason !== "destroyed") {
         initGPU(options);
       }
     },
-    canvasContextConfig = {
-      alphaMode: "opaque",
-      colorSpace: "srgb",
-      format: navigator.gpu.getPreferredCanvasFormat(),
-      toneMapping: { mode: "standard" },
-      usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
-      viewFormats: [],
-    },
   } = options;
 
-  const adapter = await navigator.gpu.requestAdapter(adapterOptions);
+  const defaultAdapterOptions = {
+    featureLevel: "core",
+    powerPreference: "high-performance",
+  };
+  const defaultDeviceDescriptor = {
+    defaultQueue: { label: "Default GPUQueue" },
+    label: "Default GPUDevice",
+    requiredFeatures: ["core-features-and-limits"],
+    requiredLimits: { maxBindGroups: 4 },
+  };
+  const defaultCanvasContextConfig = {
+    device: null,
+    alphaMode: "opaque",
+    colorSpace: "srgb",
+    format: navigator.gpu.getPreferredCanvasFormat(),
+    toneMapping: { mode: "standard" },
+    usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
+    viewFormats: [],
+  };
+
+  const finalAdapterOptions = { ...defaultAdapterOptions, ...adapterOptions };
+  const adapter = await navigator.gpu.requestAdapter(finalAdapterOptions);
   if (!adapter) {
     throw "WebGPU appears to be disabled in this browser.";
   }
 
-  const device = await adapter.requestDevice(deviceDescriptor);
+  const finalDeviceDescriptor = { ...defaultDeviceDescriptor, ...deviceDescriptor };
+  const device = await adapter.requestDevice(finalDeviceDescriptor);
+
+  const context = canvas instanceof HTMLCanvasElement ? canvas.getContext("webgpu") : null;
+  if (context instanceof GPUCanvasContext) {
+    const format = canvasContextConfig.format || navigator.gpu.getPreferredCanvasFormat();
+    const finalCanvasContextConfig = { ...defaultCanvasContextConfig, ...canvasContextConfig, ...{ device, format } };
+    context.configure(finalCanvasContextConfig);
+  }
+
   device.lost.then((info) => {
     console.error(`WebGPU device lost: ${info.message} [${info.reason}]`);
     device = null;
@@ -54,27 +83,8 @@ export async function initGPU(options = {}) {
     }
   });
 
-  const context = canvas instanceof HTMLCanvasElement ? canvas.getContext("webgpu") : null;
-  canvasContextConfig.format = canvasContextConfig.format || navigator.gpu.getPreferredCanvasFormat();
-  if (context instanceof GPUCanvasContext) {
-    canvasContextConfig.device = device;
-    context.configure(canvasContextConfig);
-  }
-
   return { adapter, device, context };
 }
-
-/**
- * @type {Object.<string, number>}
- */
-const __gpuLabelCounts = {
-  shaderModule: 0,
-  imageTexture: 0,
-  imageView: 0,
-  imageSampler: 0,
-  imageBindGroupLayout: 0,
-  imageBindGroup: 0,
-};
 
 /**
  * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createShaderModule|GPUDevice: createShaderModule() method}
@@ -101,6 +111,73 @@ export function makeShaderModule(device, resource, options = {}) {
 }
 
 /**
+ * @param {GPUCanvasContext} context
+ * @param {Object} [options]
+ * @param {GPUTextureDescriptor} [options.textureDescriptor] {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createTexture|GPUDevice: createTexture() method}
+ * @param {GPUTextureViewDescriptor} [options.viewDescriptor] {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUTexture/createView|GPUTexture: createView() method}
+ * @returns {{depthStencil: GPUDepthStencilState, depthStencilTexture: GPUTexture, depthStencilView: GPUTextureView, depthStencilAttachment: GPURenderPassDepthStencilAttachment}}
+ */
+export function makeDepthStencilSettings(context, options = {}) {
+  if (!(context instanceof GPUCanvasContext)) {
+    throw "Invalid argument, expected type: GPUCanvasContext.";
+  }
+
+  const { textureDescriptor = {}, viewDescriptor = {} } = options;
+
+  const device = context.getConfiguration().device;
+  const canvas = context.canvas;
+
+  const defaultTextureDescriptor = {
+    dimension: "2d",
+    format: "depth24plus-stencil8",
+    label: `Depth texture: #${__gpuLabelCounts.depthTexture++}`,
+    mipLevelCount: 1,
+    sampleCount: 1,
+    size: {
+      width: canvas.width,
+      height: canvas.height,
+      depthOrArrayLayers: 1,
+    },
+    usage: GPUTextureUsage.RENDER_ATTACHMENT,
+    viewFormats: [],
+  };
+  const defaultViewDescriptor = {
+    arrayLayerCount: 1,
+    aspect: "all",
+    baseArrayLayer: 0,
+    baseMipLevel: 0,
+    dimension: defaultTextureDescriptor.dimension,
+    format: defaultTextureDescriptor.format,
+    label: `Depth view: #${__gpuLabelCounts.imageView++}`,
+    mipLevelCount: defaultTextureDescriptor.mipLevelCount,
+    swizzle: "rgba",
+    usage: defaultTextureDescriptor.usage,
+  };
+
+  const finalTextureDescriptor = { ...defaultTextureDescriptor, ...textureDescriptor };
+  const depthStencilTexture = device.createTexture(finalTextureDescriptor);
+
+  const finalViewDescriptor = { ...defaultViewDescriptor, ...viewDescriptor };
+  const depthStencilView = depthStencilTexture.createView(finalViewDescriptor);
+
+  const depthStencil = {
+    format: "depth24plus-stencil8",
+    depthWriteEnabled: true,
+    depthCompare: "less-equal",
+  };
+  const depthStencilAttachment = {
+    view: depthStencilView,
+    depthClearValue: 1.0,
+    depthLoadOp: "clear",
+    depthStoreOp: "store",
+    stencilLoadOp: "clear",
+    stencilStoreOp: "discard",
+  };
+
+  return { depthStencil, depthStencilTexture, depthStencilView, depthStencilAttachment };
+}
+
+/**
  * @async
  * @param {GPUCanvasContext} context
  * @param {Blob[]} blobs
@@ -108,7 +185,7 @@ export function makeShaderModule(device, resource, options = {}) {
  * @param {GPUTextureDescriptor} [options.textureDescriptor] {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createTexture|GPUDevice: createTexture() method}
  * @param {GPUTextureViewDescriptor} [options.viewDescriptor] {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUTexture/createView|GPUTexture: createView() method}
  * @param {GPUSamplerDescriptor} [options.samplerDescriptor] {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createSampler|GPUDevice: createSampler() method}
- * @param {boolean} [options.defaultBindGroup]
+ * @param {boolean|GPUBindGroupLayout} [options.defaultBindGroup]
  * @returns {{texture: GPUTexture, view: GPUTextureView, sampler: GPUSampler, bindGroupLayout: GPUBindGroupLayout|null, bindGroup: GPUBindGroup|null}}
  */
 export async function makeImagesTexture(context, blobs, options = {}) {
@@ -116,89 +193,99 @@ export async function makeImagesTexture(context, blobs, options = {}) {
     throw "Invalid argument, expected type: GPUCanvasContext.";
   }
 
+  const { textureDescriptor = {}, viewDescriptor = {}, samplerDescriptor = {}, createBindGroup = false } = options;
+
   const { device, format } = context.getConfiguration();
 
-  const {
-    textureDescriptor = {
-      dimension: "2d",
-      format: format,
-      label: `Image texture: #${__gpuLabelCounts.imageTexture++}`,
-      mipLevelCount: 1,
-      sampleCount: 1,
-      size: {
-        width: 0,
-        height: 0,
-        depthOrArrayLayers: blobs.length,
-      },
-      usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
-      viewFormats: [],
+  const defaultTextureDescriptor = {
+    dimension: "2d",
+    format: format,
+    label: `Image texture: #${__gpuLabelCounts.imageTexture++}`,
+    mipLevelCount: 1,
+    sampleCount: 1,
+    size: {
+      width: 0,
+      height: 0,
+      depthOrArrayLayers: blobs.length,
     },
-    viewDescriptor = {
-      arrayLayerCount: blobs.length,
-      aspect: "all",
-      baseArrayLayer: 0,
-      baseMipLevel: 0,
-      dimension: blobs.length > 1 ? "2d-array" : textureDescriptor.dimension,
-      format: textureDescriptor.format,
-      label: `Image view: #${__gpuLabelCounts.imageView++}`,
-      mipLevelCount: textureDescriptor.mipLevelCount,
-      swizzle: "rgba",
-      usage: textureDescriptor.usage,
-    },
-    samplerDescriptor = {
-      addressModeU: "repeat",
-      addressModeV: "repeat",
-      addressModeW: "repeat",
-      compare: undefined,
-      label: `Image sampler: #${__gpuLabelCounts.imageSampler++}`,
-      lodMinClamp: 0,
-      lodMaxClamp: 32,
-      maxAnisotropy: 1,
-      magFilter: "linear",
-      minFilter: "nearest",
-      mipmapFilter: "nearest",
-    },
-    createBindGroup = false,
-  } = options;
+    usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
+    viewFormats: [],
+  };
+  const defaultViewDescriptor = {
+    arrayLayerCount: blobs.length,
+    aspect: "all",
+    baseArrayLayer: 0,
+    baseMipLevel: 0,
+    dimension: blobs.length > 1 ? "2d-array" : defaultTextureDescriptor.dimension,
+    format: defaultTextureDescriptor.format,
+    label: `Image view: #${__gpuLabelCounts.imageView++}`,
+    mipLevelCount: defaultTextureDescriptor.mipLevelCount,
+    swizzle: "rgba",
+    usage: defaultTextureDescriptor.usage,
+  };
+  const defaultSamplerDescriptor = {
+    addressModeU: "repeat",
+    addressModeV: "repeat",
+    addressModeW: "repeat",
+    compare: undefined,
+    label: `Image sampler: #${__gpuLabelCounts.imageSampler++}`,
+    lodMinClamp: 0,
+    lodMaxClamp: 32,
+    maxAnisotropy: 1,
+    magFilter: "linear",
+    minFilter: "nearest",
+    mipmapFilter: "nearest",
+  };
 
   const images = [];
+  let width = 0;
+  let height = 0;
   for (let i = 0; i < blobs.length; i++) {
     const resource = await createImageBitmap(blobs[i]);
-    textureDescriptor.size.width = Math.max(textureDescriptor.size.width, resource.width);
-    textureDescriptor.size.height = Math.max(textureDescriptor.size.height, resource.height);
+    width = Math.max(width, resource.width);
+    height = Math.max(height, resource.height);
     images.push(resource);
   }
 
-  const texture = device.createTexture(textureDescriptor);
-  images.forEach((image, index) => {
-    device.queue.copyExternalImageToTexture(
-      { source: image },
-      { texture, origin: { x: 0, y: 0, z: index } },
-      { width: textureDescriptor.size.width, height: textureDescriptor.size.height },
-    );
+  const finalTextureDescriptor = {
+    ...defaultTextureDescriptor,
+    ...textureDescriptor,
+    ...{ size: { width, height, depthOrArrayLayers: blobs.length } },
+  };
+  const texture = device.createTexture(finalTextureDescriptor);
+
+  images.forEach((source, index) => {
+    device.queue.copyExternalImageToTexture({ source }, { texture, origin: { x: 0, y: 0, z: index } }, { width, height });
   });
-  const view = texture.createView(viewDescriptor);
-  const sampler = device.createSampler(samplerDescriptor);
 
-  const bindGroupLayout = createBindGroup
-    ? device.createBindGroupLayout({
-        label: `Image bind group layout: #${__gpuLabelCounts.imageBindGroupLayout++}`,
-        entries: [
-          {
-            binding: 0,
-            visibility: GPUShaderStage.FRAGMENT,
-            texture: { viewDimension: viewDescriptor.dimension },
-          },
-          {
-            binding: 1,
-            visibility: GPUShaderStage.FRAGMENT,
-            sampler: {},
-          },
-        ],
-      })
-    : null;
+  const finalViewDescriptor = { ...defaultViewDescriptor, ...viewDescriptor };
+  const view = texture.createView(finalViewDescriptor);
 
-  const bindGroup = createBindGroup
+  const finalSamplerDescriptor = { ...defaultSamplerDescriptor, ...samplerDescriptor };
+  const sampler = device.createSampler(finalSamplerDescriptor);
+
+  const bindGroupLayout =
+    createBindGroup instanceof GPUBindGroupLayout
+      ? createBindGroup
+      : createBindGroup
+        ? device.createBindGroupLayout({
+            label: `Image bind group layout: #${__gpuLabelCounts.imageBindGroupLayout++}`,
+            entries: [
+              {
+                binding: 0,
+                visibility: GPUShaderStage.FRAGMENT,
+                texture: { viewDimension: finalViewDescriptor.dimension },
+              },
+              {
+                binding: 1,
+                visibility: GPUShaderStage.FRAGMENT,
+                sampler: {},
+              },
+            ],
+          })
+        : null;
+
+  const bindGroup = bindGroupLayout
     ? device.createBindGroup({
         label: `Image bind group: #${__gpuLabelCounts.imageBindGroup++}`,
         layout: bindGroupLayout,

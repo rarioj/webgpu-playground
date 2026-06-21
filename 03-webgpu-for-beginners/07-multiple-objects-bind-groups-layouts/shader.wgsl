@@ -14,11 +14,11 @@ struct Fragment {
 };
 
 // vertex group
-@binding(0) @group(0) var<uniform> transform: TransformData;
-@binding(1) @group(0) var<storage, read> objects: ObjectData;
+@group(0) @binding(0) var<uniform> transform: TransformData;
+@group(0) @binding(1) var<storage, read> objects: ObjectData;
 // fragment group
-@binding(0) @group(1) var imageTextureArray: texture_2d_array<f32>;
-@binding(1) @group(1) var imageSampler: sampler;
+@group(1) @binding(0) var imageTextureArray: texture_2d_array<f32>;
+@group(1) @binding(1) var imageSampler: sampler;
 
 @vertex
 fn vertexMain(

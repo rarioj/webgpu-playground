@@ -9,7 +9,7 @@ struct Fragment {
     @location(0) Color: vec4<f32>,
 };
 
-@binding(0) @group(0) var<uniform> transform: TransformData;
+@group(0) @binding(0) var<uniform> transform: TransformData;
 
 @vertex
 fn vertexMain(@location(0) positions: vec3<f32>, @location(1) colors: vec3<f32>) -> Fragment {
