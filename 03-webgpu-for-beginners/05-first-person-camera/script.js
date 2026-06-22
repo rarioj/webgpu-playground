@@ -14,7 +14,7 @@ const resources = await loadResources([
   },
   {
     name: "image",
-    url: `https://picsum.photos/id/${getRandomBetween(1, 100)}/256/256`,
+    url: `./assets/images/bird${getRandomBetween(0, 9)}.webp`,
     type: "blob",
   },
 ]);

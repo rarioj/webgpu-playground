@@ -47,13 +47,14 @@ export function createProgressBar(options = {}) {
   const {
     container = document.body,
     style = {
-      bottom: "0",
       position: "fixed",
+      top: "0",
     },
   } = options;
 
   const progress = document.createElement("progress");
-  progress.value = 0;
+  progress.max = 100;
+  // progress.value = 0;
 
   if (container instanceof HTMLElement) {
     container.appendChild(progress);
@@ -74,12 +75,19 @@ export async function loadResources(resources) {
   const progress = createProgressBar();
   const results = {};
   for (const resource of resources) {
-    const response = await fetch(resource.url);
-    if (!response.ok) {
-      throw `Unable to fetch resource URL: ${resource.url}`;
-    }
+    const downloaded = await fetch(resource.url)
+      .then((response) => {
+        if (!response.ok) {
+          throw `Unable to fetch resource URL: ${resource.url}`;
+        }
+        return response[resource.type]();
+      })
+      .then((data) => {
+        fetched++;
+        progress.value = (fetched / resources.length) * 100;
+        return data;
+      });
 
-    const downloaded = await response[resource.type]();
     if (resource.group === true) {
       if (!Array.isArray(results[resource.name])) {
         results[resource.name] = [];
@@ -88,10 +96,9 @@ export async function loadResources(resources) {
     } else {
       results[resource.name] = downloaded;
     }
-    fetched++;
-    progress.value = Math.ceil(fetched / resources.length) * 100;
   }
 
+  progress.value = 100;
   progress.remove();
   return results;
 }
