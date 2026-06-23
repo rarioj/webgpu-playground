@@ -1,5 +1,5 @@
 import { initGPU, makeShaderModule, makeImagesTexture } from "./library/helper/webgpu.js";
-import { loadResources, getRandomBetween } from "./library/helper/utility.js";
+import { loadResources } from "./library/helper/utility.js";
 import { FirstPersonCamera } from "./library/component/FirstPersonCamera.js";
 import { Scene } from "./Scene.js";
 import { BasicMesh } from "./library/component/BasicMesh.js";
@@ -14,7 +14,7 @@ const resources = await loadResources([
   },
   {
     name: "image",
-    url: `./assets/images/bird${getRandomBetween(0, 9)}.webp`,
+    url: `./assets/images/15-512.webp`,
     type: "blob",
   },
 ]);

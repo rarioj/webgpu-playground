@@ -19,7 +19,7 @@ Any external libraries are loaded directly from within the HTML file, with no re
 
 ### 🏗️ Learning
 
-- 🎥 [WebGPU for Beginners](https://www.youtube.com/playlist?list=PLn3eTxaOtL2Ns3wkxdyS3CiqkJuwQdZzn) by The Graphics Guy → [Hello Triangle!](./03-webgpu-for-beginners/01-hello-triangle/index.html) | [Vertex Buffers](./03-webgpu-for-beginners/02-vertex-buffers/index.html) | [Transformations](./03-webgpu-for-beginners/03-transformations/index.html) | [Textures](./03-webgpu-for-beginners/04-textures/index.html) | [First Person Camera](./03-webgpu-for-beginners/05-first-person-camera/index.html) | [Multiple Triangles + Depth Testing](./03-webgpu-for-beginners/06-multiple-triangles-depth-testing/index.html) | [Multiple Objects + Bind Groups and Bindings](./03-webgpu-for-beginners/07-multiple-objects-bind-groups-layouts/index.html) | [Loading OBJ Models](./03-webgpu-for-beginners/08-obj-models/index.html) | [Cubemaps](./03-webgpu-for-beginners/09-cubemaps/index.html)
+- 🎥 [WebGPU for Beginners](https://www.youtube.com/playlist?list=PLn3eTxaOtL2Ns3wkxdyS3CiqkJuwQdZzn) by The Graphics Guy → [Hello Triangle!](./03-webgpu-for-beginners/01-hello-triangle/index.html) | [Vertex Buffers](./03-webgpu-for-beginners/02-vertex-buffers/index.html) | [Transformations](./03-webgpu-for-beginners/03-transformations/index.html) | [Textures](./03-webgpu-for-beginners/04-textures/index.html) | [First Person Camera](./03-webgpu-for-beginners/05-first-person-camera/index.html) | [Multiple Triangles + Depth Testing](./03-webgpu-for-beginners/06-multiple-triangles-depth-testing/index.html) | [Multiple Objects + Bind Groups and Bindings](./03-webgpu-for-beginners/07-multiple-objects-bind-groups-layouts/index.html) | [Loading OBJ Models](./03-webgpu-for-beginners/08-obj-models/index.html) | [Cubemaps + Mipmaps](./03-webgpu-for-beginners/09-cubemaps-mipmaps/index.html)
 - [WebGPU Fundamentals](https://webgpufundamentals.org/) → [Drawing triangles to textures](./04-webgpu-fundamentals/01-drawing-triangles-to-textures/index.html) | [Run computations on the GPU](./04-webgpu-fundamentals/02-run-computations-on-gpu/index.html)
 
 ### 📝 To Learn
@@ -28,6 +28,7 @@ Not in any particular order.
 
 - [From 0 to glTF with WebGPU: The First Triangle](https://www.willusher.io/graphics/2023/04/10/0-to-gltf-triangle/)
 - [Efficiently rendering glTF models](https://toji.dev/webgpu-gltf-case-study/)
+- [WebGPU Engine from Scratch](https://dev.to/ndesmic/webgpu-engine-from-scratch-1-basic-rendering-51cl) by ndesmic
 - #️⃣ [WebGPU Examples](https://github.com/tsherif/webgpu-examples) by Tarek Sherif
 - #️⃣ [WebGPU Samples](https://github.com/webgpu/webgpu-samples) by Austin Eng
 - #️⃣ [RedGPU](https://github.com/redcamel/RedGPU) by @RedCamel15
@@ -55,7 +56,7 @@ Not in any particular order.
 
 ### Assets
 
-- [LoremFlickr](https://loremflickr.com/) - Free placeholder images.
+- [Lorem Picsum](https://picsum.photos/) - The Lorem Ipsum for photos.
 - [PNGWing](https://www.pngwing.com/) - Transparent background images for designers.
 - [Free3D](https://free3d.com/) - Free 3D Models, TF3DM is the go to place where you can share your free 3d assets and download instantly any you like.
 - [Poly Haven](https://polyhaven.com/) - The public 3D asset library.

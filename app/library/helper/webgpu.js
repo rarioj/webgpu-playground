@@ -180,8 +180,9 @@ export function makeDepthStencilSettings(context, options = {}) {
 /**
  * @async
  * @param {GPUCanvasContext} context
- * @param {Blob[]} blobs
+ * @param {Blob[]|{group: string, data: Blob}[]} blobs
  * @param {Object} [options]
+ * @param {boolean} [options.enableMipmap]
  * @param {GPUTextureDescriptor} [options.textureDescriptor] {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createTexture|GPUDevice: createTexture() method}
  * @param {GPUTextureViewDescriptor} [options.viewDescriptor] {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUTexture/createView|GPUTexture: createView() method}
  * @param {GPUSamplerDescriptor} [options.samplerDescriptor] {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createSampler|GPUDevice: createSampler() method}
@@ -193,7 +194,7 @@ export async function makeImagesTexture(context, blobs, options = {}) {
     throw "Invalid argument, expected type: GPUCanvasContext.";
   }
 
-  const { textureDescriptor = {}, viewDescriptor = {}, samplerDescriptor = {}, createBindGroup = false } = options;
+  const { enableMipmap = false, textureDescriptor = {}, viewDescriptor = {}, samplerDescriptor = {}, createBindGroup = false } = options;
 
   const { device, format } = context.getConfiguration();
 
@@ -206,17 +207,17 @@ export async function makeImagesTexture(context, blobs, options = {}) {
     size: {
       width: 0,
       height: 0,
-      depthOrArrayLayers: blobs.length,
+      depthOrArrayLayers: 1,
     },
     usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
     viewFormats: [],
   };
   const defaultViewDescriptor = {
-    arrayLayerCount: blobs.length,
+    arrayLayerCount: 1,
     aspect: "all",
     baseArrayLayer: 0,
     baseMipLevel: 0,
-    dimension: blobs.length > 1 ? "2d-array" : defaultTextureDescriptor.dimension,
+    dimension: "2d",
     format: defaultTextureDescriptor.format,
     label: `Image view: #${__gpuLabelCounts.imageView++}`,
     mipLevelCount: defaultTextureDescriptor.mipLevelCount,
@@ -237,28 +238,61 @@ export async function makeImagesTexture(context, blobs, options = {}) {
     mipmapFilter: "nearest",
   };
 
-  const images = [];
+  const images = {};
+  let lastGroup = "";
   let width = 0;
   let height = 0;
   for (let i = 0; i < blobs.length; i++) {
-    const resource = await createImageBitmap(blobs[i]);
-    width = Math.max(width, resource.width);
-    height = Math.max(height, resource.height);
-    images.push(resource);
+    let dataGroup = "__default__";
+    let dataSource = null;
+    if (blobs[i] instanceof Blob) {
+      dataSource = blobs[i];
+    } else {
+      dataGroup = blobs[i].group;
+      dataSource = blobs[i].data;
+    }
+    if (!Array.isArray(images[dataGroup]?.entries)) {
+      images[dataGroup] = {
+        width: 0,
+        height: 0,
+        count: 0,
+        entries: [],
+      };
+    }
+    const resource = await createImageBitmap(dataSource);
+    images[dataGroup].width = width = Math.max(images[dataGroup].width, resource.width);
+    images[dataGroup].height = height = Math.max(images[dataGroup].height, resource.height);
+    images[dataGroup].entries.push(resource);
+    lastGroup = dataGroup;
   }
+
+  if (enableMipmap) {
+    if (!Object.values(images).every((obj, index, array) => obj.width === array[0].width && obj.height === array[0].height && obj.count === array[0].count)) {
+      throw "The image count and dimensions must be identical across all groups.";
+    }
+  }
+
+  const arrayLayerCount = enableMipmap ? Object.keys(images).length : images[lastGroup].entries.length;
+  const mipLevelCount = enableMipmap ? images[lastGroup].entries.length : 1;
+  const viewDimension = arrayLayerCount > 1 ? "2d-array" : "2d";
 
   const finalTextureDescriptor = {
     ...defaultTextureDescriptor,
+    ...{ size: { width, height, depthOrArrayLayers: arrayLayerCount }, mipLevelCount },
     ...textureDescriptor,
-    ...{ size: { width, height, depthOrArrayLayers: blobs.length } },
   };
   const texture = device.createTexture(finalTextureDescriptor);
 
-  images.forEach((source, index) => {
-    device.queue.copyExternalImageToTexture({ source }, { texture, origin: { x: 0, y: 0, z: index } }, { width, height });
+  Object.entries(images).forEach(([group, data], groupIndex) => {
+    data.entries.forEach((source, entryIndex) => {
+      const mipLevel = enableMipmap ? entryIndex : 0;
+      const z = enableMipmap ? groupIndex : entryIndex;
+      device.queue.copyExternalImageToTexture({ source }, { texture, mipLevel, origin: { x: 0, y: 0, z } }, { width: source.width, height: source.height });
+      source.close();
+    });
   });
 
-  const finalViewDescriptor = { ...defaultViewDescriptor, ...viewDescriptor };
+  const finalViewDescriptor = { ...defaultViewDescriptor, ...{ arrayLayerCount, dimension: viewDimension, mipLevelCount }, ...viewDescriptor };
   const view = texture.createView(finalViewDescriptor);
 
   const finalSamplerDescriptor = { ...defaultSamplerDescriptor, ...samplerDescriptor };

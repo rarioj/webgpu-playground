@@ -1,5 +1,5 @@
 import { initGPU, makeShaderModule, makeImagesTexture } from "./library/helper/webgpu.js";
-import { loadResources, getRandomBetween } from "./library/helper/utility.js";
+import { loadResources } from "./library/helper/utility.js";
 import { Triangle } from "./Triangle.js";
 import { mat4 } from "https://wgpu-matrix.org/dist/3.x/wgpu-matrix.module.js";
 
@@ -13,7 +13,7 @@ const resources = await loadResources([
   },
   {
     name: "image1",
-    url: `./assets/images/autumn${getRandomBetween(0, 9)}.webp`,
+    url: `./assets/images/10-512.webp`,
     type: "blob",
   },
 ]);

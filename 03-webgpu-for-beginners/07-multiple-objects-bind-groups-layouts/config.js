@@ -1,5 +1,3 @@
-import { getRandomBetween } from "./library/helper/utility.js";
-
 export const resourceArray = [
   {
     name: "shader",
@@ -8,68 +6,68 @@ export const resourceArray = [
   },
   {
     name: "image",
-    url: `./assets/images/autumn${getRandomBetween(0, 9)}.webp`,
+    url: "./assets/images/10-512.webp",
     type: "blob",
     group: true,
   },
   {
     name: "image",
-    url: `./assets/images/bird${getRandomBetween(0, 9)}.webp`,
+    url: "./assets/images/15-512.webp",
     type: "blob",
     group: true,
   },
   {
     name: "image",
-    url: `./assets/images/building${getRandomBetween(0, 9)}.webp`,
+    url: "./assets/images/20-512.webp",
     type: "blob",
     group: true,
   },
   {
     name: "image",
-    url: `./assets/images/kitten${getRandomBetween(0, 9)}.webp`,
+    url: "./assets/images/25-512.webp",
     type: "blob",
     group: true,
   },
   {
     name: "image",
-    url: `./assets/images/mountain${getRandomBetween(0, 9)}.webp`,
+    url: "./assets/images/30-512.webp",
     type: "blob",
     group: true,
   },
   {
     name: "image",
-    url: `./assets/images/puppy${getRandomBetween(0, 9)}.webp`,
+    url: "./assets/images/35-512.webp",
     type: "blob",
     group: true,
   },
   {
     name: "image",
-    url: `./assets/images/spring${getRandomBetween(0, 9)}.webp`,
+    url: "./assets/images/40-512.webp",
     type: "blob",
     group: true,
   },
   {
     name: "image",
-    url: `./assets/images/summer${getRandomBetween(0, 9)}.webp`,
+    url: "./assets/images/45-512.webp",
     type: "blob",
     group: true,
   },
   {
     name: "image",
-    url: `./assets/images/waterfall${getRandomBetween(0, 9)}.webp`,
+    url: "./assets/images/50-512.webp",
     type: "blob",
     group: true,
   },
   {
     name: "image",
-    url: `./assets/images/winter${getRandomBetween(0, 9)}.webp`,
+    url: "./assets/images/55-512.webp",
     type: "blob",
     group: true,
   },
   {
     // tile
     name: "image",
-    url: `./assets/tiles/wood0.webp`,
+    url: `./assets/images/143-512.webp`,
     type: "blob",
     group: true,
   },

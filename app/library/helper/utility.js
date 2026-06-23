@@ -88,11 +88,18 @@ export async function loadResources(resources) {
         return data;
       });
 
-    if (resource.group === true) {
+    if (resource.group) {
       if (!Array.isArray(results[resource.name])) {
         results[resource.name] = [];
       }
-      results[resource.name].push(downloaded);
+      if (typeof resource.group === "string") {
+        results[resource.name].push({
+          group: resource.group,
+          data: downloaded,
+        });
+      } else {
+        results[resource.name].push(downloaded);
+      }
     } else {
       results[resource.name] = downloaded;
     }
