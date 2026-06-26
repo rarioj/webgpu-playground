@@ -18,17 +18,10 @@ const {
 } = await makeImagesTexture(context, resources.image, { createBindGroup: true });
 
 // --- Set up camera and scene
-const camera = new FirstPersonCamera(
-  {
-    aspect: canvas.width / canvas.height,
-  },
-  {
-    pointerLockElement: canvas,
-    debugKeyPress: document.getElementById("event-keypress"),
-    debugMouseMove: document.getElementById("event-mousemove"),
-  },
-);
+const camera = new FirstPersonCamera(canvas);
 camera.position = [-7, -0.5, 0.5];
+camera.debugKeyPress = document.getElementById("event-keypress");
+camera.debugMouseMove = document.getElementById("event-mousemove");
 const scene = new Scene();
 
 // --- Set up triangle and quad material

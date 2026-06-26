@@ -1,4 +1,9 @@
 /**
+ * @file Compatibility for older learning materials.
+ * @deprecated Use "core/WebGPUWrapper.js" instead.
+ */
+
+/**
  * @type {Object.<string, number>}
  */
 const __gpuLabelCounts = {

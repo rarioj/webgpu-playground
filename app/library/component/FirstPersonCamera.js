@@ -3,87 +3,86 @@ import { convertDegreeToRadian } from "../helper/utility.js";
 
 export class FirstPersonCamera {
   /**
-   * @type {vec3}
+   * @type {HTMLCanvasElement}
    */
-  position;
-
-  /**
-   * @type {vec3}
-   */
-  eulers;
+  canvas = null;
 
   /**
    * @type {mat4}
    */
-  projection;
+  projection = null;
+
+  /**
+   * @type {vec3}
+   */
+  position = [0, 0, 0];
+
+  /**
+   * @type {vec3}
+   */
+  eulers = [0, 0, 0];
 
   /**
    * @type {{ forward: number, right: number, up: number }}
    */
-  movements;
+  movements = { forward: 0, right: 0, up: 0 };
 
   /**
    * @type {mat4}
    */
-  view;
+  view = null;
 
   /**
    * @type {vec3}
    */
-  forward;
+  forward = null;
 
   /**
    * @type {vec3}
    */
-  right;
+  right = null;
 
   /**
    * @type {vec3}
    */
-  up;
-
-  /**
-   * @type {HTMLElement}
-   */
-  pointerLockElement;
+  up = null;
 
   /**
    * @type {Object}
    */
-  keypresses;
+  keypresses = {};
 
   /**
    * @type {HTMLElement}
    */
-  debugKeyPress;
+  debugKeyPress = null;
 
   /**
    * @type {HTMLElement}
    */
-  debugMouseMove;
+  debugMouseMove = null;
 
   /**
-   * @param {Object} [projection]
-   * @param {number} [projection.fov]
-   * @param {number} [projection.aspect]
-   * @param {number} [projection.near]
-   * @param {number} [projection.far]
+   * @param {HTMLCanvasElement} canvas
    * @param {Object} [options]
-   * @param {HTMLElement} [options.pointerLockElement]
-   * @param {HTMLElement} [options.debugKeyPress]
-   * @param {HTMLElement} [options.debugMouseMove]
+   * @param {number} [options.fov]
+   * @param {number} [options.aspect]
+   * @param {number} [options.near]
+   * @param {number} [options.far]
    */
-  constructor(projection = {}, options = {}) {
-    const { fov = Math.PI / 4, aspect = 400 / 300, near = 0.1, far = 10 } = projection;
-    this.position = [0, 0, 0];
-    this.eulers = [0, 0, 0];
-    this.projection = mat4.perspective(fov, aspect, near, far);
-    this.movements = { forward: 0, right: 0, up: 0 };
+  constructor(canvas, options = {}) {
+    this.canvas = canvas;
 
-    this.pointerLockElement = options.pointerLockElement ? options.pointerLockElement : null;
-    this.keypresses = {};
-    this.debugKeyPress = options.debugKeyPress ? options.debugKeyPress : null;
-    this.debugMouseMove = options.debugMouseMove ? options.debugMouseMove : null;
+    const { fov, aspect, near, far } = {
+      ...{
+        fov: Math.PI / 4,
+        aspect: this.canvas.width / this.canvas.height,
+        near: 0.1,
+        far: 10,
+      },
+      ...options,
+    };
+    this.projection = mat4.perspective(fov, aspect, near, far);
 
     const boundKeydownEvent = this.keydown.bind(this);
     const boundKeyupEvent = this.keyup.bind(this);
@@ -92,19 +91,17 @@ export class FirstPersonCamera {
     window.addEventListener("keydown", boundKeydownEvent);
     window.addEventListener("keyup", boundKeyupEvent);
 
-    if (this.pointerLockElement) {
-      this.pointerLockElement.addEventListener("click", () => {
-        this.pointerLockElement.requestPointerLock();
-      });
+    this.canvas.addEventListener("click", () => {
+      this.canvas.requestPointerLock();
+    });
 
-      document.addEventListener("pointerlockchange", () => {
-        if (document.pointerLockElement === this.pointerLockElement) {
-          document.addEventListener("mousemove", boundMousemoveEvent);
-        } else {
-          document.removeEventListener("mousemove", boundMousemoveEvent);
-        }
-      });
-    }
+    document.addEventListener("pointerlockchange", () => {
+      if (document.pointerLockElement === this.canvas) {
+        document.addEventListener("mousemove", boundMousemoveEvent);
+      } else {
+        document.removeEventListener("mousemove", boundMousemoveEvent);
+      }
+    });
   }
 
   /**

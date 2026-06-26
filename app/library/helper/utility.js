@@ -41,7 +41,7 @@ export function convertRadianToDegree(radian) {
  * @param {Object} [options]
  * @param {HTMLElement} [options.container]
  * @param {CSSStyleDeclaration} [options.style]
- * @returns {HTMLProgressElement}
+ * @returns {HTMLElement}
  */
 export function createProgressBar(options = {}) {
   const {
@@ -49,19 +49,24 @@ export function createProgressBar(options = {}) {
     style = {
       position: "fixed",
       top: "0",
+      width: "100%",
     },
   } = options;
 
+  const wrapper = document.createElement("article");
+  const caption = document.createElement("span");
   const progress = document.createElement("progress");
   progress.max = 100;
-  // progress.value = 0;
+
+  wrapper.appendChild(caption);
+  wrapper.appendChild(progress);
 
   if (container instanceof HTMLElement) {
-    container.appendChild(progress);
+    container.appendChild(wrapper);
   }
 
-  Object.assign(progress.style, style);
-  return progress;
+  Object.assign(wrapper.style, style);
+  return wrapper;
 }
 
 /**
@@ -72,11 +77,16 @@ export function createProgressBar(options = {}) {
 export async function loadResources(resources) {
   let fetched = 0;
 
-  const progress = createProgressBar();
+  const wrapper = createProgressBar();
+  const caption = wrapper.querySelector("span");
+  const progress = wrapper.querySelector("progress");
   const results = {};
+
   for (const resource of resources) {
     const downloaded = await fetch(resource.url)
       .then((response) => {
+        caption.ariaBusy = true;
+        caption.innerText = `Loading: ${resource.url.split("/").pop()}`;
         if (!response.ok) {
           throw `Unable to fetch resource URL: ${resource.url}`;
         }
@@ -106,7 +116,11 @@ export async function loadResources(resources) {
   }
 
   progress.value = 100;
-  progress.remove();
+  caption.ariaBusy = false;
+  caption.innerText = "";
+  setTimeout(() => {
+    wrapper.remove();
+  }, 100);
   return results;
 }
 

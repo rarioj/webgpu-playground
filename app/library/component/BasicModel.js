@@ -4,17 +4,17 @@ export class BasicModel {
   /**
    * @type {vec3}
    */
-  position;
+  position = [0, 0, 0];
 
   /**
    * @type {vec3}
    */
-  eulers;
+  eulers = [0, 0, 0];
 
   /**
    * @type {mat4}
    */
-  model;
+  model = null;
 
   /**
    * @type {function(BasicModel): void}
@@ -25,8 +25,6 @@ export class BasicModel {
    * @param {function(BasicModel): void} [callback]
    */
   constructor(callback = null) {
-    this.position = [0, 0, 0];
-    this.eulers = [0, 0, 0];
     this.init();
     this.updateCallback = callback;
   }

@@ -2,17 +2,17 @@ export class BasicMesh {
   /**
    * @type {number}
    */
-  vertexCount;
+  vertexCount = 0;
 
   /**
    * @type {GPUVertexBufferLayout}
    */
-  bufferLayout;
+  bufferLayout = null;
 
   /**
    * @type {GPUBuffer}
    */
-  bufferData;
+  bufferData = null;
 
   /**
    * @param {GPUDevice} device

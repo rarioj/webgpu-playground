@@ -18,12 +18,12 @@ struct Fragment {
     @location(0) Direction: vec3<f32>,
 };
 
-@group(0) @binding(0) var<uniform> camera: Camera;
-@group(0) @binding(1) var imageTextureArray: texture_cube<f32>;
-@group(0) @binding(2) var imageSampler: sampler;
+@group(0) @binding(0) var imageTextureArray: texture_cube<f32>;
+@group(0) @binding(1) var imageSampler: sampler;
+@group(0) @binding(2) var<uniform> camera: Camera;
 
 @vertex
-fn skyVertexMain(
+fn vertexMain(
     @builtin(vertex_index) vertexIndex: u32,
 ) -> Fragment {
     var positions: array<vec2<f32>, 6> = array<vec2<f32>, 6>(
@@ -45,7 +45,7 @@ fn skyVertexMain(
 }
 
 @fragment
-fn skyFragmentMain(@location(0) Direction: vec3<f32>) -> @location(0) vec4<f32> {
+fn fragmentMain(@location(0) Direction: vec3<f32>) -> @location(0) vec4<f32> {
     let rotatedDirection: vec3<f32> = normalize(ROTATION * Direction);
     return textureSample(imageTextureArray, imageSampler, rotatedDirection);
 }
