@@ -1,3 +1,5 @@
+import { mat4, vec3, vec4 } from "https://wgpu-matrix.org/dist/3.x/wgpu-matrix.module.js";
+
 /**
  * @type {URLSearchParams}
  */
@@ -126,9 +128,21 @@ export async function loadResources(resources) {
 
 /**
  * @param {string} text
+ * @param {Object} [options]
+ * @param {boolean} [options.useVertex]
+ * @param {boolean} [options.useTexture]
+ * @param {boolean} [options.useNormal]
+ * @param {mat4} [options.preTransform]
  * @returns {Float32Array}
  */
-export function parseObjCode(text) {
+export function parseObjCode(text, options = {}) {
+  const {
+    useVertex = true,
+    useTexture = true,
+    useNormal = false, // compatible with older learning material
+    preTransform = null,
+  } = options;
+
   const v = [];
   const vt = [];
   const vn = [];
@@ -140,13 +154,26 @@ export function parseObjCode(text) {
    */
   const triangle = (data) => {
     const vtn = data.split("/");
-    const vTarget = v[parseInt(vtn[0]) - 1];
-    vertices.push(vTarget[0]); // x
-    vertices.push(vTarget[1]); // y
-    vertices.push(vTarget[2]); // z
-    const vtTarget = vt[parseInt(vtn[1]) - 1];
-    vertices.push(vtTarget[0]); // u
-    vertices.push(vtTarget[1]); // v
+
+    if (useVertex) {
+      const vTarget = v[parseInt(vtn[0]) - 1];
+      vertices.push(vTarget[0]); // x
+      vertices.push(vTarget[1]); // y
+      vertices.push(vTarget[2]); // z
+    }
+
+    if (useTexture) {
+      const vtTarget = vt[parseInt(vtn[1]) - 1];
+      vertices.push(vtTarget[0]); // u
+      vertices.push(vtTarget[1]); // v
+    }
+
+    if (useNormal) {
+      const vnTarget = vn[parseInt(vtn[2]) - 1];
+      vertices.push(vnTarget[0]); // x
+      vertices.push(vnTarget[1]); // y
+      vertices.push(vnTarget[2]); // z
+    }
   };
 
   for (const line of lines) {
@@ -157,15 +184,24 @@ export function parseObjCode(text) {
     switch (type) {
       case "v":
         // v: x y z
-        v.push([parseFloat(words[0]), parseFloat(words[1]), parseFloat(words[2])]);
+        let vertex = [parseFloat(words[0]), parseFloat(words[1]), parseFloat(words[2]), 1.0];
+        if (preTransform) {
+          vertex = vec4.transformMat4(vertex, preTransform);
+        }
+        v.push(vec3.fromValues(vertex[0], vertex[1], vertex[2]));
         break;
       case "vt":
         // vt: u v
-        vt.push([parseFloat(words[0]), parseFloat(words[1])]);
+        const texture = [parseFloat(words[0]), parseFloat(words[1])];
+        vt.push(texture);
         break;
       case "vn":
-        // vn: x y z
-        vn.push([parseFloat(words[0]), parseFloat(words[1]), parseFloat(words[2])]);
+        // vn: nx ny nz
+        let normal = [parseFloat(words[0]), parseFloat(words[1]), parseFloat(words[2]), 0.0];
+        if (preTransform) {
+          normal = vec4.transformMat4(normal, preTransform);
+        }
+        vn.push(vec3.fromValues(normal[0], normal[1], normal[2]));
         break;
       case "f":
         // f: v1 v2 v3 v4 ...

@@ -1,3 +1,8 @@
+/**
+ * @file Compatibility for older learning materials.
+ * @deprecated Use "setupBuffer()" method in "core/WebGPUWrapper.js" or "core/BufferBuilder.js" instead.
+ */
+
 export class BasicMesh {
   /**
    * @type {number}

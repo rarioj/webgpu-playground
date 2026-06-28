@@ -40,10 +40,37 @@ export class PipelineBuilder {
   computePipelineDescriptor = {};
 
   /**
+   * @type {Map.<string, GPUShaderModule>}
+   */
+  modules = null;
+
+  /**
    * @param {GPUDevice} device
    */
-  constructor(device, compute = false) {
+  constructor(device) {
     this.device = device;
+    this.modules = new Map();
+  }
+
+  /**
+   * @param {string} moduleName
+   * @param {string} code
+   * @param {Objects} [options]
+   * @param {string[][]} [options.replacements] Example: `[["fromThis", "toThat"], ["anotherThis", "anotherThat"]]`
+   * @param {GPUShaderModuleDescriptor} [options.shaderModuleDescriptor] {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createShaderModule|GPUDevice: createShaderModule() method}
+   * @returns {PipelineBuilder}
+   */
+  addShaderCode(moduleName, code, options = {}) {
+    const { replacements = [], shaderModuleDescriptor = {} } = options;
+
+    const defaultShaderModuleDescriptor = { label: moduleName, hints: {} };
+    const finalCode = replacements.reduce((text, [from, to]) => {
+      return text.replaceAll(from, to);
+    }, code);
+    const shaderModule = this.device.createShaderModule({ ...defaultShaderModuleDescriptor, ...{ code: finalCode }, ...shaderModuleDescriptor });
+
+    this.modules.set(moduleName, shaderModule);
+    return this;
   }
 
   /**
@@ -65,24 +92,24 @@ export class PipelineBuilder {
   }
 
   /**
-   * @param {GPUShaderModule} module
+   * @param {string} moduleName
    * @param {string} entryPoint
    * @param {Object} [options]
    * @returns {PipelineBuilder}
    */
-  setVertexShader(module, entryPoint, options = {}) {
-    this.renderPipelineDescriptor.vertex = { module, entryPoint, ...options };
+  setVertexShader(moduleName, entryPoint, options = {}) {
+    this.renderPipelineDescriptor.vertex = { module: this.modules.get(moduleName), entryPoint, ...options };
     return this;
   }
 
   /**
-   * @param {GPUShaderModule} module
+   * @param {string} moduleName
    * @param {string} entryPoint
    * @param {Object} [options]
    * @returns {PipelineBuilder}
    */
-  setFragmentShader(module, entryPoint, options = {}) {
-    this.renderPipelineDescriptor.fragment = { module, entryPoint, ...options };
+  setFragmentShader(moduleName, entryPoint, options = {}) {
+    this.renderPipelineDescriptor.fragment = { module: this.modules.get(moduleName), entryPoint, ...options };
     return this;
   }
 
@@ -114,13 +141,13 @@ export class PipelineBuilder {
   }
 
   /**
-   * @param {GPUShaderModule} module
+   * @param {string} moduleName
    * @param {string} entryPoint
    * @param {Object} [options]
    * @returns {PipelineBuilder}
    */
-  setComputeShader(module, entryPoint, options = {}) {
-    this.computePipelineDescriptor.compute = { module, entryPoint, ...options };
+  setComputeShader(moduleName, entryPoint, options = {}) {
+    this.computePipelineDescriptor.compute = { module: this.modules.get(moduleName), entryPoint, ...options };
     return this;
   }
 

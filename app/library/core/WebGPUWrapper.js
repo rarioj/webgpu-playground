@@ -1,5 +1,6 @@
 import { BindGroupBuilder } from "./BindGroupBuilder.js";
 import { PipelineBuilder } from "./PipelineBuilder.js";
+import { BufferBuilder } from "./BufferBuilder.js";
 
 export class WebGPUWrapper {
   /**
@@ -46,6 +47,7 @@ export class WebGPUWrapper {
    * @param {GPUDeviceDescriptor} [options.deviceDescriptor] {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUAdapter/requestDevice|GPUAdapter: requestDevice() method}
    * @param {GPUCanvasConfiguration} [options.canvasContextConfig] {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCanvasContext/configure|GPUCanvasContext: configure() method}
    * @param {function(GPUDeviceLostInfo): void} [options.deviceLostCallback] {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/lost|GPUDevice: lost property}
+   * @returns {{adapter: GPUAdapter, device: GPUDevice, context: GPUCanvasContext|null, format: string}}
    */
   async init(options = {}) {
     if (!navigator.gpu) {
@@ -97,29 +99,8 @@ export class WebGPUWrapper {
       this.context.configure({ ...defaultCanvasContextConfig, ...{ device: this.device }, ...canvasContextConfig });
       this.format = this.context.getConfiguration().format;
     }
-  }
 
-  /**
-   * @param {string} code
-   * @param {Object} [options]
-   * @param {string[][]} [options.replacements] Example: `[["fromThis", "toThat"], ["anotherThis", "anotherThat"]]`
-   * @param {GPUShaderModuleDescriptor} [options.shaderModuleDescriptor] {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createShaderModule|GPUDevice: createShaderModule() method}
-   * @returns {GPUShaderModule}
-   */
-  createShaderModule(code, options = {}) {
-    const { replacements = [], shaderModuleDescriptor = {} } = options;
-
-    const defaultShaderModuleDescriptor = {
-      code,
-      hints: {},
-      label: `Shader module #${this.#autoLabel++}`,
-    };
-
-    const finalCode = replacements.reduce((text, [from, to]) => {
-      return text.replaceAll(from, to);
-    }, code);
-
-    return this.device.createShaderModule({ ...defaultShaderModuleDescriptor, ...{ code: finalCode }, ...shaderModuleDescriptor });
+    return { adapter: this.adapter, device: this.device, context: this.context, format: this.format };
   }
 
   /**
@@ -320,6 +301,25 @@ export class WebGPUWrapper {
   }
 
   /**
+   * @param {GPUBufferUsageFlags} usage
+   * @param {Int32Array|Uint32Array|Float32Array|number} [dataOrSize]
+   * @returns {BufferBuilder}
+   */
+  setupBuffer(usage, dataOrSize) {
+    const builder = new BufferBuilder(this.device);
+    builder.setLabel(`Buffer #${this.#autoLabel++}`);
+    builder.setUsage(usage);
+
+    if (typeof dataOrSize === "number") {
+      builder.setSize(dataOrSize);
+    } else {
+      builder.setData(dataOrSize);
+    }
+
+    return builder;
+  }
+
+  /**
    * @param {GPUBindGroupLayout|null} [layout]
    * @returns {BindGroupBuilder}
    */
@@ -338,7 +338,7 @@ export class WebGPUWrapper {
 
   /**
    * @param {GPUPipelineLayout|null} [layout]
-   * @param {PipelineBuilder}
+   * @returns {PipelineBuilder}
    */
   setupPipeline(layout = null) {
     const builder = new PipelineBuilder(this.device);

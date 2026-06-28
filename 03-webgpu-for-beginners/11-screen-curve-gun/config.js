@@ -1,4 +1,4 @@
-const __cubemapName = "beach_cloudy_bridge";
+const __cubemapName = "bambanani_sunset";
 
 export const resourceArray = [
   {
@@ -22,8 +22,18 @@ export const resourceArray = [
     type: "text",
   },
   {
+    name: "weapon",
+    url: "./shaders/gun.wgsl",
+    type: "text",
+  },
+  {
     name: "statue",
-    url: "./assets/models/Horus_V1/16786_Horus_V1.obj",
+    url: "./assets/models/Knight_V1/18489_Knight_V1_.obj",
+    type: "text",
+  },
+  {
+    name: "gun",
+    url: "./assets/models/92-sci_fi_gun/scifi_gun.obj",
     type: "text",
   },
   {
@@ -70,12 +80,17 @@ export const resourceArray = [
   },
   {
     name: "hudImage",
-    url: "./assets/huds/hud0.png",
+    url: "./assets/huds/hud3.png",
+    type: "blob",
+  },
+  {
+    name: "gunImage",
+    url: "./assets/images/143-16.webp",
     type: "blob",
   },
 ];
 
-[50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 766].forEach((value1, index1) => {
+[50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 1073].forEach((value1, index1) => {
   [512, 256, 128, 64, 32, 16].forEach((value2, index2) => {
     resourceArray.push({
       name: "assetImages",
