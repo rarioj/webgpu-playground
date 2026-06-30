@@ -14,8 +14,6 @@ const { texture: imageTexture, view: imageView, sampler: imageSampler } = await 
 // --- Set up camera and scene
 const camera = new FirstPersonCamera(canvas);
 camera.position = [-7, -0.5, 0.5];
-camera.debugKeyPress = document.getElementById("event-keypress");
-camera.debugMouseMove = document.getElementById("event-mousemove");
 const scene = new Scene();
 
 // --- Set up triangle material

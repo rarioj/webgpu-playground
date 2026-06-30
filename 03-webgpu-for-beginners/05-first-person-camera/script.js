@@ -24,8 +24,6 @@ const { texture: imageTexture, view: imageView, sampler: imageSampler } = await 
 // --- Set up camera and scene
 const camera = new FirstPersonCamera(canvas);
 camera.position = [-2, 0, 0.5];
-camera.debugKeyPress = document.getElementById("event-keypress");
-camera.debugMouseMove = document.getElementById("event-mousemove");
 const scene = new Scene();
 
 // --- Set up triangle material
@@ -112,7 +110,7 @@ function render() {
   camera.update();
 
   scene.models.forEach((model) => {
-    device.queue.writeBuffer(uniformBuffer, 0, model.model);
+    device.queue.writeBuffer(uniformBuffer, 0, model.matrix);
   });
   device.queue.writeBuffer(uniformBuffer, 64, camera.view);
   device.queue.writeBuffer(uniformBuffer, 128, camera.projection);

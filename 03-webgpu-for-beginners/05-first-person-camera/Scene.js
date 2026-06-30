@@ -12,10 +12,11 @@ export class Scene {
    *
    */
   constructor() {
-    const model = new BasicModel((obj) => {
+    const model = new BasicModel();
+    model.setUpdateCallback((obj) => {
       obj.eulers[2] -= 1;
       obj.eulers[2] %= 360;
-      mat4.rotateZ(obj.model, convertDegreeToRadian(obj.eulers[2]), obj.model);
+      mat4.rotateZ(obj.matrix, convertDegreeToRadian(obj.eulers[2]), obj.matrix);
     });
     model.position = [2, 0, 0];
     this.models.push(model);

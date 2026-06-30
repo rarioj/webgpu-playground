@@ -1,3 +1,6 @@
+/**
+ * @classdesc
+ */
 export class BufferBuilder {
   /**
    * @type {GPUDevice}
@@ -27,7 +30,7 @@ export class BufferBuilder {
   /**
    * @type {string}
    */
-  type = "float32";
+  baseType = "float32";
 
   /**
    * @type {boolean}
@@ -47,17 +50,17 @@ export class BufferBuilder {
   /**
    * @type {number}
    */
+  vertexCount = 0;
+
+  /**
+   * @type {number}
+   */
   offset = 0;
 
   /**
    * @type {number}
    */
   stride = 0;
-
-  /**
-   * @type {number}
-   */
-  count = 0;
 
   /**
    *
@@ -103,11 +106,11 @@ export class BufferBuilder {
     this.size = data.byteLength;
 
     if (data instanceof Float32Array) {
-      this.type = "float32";
+      this.baseType = "float32";
     } else if (data instanceof Uint32Array) {
-      this.type = "uint32";
+      this.baseType = "uint32";
     } else if (data instanceof Int32Array) {
-      this.type = "sint32";
+      this.baseType = "sint32";
     }
 
     this.mappedAtCreation = true;
@@ -121,7 +124,7 @@ export class BufferBuilder {
    */
   addVertexAttribute(count, type = "float32") {
     const byte = 4; // uint32, sint32, float32 - all 4 bytes
-    const format = (this.type || type) + (count > 1 ? "x" + count : "");
+    const format = (this.baseType || type) + (count > 1 ? "x" + count : "");
 
     if (!this.bufferLayout) {
       this.bufferLayout = {
@@ -143,7 +146,7 @@ export class BufferBuilder {
   }
 
   /**
-   * @returns {{buffer: GPUBuffer, bufferLayout: GPUVertexBufferLayout}}
+   * @returns {{buffer: GPUBuffer, bufferLayout: GPUVertexBufferLayout, vertexCount: number}}
    */
   build() {
     this.buffer = this.device.createBuffer({
@@ -164,10 +167,10 @@ export class BufferBuilder {
       }
       this.buffer.unmap();
       if (this.stride) {
-        this.count = this.data.length / this.stride;
+        this.vertexCount = this.data.length / this.stride;
       }
     }
 
-    return { buffer: this.buffer, bufferLayout: this.bufferLayout, count: this.count, stride: this.stride };
+    return { buffer: this.buffer, bufferLayout: this.bufferLayout, vertexCount: this.vertexCount };
   }
 }

@@ -2,6 +2,9 @@ import { BasicModel } from "./library/component/BasicModel.js";
 import { mat4 } from "https://wgpu-matrix.org/dist/3.x/wgpu-matrix.module.js";
 import { convertDegreeToRadian } from "./library/helper/utility.js";
 
+/**
+ * @classdesc
+ */
 export class Scene {
   /**
    * @type {Float32Array}
@@ -11,42 +14,43 @@ export class Scene {
   /**
    * @type {BasicModel[]}
    */
-  triangleObjects = [];
+  triangles = [];
 
   /**
    * @type {BasicModel[]}
    */
-  tileObjects = [];
+  tiles = [];
 
   /**
    * @type {BasicModel}
    */
-  modelObject;
+  statue;
 
   /**
    *
    */
   constructor() {
-    this.objectData = new Float32Array(16 * 1024);
+    this.objectData = new Float32Array(4 * 4 * 1024);
 
-    this.initTriangleModels();
-    this.initTileModels();
-    this.initObjectModel();
+    this.initTriangles();
+    this.initTiles();
+    this.initStatue();
   }
 
   /**
    *
    */
-  initTriangleModels() {
+  initTriangles() {
     let i = 0;
     for (let y = -5; y < 5; y++) {
-      const model = new BasicModel((obj) => {
+      const model = new BasicModel();
+      model.setPosition(2, y, 0.5);
+      model.setUpdateCallback((obj) => {
         obj.eulers[2] -= 1;
         obj.eulers[2] %= 360;
-        mat4.rotateZ(obj.model, convertDegreeToRadian(obj.eulers[2]), obj.model);
+        obj.matrix = mat4.rotateZ(obj.matrix, convertDegreeToRadian(obj.eulers[2]));
       });
-      model.position = [2, y, 0.5];
-      this.triangleObjects.push(model);
+      this.triangles.push(model);
 
       const matrix = mat4.create();
       for (let j = 0; j < 16; j++) {
@@ -59,13 +63,13 @@ export class Scene {
   /**
    *
    */
-  initTileModels() {
-    let i = this.triangleObjects.length;
+  initTiles() {
+    let i = this.triangles.length;
     for (let x = -8; x < 8; x++) {
       for (let y = -8; y < 8; y++) {
         const model = new BasicModel();
-        model.position = [x, y, 0];
-        this.tileObjects.push(model);
+        model.setPosition(x, y, 0);
+        this.tiles.push(model);
 
         const matrix = mat4.create();
         for (let j = 0; j < 16; j++) {
@@ -79,13 +83,14 @@ export class Scene {
   /**
    *
    */
-  initObjectModel() {
-    this.modelObject = new BasicModel((obj) => {
+  initStatue() {
+    this.statue = new BasicModel();
+    this.statue.setPosition(0, 0, 0);
+    this.statue.setUpdateCallback((obj) => {
       obj.eulers[2] -= 1;
       obj.eulers[2] %= 360;
-      mat4.rotateZ(obj.model, convertDegreeToRadian(obj.eulers[2]), obj.model);
+      obj.matrix = mat4.rotateZ(obj.matrix, convertDegreeToRadian(obj.eulers[2]));
     });
-    this.modelObject.position = [0, 0, 0];
   }
 
   /**
@@ -93,23 +98,23 @@ export class Scene {
    */
   update() {
     let i = 0;
-    this.triangleObjects.forEach((model) => {
+    this.triangles.forEach((model) => {
       model.update();
       for (let j = 0; j < 16; j++) {
-        this.objectData[16 * i + j] = model.model[j];
+        this.objectData[16 * i + j] = model.matrix[j];
       }
       i++;
     });
-    this.tileObjects.forEach((model) => {
+    this.tiles.forEach((model) => {
       model.update();
       for (let j = 0; j < 16; j++) {
-        this.objectData[16 * i + j] = model.model[j];
+        this.objectData[16 * i + j] = model.matrix[j];
       }
       i++;
     });
-    this.modelObject.update();
+    this.statue.update();
     for (let j = 0; j < 16; j++) {
-      this.objectData[16 * i + j] = this.modelObject.model[j];
+      this.objectData[16 * i + j] = this.statue.matrix[j];
     }
     i++;
   }

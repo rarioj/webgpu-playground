@@ -1,17 +1,15 @@
 import { mat4, vec3, vec4 } from "https://wgpu-matrix.org/dist/3.x/wgpu-matrix.module.js";
 
 /**
- * @type {URLSearchParams}
- */
-const __queryParameters = new URLSearchParams(location.search);
-
-/**
  * @param {string} key
  * @param {any} [fallback]
  * @returns {any}
  */
 export function getQueryValue(key, fallback = null) {
-  return __queryParameters.has(key) ? __queryParameters.get(key) : fallback;
+  if (!(getQueryValue.parameters instanceof URLSearchParams)) {
+    getQueryValue.parameters = new URLSearchParams(location.search);
+  }
+  return getQueryValue.parameters.has(key) ? getQueryValue.parameters.get(key) : fallback;
 }
 
 /**
@@ -43,7 +41,7 @@ export function convertRadianToDegree(radian) {
  * @param {Object} [options]
  * @param {HTMLElement} [options.container]
  * @param {CSSStyleDeclaration} [options.style]
- * @returns {HTMLElement}
+ * @returns {(wrapper: HTMLElement, span: HTMLSpanElement, progress: HTMLProgressElement)}
  */
 export function createProgressBar(options = {}) {
   const {
@@ -62,33 +60,31 @@ export function createProgressBar(options = {}) {
 
   wrapper.appendChild(caption);
   wrapper.appendChild(progress);
+  Object.assign(wrapper.style, style);
 
   if (container instanceof HTMLElement) {
     container.appendChild(wrapper);
   }
 
-  Object.assign(wrapper.style, style);
-  return wrapper;
+  return { wrapper, caption, progress };
 }
 
 /**
  * @async
- * @param {{name: string, group: boolean, url: string, type: string}[]} resources
- * @returns {Object.<string, any>}
+ * @param {{name: string, url: string, type: string, group: boolean}[]} resources
+ * @returns {Object.<string, String|Blob|{group: string, data: String|Blob}>}
  */
 export async function loadResources(resources) {
   let fetched = 0;
 
-  const wrapper = createProgressBar();
-  const caption = wrapper.querySelector("span");
-  const progress = wrapper.querySelector("progress");
+  const { wrapper, caption, progress } = createProgressBar();
   const results = {};
 
   for (const resource of resources) {
     const downloaded = await fetch(resource.url)
       .then((response) => {
         caption.ariaBusy = true;
-        caption.innerText = `Loading: ${resource.url.split("/").pop()}`;
+        caption.innerText = resource.url.split("/").pop();
         if (!response.ok) {
           throw `Unable to fetch resource URL: ${resource.url}`;
         }
@@ -124,6 +120,49 @@ export async function loadResources(resources) {
     wrapper.remove();
   }, 100);
   return results;
+}
+
+/**
+ * @param {Object} [options]
+ * @param {HTMLElement} [options.parentContainer]
+ * @param {CSSStyleDeclaration} [options.parentStyle]
+ * @param {string} [options.label]
+ * @param {CSSStyleDeclaration} [options.style]
+ * @returns {{outer: HTMLSpanElement, inner: HTMLElement}}
+ */
+export function createDebugElement(options = {}) {
+  const {
+    parentContainer = document.body,
+    parentStyle = {
+      display: "flex",
+      position: "fixed",
+      right: "0",
+      top: "0",
+    },
+    label = "Debug:",
+    style = {
+      margin: "0 0.5em",
+      fontSize: "smaller",
+    },
+  } = options;
+
+  if (!(createDebugElement.container instanceof HTMLElement)) {
+    createDebugElement.container = document.createElement("section");
+    Object.assign(createDebugElement.container.style, parentStyle);
+    if (parentContainer instanceof HTMLElement) {
+      parentContainer.appendChild(createDebugElement.container);
+    }
+  }
+
+  const outer = document.createElement("span");
+  outer.innerText = label + " ";
+  const inner = document.createElement("small");
+  outer.appendChild(inner);
+
+  Object.assign(outer.style, style);
+  createDebugElement.container.appendChild(outer);
+
+  return { outer, inner };
 }
 
 /**

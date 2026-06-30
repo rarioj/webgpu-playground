@@ -1,3 +1,6 @@
+/**
+ * @classdesc
+ */
 export class PipelineBuilder {
   /**
    * @type {GPUDevice}
@@ -40,36 +43,45 @@ export class PipelineBuilder {
   computePipelineDescriptor = {};
 
   /**
-   * @type {Map.<string, GPUShaderModule>}
+   * @type {GPUShaderModule}
    */
-  modules = null;
+  activeModule = null;
 
   /**
    * @param {GPUDevice} device
    */
   constructor(device) {
     this.device = device;
-    this.modules = new Map();
   }
 
   /**
-   * @param {string} moduleName
+   * @param {string} label
+   * @param {string} [layoutLabel]
+   * @returns {PipelineBuilder}
+   */
+  setLabel(label, layoutLabel = "") {
+    this.pipelineLabel = label;
+    this.pipelineLayoutLabel = layoutLabel || `${label} layout`;
+    return this;
+  }
+
+  /**
    * @param {string} code
    * @param {Objects} [options]
    * @param {string[][]} [options.replacements] Example: `[["fromThis", "toThat"], ["anotherThis", "anotherThat"]]`
    * @param {GPUShaderModuleDescriptor} [options.shaderModuleDescriptor] {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createShaderModule|GPUDevice: createShaderModule() method}
    * @returns {PipelineBuilder}
    */
-  addShaderCode(moduleName, code, options = {}) {
+  setShaderCode(code, options = {}) {
     const { replacements = [], shaderModuleDescriptor = {} } = options;
 
-    const defaultShaderModuleDescriptor = { label: moduleName, hints: {} };
+    const label = this.pipelineLabel ? `${this.pipelineLabel} shader module` : "Shader module";
+    const defaultShaderModuleDescriptor = { code: "", label, hints: {} };
     const finalCode = replacements.reduce((text, [from, to]) => {
       return text.replaceAll(from, to);
     }, code);
-    const shaderModule = this.device.createShaderModule({ ...defaultShaderModuleDescriptor, ...{ code: finalCode }, ...shaderModuleDescriptor });
 
-    this.modules.set(moduleName, shaderModule);
+    this.activeModule = this.device.createShaderModule({ ...defaultShaderModuleDescriptor, ...{ code: finalCode }, ...shaderModuleDescriptor });
     return this;
   }
 
@@ -92,24 +104,22 @@ export class PipelineBuilder {
   }
 
   /**
-   * @param {string} moduleName
    * @param {string} entryPoint
    * @param {Object} [options]
    * @returns {PipelineBuilder}
    */
-  setVertexShader(moduleName, entryPoint, options = {}) {
-    this.renderPipelineDescriptor.vertex = { module: this.modules.get(moduleName), entryPoint, ...options };
+  setVertexShader(entryPoint, options = {}) {
+    this.renderPipelineDescriptor.vertex = { module: this.activeModule, entryPoint, ...options };
     return this;
   }
 
   /**
-   * @param {string} moduleName
    * @param {string} entryPoint
    * @param {Object} [options]
    * @returns {PipelineBuilder}
    */
-  setFragmentShader(moduleName, entryPoint, options = {}) {
-    this.renderPipelineDescriptor.fragment = { module: this.modules.get(moduleName), entryPoint, ...options };
+  setFragmentShader(entryPoint, options = {}) {
+    this.renderPipelineDescriptor.fragment = { module: this.activeModule, entryPoint, ...options };
     return this;
   }
 
@@ -141,24 +151,12 @@ export class PipelineBuilder {
   }
 
   /**
-   * @param {string} moduleName
    * @param {string} entryPoint
    * @param {Object} [options]
    * @returns {PipelineBuilder}
    */
-  setComputeShader(moduleName, entryPoint, options = {}) {
-    this.computePipelineDescriptor.compute = { module: this.modules.get(moduleName), entryPoint, ...options };
-    return this;
-  }
-
-  /**
-   * @param {string} label
-   * @param {string} [layoutLabel]
-   * @returns {PipelineBuilder}
-   */
-  setLabel(label, layoutLabel = "") {
-    this.pipelineLabel = label;
-    this.pipelineLayoutLabel = layoutLabel;
+  setComputeShader(entryPoint, options = {}) {
+    this.computePipelineDescriptor.compute = { module: this.activeModule, entryPoint, ...options };
     return this;
   }
 
@@ -187,7 +185,7 @@ export class PipelineBuilder {
         ...{ layout: this.pipelineLayout, label: this.pipelineLabel || "Render pipeline" },
       });
     } else {
-      throw "Missing complete descriptor to generate pipeline object.";
+      throw "Unable to generate pipeline object due to incomplete descriptor.";
     }
 
     return { pipelineLayout: this.pipelineLayout, pipeline: this.pipeline };

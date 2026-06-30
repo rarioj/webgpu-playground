@@ -26,9 +26,8 @@ fn vertexMain(
     @location(0) positions: vec3<f32>,
     @location(1) texture: vec2<f32>,
 ) -> Fragment {
-    var finalPos: vec3<f32> = positions;
     var output: Fragment;
-    output.Position = transform.projection * transform.view * objects.model[instanceIndex] * vec4<f32>(finalPos, 1.0);
+    output.Position = transform.projection * transform.view * objects.model[instanceIndex] * vec4<f32>(positions, 1.0);
     output.Texture = texture;
     output.TextureIndex = instanceIndex;
     return output;

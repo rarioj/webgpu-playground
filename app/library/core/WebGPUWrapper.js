@@ -2,6 +2,9 @@ import { BindGroupBuilder } from "./BindGroupBuilder.js";
 import { PipelineBuilder } from "./PipelineBuilder.js";
 import { BufferBuilder } from "./BufferBuilder.js";
 
+/**
+ * @classdesc
+ */
 export class WebGPUWrapper {
   /**
    * @type {HTMLCanvasElement}
@@ -31,7 +34,7 @@ export class WebGPUWrapper {
   /**
    * @type {number}
    */
-  #autoLabel = 0;
+  labelCounter = 0;
 
   /**
    * @param {HTMLCanvasElement|null} [canvas]
@@ -54,14 +57,7 @@ export class WebGPUWrapper {
       throw "WebGPU is not supported in this browser.";
     }
 
-    const {
-      adapterOptions = {},
-      deviceDescriptor = {},
-      canvasContextConfig = {},
-      deviceLostCallback = (info) => {
-        console.error(`WebGPU device lost: ${info.message} [${info.reason}]`);
-      },
-    } = options;
+    const { adapterOptions = {}, deviceDescriptor = {}, canvasContextConfig = {}, deviceLostCallback = null } = options;
 
     const defaultAdapterOptions = {
       featureLevel: "core",
@@ -90,8 +86,11 @@ export class WebGPUWrapper {
 
     this.device = await this.adapter.requestDevice({ ...defaultDeviceDescriptor, ...deviceDescriptor });
     this.device.lost.then((info) => {
+      console.error(`WebGPU device lost: ${info.message} [${info.reason}]`);
       this.device = null;
-      deviceLostCallback(info);
+      if (typeof deviceLostCallback === "function") {
+        deviceLostCallback(info);
+      }
     });
 
     this.context = this.canvas instanceof HTMLCanvasElement ? this.canvas.getContext("webgpu") : null;
@@ -115,7 +114,7 @@ export class WebGPUWrapper {
     const defaultTextureDescriptor = {
       dimension: "2d",
       format: "depth24plus-stencil8",
-      label: `Texture #${this.#autoLabel++}`,
+      label: `Depth stencil texture #${this.labelCounter++}`,
       mipLevelCount: 1,
       sampleCount: 1,
       size: {
@@ -133,7 +132,7 @@ export class WebGPUWrapper {
       baseMipLevel: 0,
       dimension: defaultTextureDescriptor.dimension,
       format: defaultTextureDescriptor.format,
-      label: `Texture view #${this.#autoLabel++}`,
+      label: `Depth stencil texture view #${this.labelCounter++}`,
       mipLevelCount: defaultTextureDescriptor.mipLevelCount,
       swizzle: "rgba",
       usage: undefined,
@@ -142,6 +141,7 @@ export class WebGPUWrapper {
     const finalTextureDescriptor = { ...defaultTextureDescriptor, ...textureDescriptor };
     const texture = this.device.createTexture(finalTextureDescriptor);
     const view = texture.createView({ ...defaultTextureViewDescriptor, ...textureViewDescriptor });
+
     const state = {
       format: finalTextureDescriptor.format,
       depthWriteEnabled: true,
@@ -164,19 +164,19 @@ export class WebGPUWrapper {
    * @param {Blob[]|{group: string, data: Blob}[]|null} [blobs]
    * @param {Object} [options]
    * @param {boolean} [options.enableMipmap]
-   * @param {GPUBindGroupLayout} [options.bindGroupLayout]
    * @param {GPUTextureDescriptor} [options.textureDescriptor] {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createTexture|GPUDevice: createTexture() method}
    * @param {GPUTextureViewDescriptor} [options.textureViewDescriptor] {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUTexture/createView|GPUTexture: createView() method}
    * @param {GPUSamplerDescriptor} [options.samplerDescriptor] {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createSampler|GPUDevice: createSampler() method}
-   * @returns {{texture: GPUTexture, view: GPUTextureView, sampler: GPUSampler, builder: BindGroupBuilder}}
+   * @param {GPUBindGroupLayout|null} [options.bindGroupLayout]
+   * @returns {{texture: GPUTexture, view: GPUTextureView, sampler: GPUSampler, bindGroupBuilder: BindGroupBuilder}}
    */
   async createTextureViewSampler(blobs = null, options = {}) {
-    const { enableMipmap = false, bindGroupLayout = null, textureDescriptor = {}, textureViewDescriptor = {}, samplerDescriptor = {} } = options;
+    const { enableMipmap = false, textureDescriptor = {}, textureViewDescriptor = {}, samplerDescriptor = {}, bindGroupLayout = null } = options;
 
     const defaultTextureDescriptor = {
       dimension: "2d",
       format: this.format,
-      label: `Texture #${this.#autoLabel++}`,
+      label: `Texture #${this.labelCounter++}`,
       mipLevelCount: 1,
       sampleCount: 1,
       size: {
@@ -194,7 +194,7 @@ export class WebGPUWrapper {
       baseMipLevel: 0,
       dimension: "2d",
       format: defaultTextureDescriptor.format,
-      label: `Texture view #${this.#autoLabel++}`,
+      label: `Texture view #${this.labelCounter++}`,
       mipLevelCount: defaultTextureDescriptor.mipLevelCount,
       swizzle: "rgba",
       usage: undefined,
@@ -204,7 +204,7 @@ export class WebGPUWrapper {
       addressModeV: "repeat",
       addressModeW: "repeat",
       compare: undefined,
-      label: `Sampler #${this.#autoLabel++}`,
+      label: `Sampler #${this.labelCounter++}`,
       lodMinClamp: 0,
       lodMaxClamp: 32,
       maxAnisotropy: 1,
@@ -253,6 +253,7 @@ export class WebGPUWrapper {
       mipCount = enableMipmap ? images[mainGroup].entries?.length : 1;
     } else {
       images[mainGroup] = {
+        // Create texture from existing canvas
         width: this.canvas.width,
         height: this.canvas.height,
         count: 0,
@@ -287,15 +288,13 @@ export class WebGPUWrapper {
       ...textureViewDescriptor,
     };
     const view = texture.createView(finalTextureViewDescriptor);
+
     const sampler = this.device.createSampler({ ...defaultSamplerDescriptor, ...samplerDescriptor });
 
-    const bindGroupBuilder = this.setupBindGroup()
+    const bindGroupBuilder = bindGroupLayout ? this.setupBindGroup(bindGroupLayout) : this.setupBindGroup();
+    bindGroupBuilder
       .addTexture(view, GPUShaderStage.FRAGMENT, { viewDimension: finalTextureViewDescriptor.dimension })
       .addSampler(sampler, GPUShaderStage.FRAGMENT);
-
-    if (bindGroupLayout) {
-      bindGroupBuilder.setLayout(bindGroupLayout);
-    }
 
     return { texture, view, sampler, bindGroupBuilder };
   }
@@ -307,7 +306,7 @@ export class WebGPUWrapper {
    */
   setupBuffer(usage, dataOrSize) {
     const builder = new BufferBuilder(this.device);
-    builder.setLabel(`Buffer #${this.#autoLabel++}`);
+    builder.setLabel(`Buffer #${this.labelCounter++}`);
     builder.setUsage(usage);
 
     if (typeof dataOrSize === "number") {
@@ -328,9 +327,9 @@ export class WebGPUWrapper {
 
     if (layout instanceof GPUBindGroupLayout) {
       builder.setLayout(layout);
-      builder.setLabel(`Bind group #${this.#autoLabel++}`);
+      builder.setLabel(`Bind group #${this.labelCounter++}`);
     } else {
-      builder.setLabel(`Bind group #${this.#autoLabel++}`, `Bind group layout #${this.#autoLabel++}`);
+      builder.setLabel(`Bind group #${this.labelCounter++}`, `Bind group layout #${this.labelCounter++}`);
     }
 
     return builder;
@@ -345,9 +344,9 @@ export class WebGPUWrapper {
 
     if (layout instanceof GPUPipelineLayout) {
       builder.setPipelineLayout(layout);
-      builder.setLabel(`Pipeline #${this.#autoLabel++}`);
+      builder.setLabel(`Pipeline #${this.labelCounter++}`);
     } else {
-      builder.setLabel(`Pipeline #${this.#autoLabel++}`, `Pipeline layout #${this.#autoLabel++}`);
+      builder.setLabel(`Pipeline #${this.labelCounter++}`, `Pipeline layout #${this.labelCounter++}`);
     }
 
     return builder;

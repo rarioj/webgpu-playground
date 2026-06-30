@@ -1,3 +1,6 @@
+/**
+ * @classdesc
+ */
 export class BindGroupBuilder {
   /**
    * @type {GPUDevice}
@@ -62,7 +65,7 @@ export class BindGroupBuilder {
    */
   setLabel(label, layoutLabel = "") {
     this.bindGroupLabel = label;
-    this.bindGroupLayoutLabel = layoutLabel;
+    this.bindGroupLayoutLabel = layoutLabel || `${label} layout`;
     return this;
   }
 
@@ -82,51 +85,51 @@ export class BindGroupBuilder {
 
   /**
    * @param {GPUBuffer} resource
-   * @param {number} [visibility]
+   * @param {number} visibility
    * @param {GPUBufferBindingLayout} [options]
    * @returns {BindGroupBuilder}
    */
-  addBuffer(resource, visibility = 0, options = {}) {
+  addBuffer(resource, visibility, options = {}) {
     return this.addEntry({ buffer: resource }, { visibility, buffer: options });
   }
 
   /**
    * @param {GPUTexture} resource
-   * @param {number} [visibility]
+   * @param {number} visibility
    * @param {GPUTextureBindingLayout} [options]
    * @returns {BindGroupBuilder}
    */
-  addTexture(resource, visibility = 0, options = {}) {
+  addTexture(resource, visibility, options = {}) {
     return this.addEntry(resource, { visibility, texture: options });
   }
 
   /**
    * @param {GPUSampler} resource
-   * @param {number} [visibility]
+   * @param {number} visibility
    * @param {GPUSamplerBindingLayout} [options]
    * @returns {BindGroupBuilder}
    */
-  addSampler(resource, visibility = 0, options = {}) {
+  addSampler(resource, visibility, options = {}) {
     return this.addEntry(resource, { visibility, sampler: options });
   }
 
   /**
    * @param {GPUExternalTexture} resource
-   * @param {number} [visibility]
+   * @param {number} visibility
    * @param {GPUExternalTextureBindingLayout} [options]
    * @returns {BindGroupBuilder}
    */
-  addExternalTexture(resource, visibility = 0, options = {}) {
+  addExternalTexture(resource, visibility, options = {}) {
     return this.addEntry(resource, { visibility, externalTexture: options });
   }
 
   /**
    * @param {GPUTexture} resource
-   * @param {number} [visibility]
+   * @param {number} visibility
    * @param {GPUStorageTextureBindingLayout} [options]
    * @returns {BindGroupBuilder}
    */
-  addStorageTexture(resource, visibility = 0, options = {}) {
+  addStorageTexture(resource, visibility, options = {}) {
     return this.addEntry(resource, { visibility, storageTexture: options });
   }
 

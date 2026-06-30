@@ -1,6 +1,9 @@
-import { vec3, mat4 } from "https://wgpu-matrix.org/dist/3.x/wgpu-matrix.module.js";
-import { convertDegreeToRadian } from "../helper/utility.js";
+import { mat4, vec3 } from "https://wgpu-matrix.org/dist/3.x/wgpu-matrix.module.js";
+import { convertDegreeToRadian, createDebugElement } from "../helper/utility.js";
 
+/**
+ * @classdesc
+ */
 export class FirstPersonCamera {
   /**
    * @type {HTMLCanvasElement}
@@ -63,22 +66,34 @@ export class FirstPersonCamera {
   debugMouseMove = null;
 
   /**
+   * @type {number}
+   */
+  debugMouseTimer = 0;
+
+  /**
+   * @type {boolean}
+   */
+  mouseIsDragging = false;
+
+  /**
    * @param {HTMLCanvasElement} canvas
    * @param {Object} [options]
    * @param {number} [options.fov]
    * @param {number} [options.aspect]
    * @param {number} [options.near]
    * @param {number} [options.far]
+   * @param {boolean} [options.debug]
    */
   constructor(canvas, options = {}) {
     this.canvas = canvas;
 
-    const { fov, aspect, near, far } = {
+    const { fov, aspect, near, far, debug } = {
       ...{
         fov: Math.PI / 4,
         aspect: this.canvas.width / this.canvas.height,
         near: 0.1,
         far: 10,
+        debug: true,
       },
       ...options,
     };
@@ -87,21 +102,33 @@ export class FirstPersonCamera {
     const boundKeydownEvent = this.keydown.bind(this);
     const boundKeyupEvent = this.keyup.bind(this);
     const boundMousemoveEvent = this.mousemove.bind(this);
+    const boundMousedragEvent = this.mousedrag.bind(this);
 
     window.addEventListener("keydown", boundKeydownEvent);
     window.addEventListener("keyup", boundKeyupEvent);
 
-    this.canvas.addEventListener("click", () => {
-      this.canvas.requestPointerLock();
-    });
+    if ("requestPointerLock" in this.canvas) {
+      this.canvas.addEventListener("click", () => {
+        this.canvas.requestPointerLock();
+      });
+      document.addEventListener("pointerlockchange", () => {
+        if (document.pointerLockElement === this.canvas) {
+          document.addEventListener("mousemove", boundMousemoveEvent);
+        } else {
+          document.removeEventListener("mousemove", boundMousemoveEvent);
+        }
+      });
+    } else {
+      this.canvas.addEventListener("pointerdown", boundMousedragEvent);
+      this.canvas.addEventListener("pointermove", boundMousedragEvent);
+      this.canvas.addEventListener("pointerup", boundMousedragEvent);
+      this.canvas.addEventListener("pointercancel", boundMousedragEvent);
+    }
 
-    document.addEventListener("pointerlockchange", () => {
-      if (document.pointerLockElement === this.canvas) {
-        document.addEventListener("mousemove", boundMousemoveEvent);
-      } else {
-        document.removeEventListener("mousemove", boundMousemoveEvent);
-      }
-    });
+    if (debug) {
+      this.debugKeyPress = createDebugElement({ label: "⌨ " }).inner;
+      this.debugMouseMove = createDebugElement({ label: "🖱 " }).inner;
+    }
   }
 
   /**
@@ -123,6 +150,24 @@ export class FirstPersonCamera {
   }
 
   /**
+   * @param {number} [x]
+   * @param {number} [y]
+   * @param {number} [z]
+   */
+  setPosition(x = 0, y = 0, z = 0) {
+    this.position = [x, y, z];
+  }
+
+  /**
+   * @param {number} [x]
+   * @param {number} [y]
+   * @param {number} [z]
+   */
+  setEulers(x = 0, y = 0, z = 0) {
+    this.eulers = [x, y, z];
+  }
+
+  /**
    * @param {KeyboardEvent} event
    */
   keydown(event) {
@@ -141,7 +186,7 @@ export class FirstPersonCamera {
 
     if (this.debugKeyPress) {
       this.keypresses[event.code] = event.code;
-      this.debugKeyPress.innerText = Object.values(this.keypresses).join(" ");
+      this.debugKeyPress.innerText = Object.values(this.keypresses).join(", ");
     }
   }
 
@@ -164,7 +209,7 @@ export class FirstPersonCamera {
 
     if (this.debugKeyPress) {
       delete this.keypresses[event.code];
-      this.debugKeyPress.innerText = Object.values(this.keypresses).join(" ");
+      this.debugKeyPress.innerText = Object.values(this.keypresses).join(", ");
     }
   }
 
@@ -176,6 +221,41 @@ export class FirstPersonCamera {
 
     if (this.debugMouseMove) {
       this.debugMouseMove.innerText = `${event.movementX} x ${event.movementY}`;
+
+      clearTimeout(this.debugMouseTimer);
+      this.debugMouseTimer = setTimeout(() => {
+        this.debugMouseMove.innerText = "";
+      }, 100);
+    }
+  }
+
+  /**
+   * @param {MouseEvent} event
+   */
+  mousedrag(event) {
+    switch (event.type) {
+      case "pointerup":
+      case "pointercancel":
+        if (!this.mouseIsDragging) {
+          return;
+        }
+        this.mouseIsDragging = false;
+        this.movements.forward = 0;
+        this.canvas.releasePointerCapture(event.pointerId);
+        break;
+      case "pointerdown":
+        this.mouseIsDragging = true;
+        this.movements.forward = 0.02;
+        this.canvas.setPointerCapture(event.pointerId);
+        break;
+      case "pointermove":
+        if (!this.mouseIsDragging) {
+          return;
+        }
+        this.mousemove(event);
+        break;
+      default:
+        break;
     }
   }
 

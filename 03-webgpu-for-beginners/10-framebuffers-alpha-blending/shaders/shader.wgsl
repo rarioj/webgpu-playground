@@ -1,5 +1,3 @@
-const STATUE_INDEX: u32 = 266u;
-
 struct TransformData {
     view: mat4x4<f32>,
     projection: mat4x4<f32>,
@@ -29,10 +27,6 @@ fn vertexMain(
     @location(1) texture: vec2<f32>,
 ) -> Fragment {
     var finalPos: vec3<f32> = positions;
-// scale down the statue
-    if instanceIndex == STATUE_INDEX {
-        finalPos *= 0.15;
-    }
     var output: Fragment;
     output.Position = transform.projection * transform.view * objects.model[instanceIndex] * vec4<f32>(finalPos, 1.0);
     output.Texture = texture;

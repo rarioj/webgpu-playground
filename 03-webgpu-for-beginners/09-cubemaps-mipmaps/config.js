@@ -1,5 +1,3 @@
-const __cubemapName = "belfast_sunset_puresky";
-
 export const resourceArray = [
   {
     name: "shader",
@@ -19,37 +17,37 @@ export const resourceArray = [
   {
     // +x (right)
     name: "cubemap_px",
-    url: `./assets/cubemaps/${__cubemapName}/face_px_right.webp`,
+    url: `./assets/cubemaps/belfast_sunset_puresky/face_px_right.webp`,
     type: "blob",
   },
   {
     // -x (left)
     name: "cubemap_nx",
-    url: `./assets/cubemaps/${__cubemapName}/face_nx_left.webp`,
+    url: `./assets/cubemaps/belfast_sunset_puresky/face_nx_left.webp`,
     type: "blob",
   },
   {
     // +y (top)
     name: "cubemap_py",
-    url: `./assets/cubemaps/${__cubemapName}/face_py_top.webp`,
+    url: `./assets/cubemaps/belfast_sunset_puresky/face_py_top.webp`,
     type: "blob",
   },
   {
     // -y (bottom)
     name: "cubemap_ny",
-    url: `./assets/cubemaps/${__cubemapName}/face_ny_bottom.webp`,
+    url: `./assets/cubemaps/belfast_sunset_puresky/face_ny_bottom.webp`,
     type: "blob",
   },
   {
     // +z (front)
     name: "cubemap_pz",
-    url: `./assets/cubemaps/${__cubemapName}/face_pz_front.webp`,
+    url: `./assets/cubemaps/belfast_sunset_puresky/face_pz_front.webp`,
     type: "blob",
   },
   {
     // -z (back)
     name: "cubemap_nz",
-    url: `./assets/cubemaps/${__cubemapName}/face_nz_back.webp`,
+    url: `./assets/cubemaps/belfast_sunset_puresky/face_nz_back.webp`,
     type: "blob",
   },
 ];

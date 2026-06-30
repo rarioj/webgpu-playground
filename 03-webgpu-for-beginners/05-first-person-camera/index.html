@@ -15,21 +15,23 @@
         </hgroup>
       </header>
       <section>
-        <canvas style="outline: 1px solid black" width="800" height="600"></canvas>
+        <canvas style="outline: 1px solid black; user-select: none; touch-action: none" width="800" height="600"></canvas>
       </section>
       <footer>
         <ul>
           <li
-            >Use <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> keys to control the camera &bull; <small>﹝<kbd id="event-keypress"></kbd>﹞</small></li
-          >
+            ><strong>Camera Controls</strong>
+            <ul>
+              <li><mark>Desktop:</mark> Move with <kbd>WASD</kbd> keys. Click the <em>canvas</em> to look around (press <kbd>Esc</kbd> to exit).</li>
+              <li><mark data-placement="right" data-tooltip="Work in progress">Mobile:</mark> Touch and drag the <em>canvas</em> to move and look around.</li>
+            </ul>
+          </li>
           <li
-            >Click the
-            <mark data-placement="right" data-tooltip="The Pointer Lock API is not supported on touch-only mobile devices like phones and tablets."
-              >canvas</mark
-            >
-            to activate pointer lock &bull; <small>﹝<kbd id="event-mousemove">0 x 0</kbd>﹞</small></li
-          >
-          <li>Triangle image source: <a href="https://picsum.photos/" target="_blank">Lorem Picsum</a></li>
+            ><strong>Credits</strong>
+            <ul>
+              <li>Triangle image source: <a href="https://picsum.photos/" target="_blank">Lorem Picsum</a></li>
+            </ul>
+          </li>
         </ul>
       </footer>
     </main>

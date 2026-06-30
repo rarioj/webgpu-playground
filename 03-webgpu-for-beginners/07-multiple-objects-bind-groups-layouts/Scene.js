@@ -34,10 +34,11 @@ export class Scene {
   initTriangleModels() {
     let i = 0;
     for (let y = -5; y < 5; y++) {
-      const model = new BasicModel((obj) => {
+      const model = new BasicModel();
+      model.setUpdateCallback((obj) => {
         obj.eulers[2] -= 1;
         obj.eulers[2] %= 360;
-        mat4.rotateZ(obj.model, convertDegreeToRadian(obj.eulers[2]), obj.model);
+        mat4.rotateZ(obj.matrix, convertDegreeToRadian(obj.eulers[2]), obj.matrix);
       });
       model.position = [2, y, 0.5];
       this.triangleModels.push(model);
@@ -78,14 +79,14 @@ export class Scene {
     this.triangleModels.forEach((model) => {
       model.update();
       for (let j = 0; j < 16; j++) {
-        this.objectData[16 * i + j] = model.model[j];
+        this.objectData[16 * i + j] = model.matrix[j];
       }
       i++;
     });
     this.tileModels.forEach((model) => {
       model.update();
       for (let j = 0; j < 16; j++) {
-        this.objectData[16 * i + j] = model.model[j];
+        this.objectData[16 * i + j] = model.matrix[j];
       }
       i++;
     });

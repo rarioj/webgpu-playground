@@ -20,8 +20,6 @@ const {
 // --- Set up camera and scene
 const camera = new FirstPersonCamera(canvas, { far: 100 });
 camera.position = [-7, -0.5, 0.5];
-camera.debugKeyPress = document.getElementById("event-keypress");
-camera.debugMouseMove = document.getElementById("event-mousemove");
 const scene = new Scene();
 
 // --- Set up triangle, quad, and obj meshes
@@ -126,14 +124,14 @@ function render() {
   // --- Draw triangles
   renderPass.setVertexBuffer(0, triangle.bufferData);
   renderPass.setBindGroup(1, fragmentBindGroup);
-  renderPass.draw(3, scene.triangleObjects.length, 0, modelDrawn);
-  modelDrawn += scene.triangleObjects.length;
+  renderPass.draw(3, scene.triangles.length, 0, modelDrawn);
+  modelDrawn += scene.triangles.length;
 
   // --- Draw floor
   renderPass.setVertexBuffer(0, quad.bufferData);
   renderPass.setBindGroup(1, fragmentBindGroup);
-  renderPass.draw(6, scene.tileObjects.length, 0, modelDrawn);
-  modelDrawn += scene.tileObjects.length;
+  renderPass.draw(6, scene.tiles.length, 0, modelDrawn);
+  modelDrawn += scene.tiles.length;
 
   // --- Draw 3d model
   renderPass.setVertexBuffer(0, objmesh.bufferData);

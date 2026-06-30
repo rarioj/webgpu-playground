@@ -1,107 +1,123 @@
-const __cubemapName = "bambanani_sunset";
+import { mat4 } from "https://wgpu-matrix.org/dist/3.x/wgpu-matrix.module.js";
 
-export const resourceArray = [
+export const config = {};
+
+config.resources = [
   {
-    name: "shader",
+    name: "shaderCode",
     url: "./shaders/shader.wgsl",
     type: "text",
   },
   {
-    name: "sky",
+    name: "skyCode",
     url: "./shaders/sky.wgsl",
     type: "text",
   },
   {
-    name: "alert",
+    name: "alertCode",
     url: "./shaders/alert.wgsl",
     type: "text",
   },
   {
-    name: "hud",
+    name: "hudCode",
     url: "./shaders/hud.wgsl",
     type: "text",
   },
   {
-    name: "weapon",
+    name: "gunCode",
     url: "./shaders/gun.wgsl",
     type: "text",
   },
   {
-    name: "statue",
+    name: "statueObj",
     url: "./assets/models/Knight_V1/18489_Knight_V1_.obj",
     type: "text",
   },
   {
-    name: "gun",
+    name: "gunObj",
     url: "./assets/models/92-sci_fi_gun/scifi_gun.obj",
     type: "text",
   },
   {
     // +x (right)
     name: "skyImages",
-    url: `./assets/cubemaps/${__cubemapName}/face_px_right.webp`,
+    url: `./assets/cubemaps/bambanani_sunset/face_px_right.webp`,
     type: "blob",
     group: true,
   },
   {
     // -x (left)
     name: "skyImages",
-    url: `./assets/cubemaps/${__cubemapName}/face_nx_left.webp`,
+    url: `./assets/cubemaps/bambanani_sunset/face_nx_left.webp`,
     type: "blob",
     group: true,
   },
   {
     // +y (top)
     name: "skyImages",
-    url: `./assets/cubemaps/${__cubemapName}/face_py_top.webp`,
+    url: `./assets/cubemaps/bambanani_sunset/face_py_top.webp`,
     type: "blob",
     group: true,
   },
   {
     // -y (bottom)
     name: "skyImages",
-    url: `./assets/cubemaps/${__cubemapName}/face_ny_bottom.webp`,
+    url: `./assets/cubemaps/bambanani_sunset/face_ny_bottom.webp`,
     type: "blob",
     group: true,
   },
   {
     // +z (front)
     name: "skyImages",
-    url: `./assets/cubemaps/${__cubemapName}/face_pz_front.webp`,
+    url: `./assets/cubemaps/bambanani_sunset/face_pz_front.webp`,
     type: "blob",
     group: true,
   },
   {
     // -z (back)
     name: "skyImages",
-    url: `./assets/cubemaps/${__cubemapName}/face_nz_back.webp`,
+    url: `./assets/cubemaps/bambanani_sunset/face_nz_back.webp`,
     type: "blob",
     group: true,
   },
   {
     name: "hudImage",
-    url: "./assets/huds/hud3.png",
+    url: "./assets/others/hud3.webp",
     type: "blob",
   },
   {
     name: "gunImage",
-    url: "./assets/images/143-16.webp",
+    url: "./assets/others/gun.webp",
     type: "blob",
   },
 ];
 
 [50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 1073].forEach((value1, index1) => {
   [512, 256, 128, 64, 32, 16].forEach((value2, index2) => {
-    resourceArray.push({
+    config.resources.push({
       name: "assetImages",
       url: `./assets/images/${value1}-${value2}.webp`,
       type: "blob",
-      group: "" + value1,
+      group: `${value1}`,
     });
   });
 });
 
-export const vertexMap = {
+config.transform = {
+  statue: () => {
+    let transform = mat4.identity();
+    transform = mat4.multiply(transform, mat4.scaling([0.15, 0.15, 0.15]));
+    return transform;
+  },
+  gun: () => {
+    let transform = mat4.identity();
+    transform = mat4.multiply(transform, mat4.translation([0.8, -1.75, -1.0]));
+    transform = mat4.multiply(transform, mat4.scaling([0.25, 0.25, 0.25]));
+    return transform;
+  },
+};
+
+config.vertices = {
   triangle: new Float32Array([
     //x, y, z, u, v
     // triangle 1, point 1

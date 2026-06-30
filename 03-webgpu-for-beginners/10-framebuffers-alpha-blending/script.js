@@ -1,25 +1,33 @@
 import { WebGPUWrapper } from "./library/core/WebGPUWrapper.js";
 import { loadResources, parseObjCode } from "./library/helper/utility.js";
-import { resourceArray, vertexMap } from "./config.js";
-import { FirstPersonCamera } from "./library/component/FirstPersonCamera.js";
+import { config } from "./config.js";
 import { Scene } from "./Scene.js";
+import { FirstPersonCamera } from "./library/component/FirstPersonCamera.js";
 
-// --- WebGPU initialisation
+/*
+ * Initialisation
+ * ==============
+ */
+
+// WebGPU initialisation
 const canvas = document.querySelector("canvas");
 const webgpu = new WebGPUWrapper(canvas);
 const { device, context, format } = await webgpu.init();
 
-// --- Load all images/assets/models
-const resources = await loadResources(resourceArray);
+// Fetch all resources
+const resources = await loadResources(config.resources);
 
-// --- Set up scene, camera, and all the objects in the scene
+// Set up scene and camera
 const scene = new Scene();
 const camera = new FirstPersonCamera(canvas, { far: 100 });
-camera.position = [-7, -0.5, 0.5];
-camera.debugKeyPress = document.getElementById("event-keypress");
-camera.debugMouseMove = document.getElementById("event-mousemove");
+camera.setPosition(-7, -0.5, 0.5);
 
-// --- Set up all buffers
+/*
+ * Buffers
+ * =======
+ */
+
+// Set up various buffers
 const { buffer: cameraBuffer } = webgpu
   .setupBuffer(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, 4 * 4 * 3) // 4-bytes * 3 types (forward, right, up)
   .setLabel("Camera buffer")
@@ -36,43 +44,41 @@ const { buffer: timeBuffer } = webgpu
   .setupBuffer(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, 4) // 4-bytes
   .setLabel("Time buffer")
   .build();
-const triangleMesh = webgpu
-  .setupBuffer(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST, vertexMap.triangle)
+const { buffer: triangleMeshBuffer, bufferLayout: triangleMeshBufferLayout } = webgpu
+  .setupBuffer(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST, config.vertices.triangle)
   .setLabel("Triangle mesh")
   .addVertexAttribute(3) // x, y, z
   .addVertexAttribute(2) // u, v
   .build();
-const quadMesh = webgpu
-  .setupBuffer(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST, vertexMap.quad)
+const { buffer: quadMeshBuffer } = webgpu
+  .setupBuffer(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST, config.vertices.quad)
   .setLabel("Quad mesh")
   .addVertexAttribute(3) // x, y, z
   .addVertexAttribute(2) // u, v
   .build();
-const statueMesh = webgpu
-  .setupBuffer(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST, parseObjCode(resources.statue))
+const { buffer: statueMeshBuffer, vertexCount: statueMeshVertexCount } = webgpu
+  .setupBuffer(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST, parseObjCode(resources.statueObj, { preTransform: config.transform.statue() }))
   .setLabel("Statue mesh")
   .addVertexAttribute(3) // x, y, z
   .addVertexAttribute(2) // u, v
   .build();
 
-// --- Set up texture views and samplers (materials)
-const {
-  view: skyView,
-  sampler: skySampler,
-  bindGroupBuilder: skyBindGroupBuilder,
-} = await webgpu.createTextureViewSampler(resources.skyImages, {
+/*
+ * Bind groups
+ * ===========
+ */
+
+// Set up texture views and samplers, assign them to their bind groups + layouts
+//// Sky (cubemap)
+const { bindGroupBuilder: skyBindGroupBuilder } = await webgpu.createTextureViewSampler(resources.skyImages, {
   textureViewDescriptor: { dimension: "cube" },
 });
 const { bindGroupLayout: skyBindGroupLayout, bindGroup: skyBindGroup } = skyBindGroupBuilder
-  .setLabel("Sky bind group", "Sky bind group layout")
+  .setLabel("Sky texture bind group", "Sky texture bind group layout")
   .addBuffer(cameraBuffer, GPUShaderStage.VERTEX, { type: "uniform" })
   .build();
-
-const {
-  view: imageView,
-  sampler: imageSampler,
-  bindGroupBuilder: imageBindGroupBuilder,
-} = await webgpu.createTextureViewSampler(resources.assetImages, {
+//// Asset images
+const { bindGroupBuilder: assetBindGroupBuilder } = await webgpu.createTextureViewSampler(resources.assetImages, {
   enableMipmap: true,
   samplerDescriptor: {
     maxAnisotropy: 4,
@@ -80,82 +86,88 @@ const {
     mipmapFilter: "linear",
   },
 });
-const { bindGroupLayout: fragmentBindGroupLayout, bindGroup: fragmentBindGroup } = imageBindGroupBuilder
-  .setLabel("Fragment bind group", "Fragment bind group layout")
+const { bindGroupLayout: assetBindGroupLayout, bindGroup: assetBindGroup } = assetBindGroupBuilder
+  .setLabel("Assets texture bind group", "Assets texture bind group layout")
   .build();
-
-const {
-  view: alertLayerView,
-  sampler: alertLayerSampler,
-  bindGroupBuilder: alertLayerBindGroupBuilder,
-} = await webgpu.createTextureViewSampler(null, {
+//// Alert (canvas)
+const { view: alertView, bindGroupBuilder: alertBindGroupBuilder } = await webgpu.createTextureViewSampler(null, {
   textureDescriptor: {
     usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT,
   },
 });
-const { bindGroupLayout: alertLayerBindGroupLayout, bindGroup: alertLayerBindGroup } = alertLayerBindGroupBuilder
-  .setLabel("Alert layer bind group", "Alert layer bind group layout")
+const { bindGroupLayout: alertBindGroupLayout, bindGroup: alertBindGroup } = alertBindGroupBuilder
+  .setLabel("Alert canvas bind group", "Alert canvas bind group layout")
   .addBuffer(timeBuffer, GPUShaderStage.FRAGMENT, { type: "uniform" })
   .build();
+//// HUD image
+const { bindGroupBuilder: hudBindGroupBuilder } = await webgpu.createTextureViewSampler([resources.hudImage]);
+const { bindGroupLayout: hudBindGroupLayout, bindGroup: hudBindGroup } = hudBindGroupBuilder
+  .setLabel("HUD texture bind group", "HUD texture bind group layout")
+  .build();
 
-const { view: hudView, sampler: hudSampler, bindGroupBuilder: hudBindGroupBuilder } = await webgpu.createTextureViewSampler([resources.hudImage]);
-const { bindGroupLayout: hudBindGroupLayout, bindGroup: hudBindGroup } = hudBindGroupBuilder.setLabel("HUD bind group", "HUD bind group layout").build();
-
-// --- Set up depth stencil
-const { state: depthStencil, texture: depthStencilTexture, view: depthStencilView, attachment: depthStencilAttachment } = webgpu.setupDepthStencil();
-
-// --- Set up remaining bind group layouts and bind groups
-const { bindGroupLayout: vertexBindGroupLayout, bindGroup: vertexBindGroup } = webgpu
+// Set up the remaining bind groups and their layouts
+//// Primary shader bind group
+const { bindGroupLayout: shaderBindGroupLayout, bindGroup: shaderBindGroup } = webgpu
   .setupBindGroup()
-  .setLabel("Vertex bind group", "Vertex bind group layout")
+  .setLabel("Shader bind group", "Shader bind group layout")
   .addBuffer(uniformBuffer, GPUShaderStage.VERTEX)
   .addBuffer(objectBuffer, GPUShaderStage.VERTEX, { type: "read-only-storage", hasDynamicOffset: false })
   .build();
 
-// --- Set up pipeline layouts and pipelines
+/*
+ * Pipelines
+ * =========
+ */
+
+// Set up depth stencil
+const { state: depthStencilState, attachment: depthStencilAttachment } = webgpu.setupDepthStencil();
+
+// Set up pipelines and their layouts
+//// Sky (cubemap)
 const { pipeline: skyPipeline } = webgpu
   .setupPipeline()
   .setLabel("Sky pipeline", "Sky pipeline layout")
   .addBindGroupLayout(skyBindGroupLayout)
-  .addShaderCode("Sky shader module", resources.sky)
-  .setVertexShader("Sky shader module", "vertexMain")
-  .setFragmentShader("Sky shader module", "fragmentMain", { targets: [{ format }] })
+  .setShaderCode(resources.skyCode)
+  .setVertexShader("vertexMain")
+  .setFragmentShader("fragmentMain", { targets: [{ format }] })
   .setPrimitive({ topology: "triangle-list" })
-  .setDepthStencil(depthStencil)
+  .setDepthStencil(depthStencilState)
   .build();
-
+//// Primary shader
 const { pipeline: shaderPipeline } = webgpu
   .setupPipeline()
-  .setLabel("Fragment pipeline", "Fragment pipeline layout")
-  .addBindGroupLayout(vertexBindGroupLayout)
-  .addBindGroupLayout(fragmentBindGroupLayout)
-  .addShaderCode("Fragment shader code", resources.shader)
-  .setVertexShader("Fragment shader code", "vertexMain", { buffers: [triangleMesh.bufferLayout] })
-  .setFragmentShader("Fragment shader code", "fragmentMain", { targets: [{ format }] })
+  .setLabel("Shader pipeline", "Shader pipeline layout")
+  .addBindGroupLayout(shaderBindGroupLayout)
+  .addBindGroupLayout(assetBindGroupLayout)
+  .setShaderCode(resources.shaderCode)
+  .setVertexShader("vertexMain", { buffers: [triangleMeshBufferLayout] })
+  .setFragmentShader("fragmentMain", { targets: [{ format }] })
   .setPrimitive({ topology: "triangle-list" })
-  .setDepthStencil(depthStencil)
+  .setDepthStencil(depthStencilState)
   .build();
-
-const { pipeline: alertLayerPipeline } = webgpu
+//// Alert
+const { pipeline: alertPipeline } = webgpu
   .setupPipeline()
   .setLabel("Alert pipeline", "Alert pipeline layout")
-  .addBindGroupLayout(alertLayerBindGroupLayout)
-  .addShaderCode("Alert shader module", resources.alert)
-  .setVertexShader("Alert shader module", "vertexMain")
-  .setFragmentShader("Alert shader module", "fragmentMain", { targets: [{ format }] })
+  .addBindGroupLayout(alertBindGroupLayout)
+  .setShaderCode(resources.alertCode)
+  .setVertexShader("vertexMain")
+  .setFragmentShader("fragmentMain", { targets: [{ format }] })
   .setPrimitive({ topology: "triangle-list" })
   .build();
-
+//// HUD
 const { pipeline: hudPipeline } = webgpu
   .setupPipeline()
   .setLabel("HUD pipeline", "HUD pipeline layout")
   .addBindGroupLayout(hudBindGroupLayout)
-  .addShaderCode("HUD shader module", resources.hud)
-  .setVertexShader("HUD shader module", "vertexMain")
-  .setFragmentShader("HUD shader module", "fragmentMain", {
+  .setShaderCode(resources.hudCode)
+  .setVertexShader("vertexMain")
+  .setFragmentShader("fragmentMain", {
     targets: [
       {
         format,
+        // enabling HUD transparency
         blend: {
           color: {
             operation: "add",
@@ -174,6 +186,11 @@ const { pipeline: hudPipeline } = webgpu
   .setPrimitive({ topology: "triangle-list" })
   .build();
 
+/*
+ * Renderer
+ * ========
+ */
+
 const dy = Math.tan(Math.PI / 8);
 const dx = (dy * canvas.width) / canvas.height;
 const startTime = performance.now();
@@ -189,15 +206,15 @@ function drawWorld(encoder) {
     camera.forward[0],
     camera.forward[1],
     camera.forward[2],
-    0.0,
+    0.0, // padding
     dx * camera.right[0],
     dx * camera.right[1],
     dx * camera.right[2],
-    0.0,
+    0.0, // padding
     dy * camera.up[0],
     dy * camera.up[1],
     dy * camera.up[2],
-    0.0,
+    0.0, // padding
   ]);
 
   device.queue.writeBuffer(objectBuffer, 0, scene.objectData, 0, scene.objectData.length);
@@ -208,8 +225,7 @@ function drawWorld(encoder) {
   const renderPass = encoder.beginRenderPass({
     colorAttachments: [
       {
-        // view: context.getCurrentTexture().createView(),
-        view: alertLayerView,
+        view: alertView,
         loadOp: "clear",
         storeOp: "store",
         clearValue: { r: 0.25, g: 0.25, b: 0.25, a: 1.0 },
@@ -218,32 +234,33 @@ function drawWorld(encoder) {
     depthStencilAttachment,
   });
 
-  // --- Draw sky
+  // Render the sky
   renderPass.setPipeline(skyPipeline);
   renderPass.setBindGroup(0, skyBindGroup);
   renderPass.draw(6, 1, 0, 0);
 
+  // Render the primary shader
   renderPass.setPipeline(shaderPipeline);
-  renderPass.setBindGroup(0, vertexBindGroup);
+  renderPass.setBindGroup(0, shaderBindGroup);
 
   let modelDrawn = 0;
 
-  // --- Draw triangles
-  renderPass.setVertexBuffer(0, triangleMesh.buffer);
-  renderPass.setBindGroup(1, fragmentBindGroup);
-  renderPass.draw(3, scene.triangleObjects.length, 0, modelDrawn);
-  modelDrawn += scene.triangleObjects.length;
+  // Render the triangles
+  renderPass.setVertexBuffer(0, triangleMeshBuffer);
+  renderPass.setBindGroup(1, assetBindGroup);
+  renderPass.draw(3, scene.triangles.length, 0, modelDrawn);
+  modelDrawn += scene.triangles.length;
 
-  // --- Draw floor
-  renderPass.setVertexBuffer(0, quadMesh.buffer);
-  renderPass.setBindGroup(1, fragmentBindGroup);
-  renderPass.draw(6, scene.tileObjects.length, 0, modelDrawn);
-  modelDrawn += scene.tileObjects.length;
+  // Render the tiles
+  renderPass.setVertexBuffer(0, quadMeshBuffer);
+  renderPass.setBindGroup(1, assetBindGroup);
+  renderPass.draw(6, scene.tiles.length, 0, modelDrawn);
+  modelDrawn += scene.tiles.length;
 
-  // --- Draw 3d model
-  renderPass.setVertexBuffer(0, statueMesh.buffer);
-  renderPass.setBindGroup(1, fragmentBindGroup);
-  renderPass.draw(statueMesh.count, 1, 0, modelDrawn);
+  // Render the statue
+  renderPass.setVertexBuffer(0, statueMeshBuffer);
+  renderPass.setBindGroup(1, assetBindGroup);
+  renderPass.draw(statueMeshVertexCount, 1, 0, modelDrawn);
   modelDrawn += 1;
 
   renderPass.end();
@@ -252,7 +269,7 @@ function drawWorld(encoder) {
 /**
  * @param {GPUCommandEncoder} encoder
  */
-function drawHUD(encoder) {
+function drawScreen(encoder) {
   const currentTime = performance.now();
   const elapsedTime = (currentTime - startTime) / 1000;
 
@@ -269,10 +286,12 @@ function drawHUD(encoder) {
     ],
   });
 
-  renderPass.setPipeline(alertLayerPipeline);
-  renderPass.setBindGroup(0, alertLayerBindGroup);
+  // Render the alert (canvas)
+  renderPass.setPipeline(alertPipeline);
+  renderPass.setBindGroup(0, alertBindGroup);
   renderPass.draw(6, 1, 0, 0);
 
+  // Render the HUD
   renderPass.setPipeline(hudPipeline);
   renderPass.setBindGroup(0, hudBindGroup);
   renderPass.draw(6, 1, 0, 0);
@@ -286,7 +305,7 @@ function drawHUD(encoder) {
 function render() {
   const encoder = device.createCommandEncoder();
   drawWorld(encoder);
-  drawHUD(encoder);
+  drawScreen(encoder);
 
   device.queue.submit([encoder.finish()]);
   requestAnimationFrame(render);

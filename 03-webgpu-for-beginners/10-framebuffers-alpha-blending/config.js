@@ -1,83 +1,85 @@
-const __cubemapName = "beach_cloudy_bridge";
+import { mat4 } from "https://wgpu-matrix.org/dist/3.x/wgpu-matrix.module.js";
 
-export const resourceArray = [
+export const config = {};
+
+config.resources = [
   {
-    name: "shader",
+    name: "shaderCode",
     url: "./shaders/shader.wgsl",
     type: "text",
   },
   {
-    name: "sky",
+    name: "skyCode",
     url: "./shaders/sky.wgsl",
     type: "text",
   },
   {
-    name: "alert",
+    name: "alertCode",
     url: "./shaders/alert.wgsl",
     type: "text",
   },
   {
-    name: "hud",
+    name: "hudCode",
     url: "./shaders/hud.wgsl",
     type: "text",
   },
   {
-    name: "statue",
+    name: "statueObj",
     url: "./assets/models/Horus_V1/16786_Horus_V1.obj",
     type: "text",
   },
   {
     // +x (right)
     name: "skyImages",
-    url: `./assets/cubemaps/${__cubemapName}/face_px_right.webp`,
+    url: `./assets/cubemaps/beach_cloudy_bridge/face_px_right.webp`,
     type: "blob",
     group: true,
   },
   {
     // -x (left)
     name: "skyImages",
-    url: `./assets/cubemaps/${__cubemapName}/face_nx_left.webp`,
+    url: `./assets/cubemaps/beach_cloudy_bridge/face_nx_left.webp`,
     type: "blob",
     group: true,
   },
   {
     // +y (top)
     name: "skyImages",
-    url: `./assets/cubemaps/${__cubemapName}/face_py_top.webp`,
+    url: `./assets/cubemaps/beach_cloudy_bridge/face_py_top.webp`,
     type: "blob",
     group: true,
   },
   {
     // -y (bottom)
     name: "skyImages",
-    url: `./assets/cubemaps/${__cubemapName}/face_ny_bottom.webp`,
+    url: `./assets/cubemaps/beach_cloudy_bridge/face_ny_bottom.webp`,
     type: "blob",
     group: true,
   },
   {
     // +z (front)
     name: "skyImages",
-    url: `./assets/cubemaps/${__cubemapName}/face_pz_front.webp`,
+    url: `./assets/cubemaps/beach_cloudy_bridge/face_pz_front.webp`,
     type: "blob",
     group: true,
   },
   {
     // -z (back)
     name: "skyImages",
-    url: `./assets/cubemaps/${__cubemapName}/face_nz_back.webp`,
+    url: `./assets/cubemaps/beach_cloudy_bridge/face_nz_back.webp`,
     type: "blob",
     group: true,
   },
   {
     name: "hudImage",
-    url: "./assets/huds/hud0.png",
+    url: "./assets/others/hud0.webp",
     type: "blob",
   },
 ];
 
 [50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 766].forEach((value1, index1) => {
   [512, 256, 128, 64, 32, 16].forEach((value2, index2) => {
-    resourceArray.push({
+    config.resources.push({
       name: "assetImages",
       url: `./assets/images/${value1}-${value2}.webp`,
       type: "blob",
@@ -86,7 +88,15 @@ export const resourceArray = [
   });
 });
 
-export const vertexMap = {
+config.transform = {
+  statue: () => {
+    let transform = mat4.identity();
+    transform = mat4.multiply(transform, mat4.scaling([0.15, 0.15, 0.15]));
+    return transform;
+  },
+};
+
+config.vertices = {
   triangle: new Float32Array([
     //x, y, z, u, v
     // triangle 1, point 1
