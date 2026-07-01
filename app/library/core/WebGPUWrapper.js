@@ -1,6 +1,7 @@
 import { BindGroupBuilder } from "./BindGroupBuilder.js";
 import { PipelineBuilder } from "./PipelineBuilder.js";
 import { BufferBuilder } from "./BufferBuilder.js";
+import { EncoderBuilder } from "./EncoderBuilder.js";
 
 /**
  * @classdesc
@@ -350,5 +351,13 @@ export class WebGPUWrapper {
     }
 
     return builder;
+  }
+
+  /**
+   * @param {string} [label]
+   * @returns {EncoderBuilder}
+   */
+  setupEncoder(label = "") {
+    return new EncoderBuilder(this.device, label || `Command encoder #${this.labelCounter++}`);
   }
 }

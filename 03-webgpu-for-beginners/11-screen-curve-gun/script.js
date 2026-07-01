@@ -247,11 +247,14 @@ const dx = (dy * canvas.width) / canvas.height;
 const startTime = performance.now();
 
 /**
- * @param {GPUCommandEncoder} encoder
+ *
  */
-function drawWorld(encoder) {
+function render() {
   scene.update();
   camera.update();
+
+  const currentTime = performance.now();
+  const elapsedTime = (currentTime - startTime) / 1000;
 
   const cameraData = new Float32Array([
     camera.forward[0],
@@ -268,129 +271,97 @@ function drawWorld(encoder) {
     0.0, // padding
   ]);
 
-  device.queue.writeBuffer(objectBuffer, 0, scene.objectData, 0, scene.objectData.length);
-  device.queue.writeBuffer(uniformBuffer, 0, camera.view);
-  device.queue.writeBuffer(uniformBuffer, 64, camera.projection);
-  device.queue.writeBuffer(cameraBuffer, 0, cameraData, 0, 12);
+  webgpu
+    .setupEncoder("Main command encoder")
 
-  const renderPass = encoder.beginRenderPass({
-    colorAttachments: [
-      {
-        view: alertView,
-        loadOp: "clear",
-        storeOp: "store",
-        clearValue: { r: 0.25, g: 0.25, b: 0.25, a: 1.0 },
-      },
-    ],
-    depthStencilAttachment,
-  });
+    // Writing buffers
+    .queueBuffer(objectBuffer, 0, scene.objectData, 0, scene.objectData.length)
+    .queueBuffer(uniformBuffer, 0, camera.view)
+    .queueBuffer(uniformBuffer, 64, camera.projection)
+    .queueBuffer(cameraBuffer, 0, cameraData, 0, 12)
+    .queueBuffer(timeBuffer, 0, new Float32Array([elapsedTime]))
 
-  // Render the sky
-  renderPass.setPipeline(skyPipeline);
-  renderPass.setBindGroup(0, skyBindGroup);
-  renderPass.draw(6, 1, 0, 0);
+    // Draw the worlds
+    .beginRenderPass({
+      colorAttachments: [
+        {
+          view: alertView,
+          loadOp: "clear",
+          storeOp: "store",
+          clearValue: { r: 0.25, g: 0.25, b: 0.25, a: 1.0 },
+        },
+      ],
+      depthStencilAttachment,
+    })
+    //// Render the sky
+    .setPipeline(skyPipeline)
+    .setBindGroup(0, skyBindGroup)
+    .draw(6, 1, 0, 0)
+    //// Render the primary shader
+    .setPipeline(shaderPipeline)
+    .setBindGroup(0, shaderBindGroup)
+    //// Render the triangles
+    .setVertexBuffer(0, triangleMeshBuffer)
+    .setBindGroup(1, assetBindGroup)
+    .draw(3, scene.triangles.length, 0, 0)
+    //// Render the tiles
+    .setVertexBuffer(0, quadMeshBuffer)
+    .setBindGroup(1, assetBindGroup)
+    .draw(6, scene.tiles.length, 0, scene.triangles.length)
+    //// Render the statue
+    .setVertexBuffer(0, statueMeshBuffer)
+    .setBindGroup(1, assetBindGroup)
+    .draw(statueMeshVertexCount, 1, 0, scene.triangles.length + scene.tiles.length)
+    .end()
 
-  // Render the primary shader
-  renderPass.setPipeline(shaderPipeline);
-  renderPass.setBindGroup(0, shaderBindGroup);
+    // Draw the gun
+    .beginRenderPass({
+      colorAttachments: [
+        {
+          view: weaponView,
+          loadOp: "clear",
+          storeOp: "store",
+          clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 0.0 },
+        },
+      ],
+      depthStencilAttachment,
+    })
+    //// Render the gun
+    .setPipeline(gunPipeline)
+    .setVertexBuffer(0, gunMeshBuffer)
+    .setBindGroup(0, gunBindGroup)
+    .setBindGroup(1, skinBindGroup)
+    .draw(gunMeshVertexCount, 1, 0, 0)
+    .end()
 
-  let modelDrawn = 0;
+    // Draw the screen
+    .beginRenderPass({
+      colorAttachments: [
+        {
+          view: context.getCurrentTexture().createView(),
+          loadOp: "clear",
+          storeOp: "store",
+          clearValue: { r: 0.25, g: 0.25, b: 0.25, a: 1.0 },
+        },
+      ],
+    })
+    //// Render the alert (canvas)
+    .setPipeline(alertPipeline)
+    .setBindGroup(0, alertBindGroup)
+    .draw(6, 1, 0, 0)
+    //// Render the weapon (canvas)
+    .setPipeline(alertPipeline)
+    .setBindGroup(0, weaponBindGroup)
+    .draw(6, 1, 0, 0)
+    //// Render the HUD
+    .setPipeline(hudPipeline)
+    .setBindGroup(0, hudBindGroup)
+    .draw(6, 1, 0, 0)
+    .end()
 
-  // Render the triangles
-  renderPass.setVertexBuffer(0, triangleMeshBuffer);
-  renderPass.setBindGroup(1, assetBindGroup);
-  renderPass.draw(3, scene.triangles.length, 0, modelDrawn);
-  modelDrawn += scene.triangles.length;
+    // Submit the command buffer
+    .submit();
 
-  // Render the tiles
-  renderPass.setVertexBuffer(0, quadMeshBuffer);
-  renderPass.setBindGroup(1, assetBindGroup);
-  renderPass.draw(6, scene.tiles.length, 0, modelDrawn);
-  modelDrawn += scene.tiles.length;
-
-  // Render the statue
-  renderPass.setVertexBuffer(0, statueMeshBuffer);
-  renderPass.setBindGroup(1, assetBindGroup);
-  renderPass.draw(statueMeshVertexCount, 1, 0, modelDrawn);
-  modelDrawn += 1;
-
-  renderPass.end();
-}
-
-/**
- * @param {GPUCommandEncoder} encoder
- */
-function drawGun(encoder) {
-  const renderPass = encoder.beginRenderPass({
-    colorAttachments: [
-      {
-        view: weaponView,
-        loadOp: "clear",
-        storeOp: "store",
-        clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 0.0 },
-      },
-    ],
-    depthStencilAttachment,
-  });
-
-  // Render the gun
-  renderPass.setPipeline(gunPipeline);
-  renderPass.setVertexBuffer(0, gunMeshBuffer);
-  renderPass.setBindGroup(0, gunBindGroup);
-  renderPass.setBindGroup(1, skinBindGroup);
-  renderPass.draw(gunMeshVertexCount, 1, 0, 0);
-
-  renderPass.end();
-}
-
-/**
- * @param {GPUCommandEncoder} encoder
- */
-function drawScreen(encoder) {
-  const currentTime = performance.now();
-  const elapsedTime = (currentTime - startTime) / 1000;
-
-  device.queue.writeBuffer(timeBuffer, 0, new Float32Array([elapsedTime]));
-
-  const renderPass = encoder.beginRenderPass({
-    colorAttachments: [
-      {
-        view: context.getCurrentTexture().createView(),
-        loadOp: "clear",
-        storeOp: "store",
-        clearValue: { r: 0.25, g: 0.25, b: 0.25, a: 1.0 },
-      },
-    ],
-  });
-
-  // Render the alert (canvas)
-  renderPass.setPipeline(alertPipeline);
-  renderPass.setBindGroup(0, alertBindGroup);
-  renderPass.draw(6, 1, 0, 0);
-
-  // Render the weapon (canvas)
-  renderPass.setPipeline(alertPipeline);
-  renderPass.setBindGroup(0, weaponBindGroup);
-  renderPass.draw(6, 1, 0, 0);
-
-  // Render the HUD
-  renderPass.setPipeline(hudPipeline);
-  renderPass.setBindGroup(0, hudBindGroup);
-  renderPass.draw(6, 1, 0, 0);
-
-  renderPass.end();
-}
-
-/**
- *
- */
-function render() {
-  const encoder = device.createCommandEncoder();
-  drawWorld(encoder);
-  drawGun(encoder);
-  drawScreen(encoder);
-
-  device.queue.submit([encoder.finish()]);
   requestAnimationFrame(render);
 }
 

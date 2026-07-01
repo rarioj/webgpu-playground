@@ -13,12 +13,18 @@ export function getQueryValue(key, fallback = null) {
 }
 
 /**
- * @param {number} min
- * @param {number} max
+ * @param {number} [min]
+ * @param {number} [max]
+ * @param {boolean} [int]
  * @returns {number}
  */
-export function getRandomBetween(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+export function getRandomBetween(min = 0.0, max = 1.0, int = false) {
+  if (int) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1) + min);
+  }
+  return Math.random() * (max - min) + min;
 }
 
 /**
