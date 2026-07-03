@@ -44,6 +44,16 @@ export function convertRadianToDegree(radian) {
 }
 
 /**
+ * @param {number} value
+ * @param {number} [decimalPlace]
+ * @returns {number}
+ */
+export function roundToDecimalPlace(value, decimalPlace = 2) {
+  const multiplier = Math.pow(10, decimalPlace);
+  return Math.round((value + Number.EPSILON) * multiplier) / multiplier;
+}
+
+/**
  * @param {Object} [options]
  * @param {HTMLElement} [options.container]
  * @param {CSSStyleDeclaration} [options.style]
@@ -73,6 +83,49 @@ export function createProgressBar(options = {}) {
   }
 
   return { wrapper, caption, progress };
+}
+
+/**
+ * @param {Object} [options]
+ * @param {HTMLElement} [options.parentContainer]
+ * @param {CSSStyleDeclaration} [options.parentStyle]
+ * @param {string} [options.label]
+ * @param {CSSStyleDeclaration} [options.style]
+ * @returns {{outer: HTMLSpanElement, inner: HTMLElement}}
+ */
+export function createDebugElement(options = {}) {
+  const {
+    parentContainer = document.body,
+    parentStyle = {
+      display: "flex",
+      position: "fixed",
+      right: "0",
+      top: "0",
+    },
+    label = "Debug:",
+    style = {
+      margin: "0 0.5em",
+      fontSize: "smaller",
+    },
+  } = options;
+
+  if (!(createDebugElement.container instanceof HTMLElement)) {
+    createDebugElement.container = document.createElement("section");
+    Object.assign(createDebugElement.container.style, parentStyle);
+    if (parentContainer instanceof HTMLElement) {
+      parentContainer.appendChild(createDebugElement.container);
+    }
+  }
+
+  const outer = document.createElement("span");
+  outer.innerText = label + " ";
+  const inner = document.createElement("small");
+  outer.appendChild(inner);
+
+  Object.assign(outer.style, style);
+  createDebugElement.container.appendChild(outer);
+
+  return { outer, inner };
 }
 
 /**
@@ -126,49 +179,6 @@ export async function loadResources(resources) {
     wrapper.remove();
   }, 100);
   return results;
-}
-
-/**
- * @param {Object} [options]
- * @param {HTMLElement} [options.parentContainer]
- * @param {CSSStyleDeclaration} [options.parentStyle]
- * @param {string} [options.label]
- * @param {CSSStyleDeclaration} [options.style]
- * @returns {{outer: HTMLSpanElement, inner: HTMLElement}}
- */
-export function createDebugElement(options = {}) {
-  const {
-    parentContainer = document.body,
-    parentStyle = {
-      display: "flex",
-      position: "fixed",
-      right: "0",
-      top: "0",
-    },
-    label = "Debug:",
-    style = {
-      margin: "0 0.5em",
-      fontSize: "smaller",
-    },
-  } = options;
-
-  if (!(createDebugElement.container instanceof HTMLElement)) {
-    createDebugElement.container = document.createElement("section");
-    Object.assign(createDebugElement.container.style, parentStyle);
-    if (parentContainer instanceof HTMLElement) {
-      parentContainer.appendChild(createDebugElement.container);
-    }
-  }
-
-  const outer = document.createElement("span");
-  outer.innerText = label + " ";
-  const inner = document.createElement("small");
-  outer.appendChild(inner);
-
-  Object.assign(outer.style, style);
-  createDebugElement.container.appendChild(outer);
-
-  return { outer, inner };
 }
 
 /**

@@ -42,7 +42,7 @@ fn intersectRaySphere(ray: Ray, sphere: Sphere, tMin: f32, tMax: f32, oldState: 
     newState.color = oldState.color;
 
     if discriminant > 0.0 {
-        let t: f32 = (-b - sqrt(discriminant)) / (2 * a);
+        let t: f32 = (-b - sqrt(discriminant)) / (2f * a);
         if t > tMin && t < tMax {
             newState.t = t;
             newState.color = sphere.color;
@@ -61,7 +61,7 @@ fn rayColor(ray: Ray) -> vec3<f32> {
     var somethingHit: bool = false;
     var renderState: RenderState;
 
-    for (var i: u32 = 0; i < u32(scene.sphereCount); i++) {
+    for (var i: u32 = 0u; i < u32(scene.sphereCount); i++) {
         var newState: RenderState = intersectRaySphere(ray, objects.spheres[i], 0.001, nearestHit, renderState);
         if newState.hit {
             nearestHit = newState.t;

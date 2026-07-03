@@ -33,7 +33,7 @@ const resources = await loadResources([
   },
 ]);
 
-const sphereCount = 1024;
+const sphereCount = 8192;
 const scene = new Scene(sphereCount);
 const debugPerformance = createDebugElement({ label: "⏱️ " }).inner;
 const debugFramePerSec = createDebugElement({ label: "🏃‍♂️ " }).inner;
@@ -46,7 +46,9 @@ debugSphereCount.innerText = `${sphereCount} spheres`;
  */
 
 const { buffer: parameterBuffer } = webgpu.setupBuffer(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, 64).build();
-const { buffer: sphereBuffer } = webgpu.setupBuffer(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, 32 * scene.spheres.length).build();
+const { buffer: sphereBuffer } = webgpu.setupBuffer(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, 32 * scene.sphereCount).build();
+const { buffer: nodeBuffer } = webgpu.setupBuffer(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, 32 * scene.nodeUsed).build();
+const { buffer: sphereIndexBuffer } = webgpu.setupBuffer(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, 4 * scene.sphereCount).build();
 
 /*
  * Bind groups
@@ -84,6 +86,14 @@ const { bindGroupLayout: rayTracingBindGroupLayout, bindGroup: rayTracingBindGro
     type: "uniform",
   })
   .addBuffer(sphereBuffer, GPUShaderStage.COMPUTE, {
+    type: "read-only-storage",
+    hasDynamicOffset: false,
+  })
+  .addBuffer(nodeBuffer, GPUShaderStage.COMPUTE, {
+    type: "read-only-storage",
+    hasDynamicOffset: false,
+  })
+  .addBuffer(sphereIndexBuffer, GPUShaderStage.COMPUTE, {
     type: "read-only-storage",
     hasDynamicOffset: false,
   })
@@ -143,11 +153,11 @@ function render() {
     scene.camera.up[0],
     scene.camera.up[1],
     scene.camera.up[2],
-    scene.spheres.length,
+    scene.sphereCount,
   ]);
 
-  const sphereData = new Float32Array(8 * scene.spheres.length);
-  for (let i = 0; i < scene.spheres.length; i++) {
+  const sphereData = new Float32Array(8 * scene.sphereCount);
+  for (let i = 0; i < scene.sphereCount; i++) {
     sphereData[8 * i] = scene.spheres[i].center[0];
     sphereData[8 * i + 1] = scene.spheres[i].center[1];
     sphereData[8 * i + 2] = scene.spheres[i].center[2];
@@ -158,6 +168,23 @@ function render() {
     sphereData[8 * i + 7] = scene.spheres[i].radius;
   }
 
+  const nodeData = new Float32Array(8 * scene.nodeUsed);
+  for (let i = 0; i < scene.nodeUsed; i++) {
+    nodeData[8 * i] = scene.nodes[i].minCorner[0];
+    nodeData[8 * i + 1] = scene.nodes[i].minCorner[1];
+    nodeData[8 * i + 2] = scene.nodes[i].minCorner[2];
+    nodeData[8 * i + 3] = scene.nodes[i].leftChild;
+    nodeData[8 * i + 4] = scene.nodes[i].maxCorner[0];
+    nodeData[8 * i + 5] = scene.nodes[i].maxCorner[1];
+    nodeData[8 * i + 6] = scene.nodes[i].maxCorner[2];
+    nodeData[8 * i + 7] = scene.nodes[i].sphereCount;
+  }
+
+  const sphereIndexData = new Float32Array(scene.sphereCount);
+  for (let i = 0; i < scene.sphereCount; i++) {
+    sphereIndexData[i] = scene.sphereIndices[i];
+  }
+
   const startTime = performance.now();
 
   webgpu
@@ -166,12 +193,14 @@ function render() {
     // Writing buffers
     .queueBuffer(parameterBuffer, 0, parameterData, 0, 16)
     .queueBuffer(sphereBuffer, 0, sphereData, 0, 8 * scene.spheres.length)
+    .queueBuffer(nodeBuffer, 0, nodeData, 0, 8 * scene.nodeUsed)
+    .queueBuffer(sphereIndexBuffer, 0, sphereIndexData, 0, scene.spheres.length)
 
     // Starting compute pass encoder
     .beginComputePass()
     .setPipeline(rayTracingPipeline)
     .setBindGroup(0, rayTracingBindGroup)
-    .dispatchWorkgroups(Math.ceil(canvas.width / 8), Math.ceil(canvas.height / 8), 1)
+    .dispatchWorkgroups(Math.ceil(canvas.width / 16), Math.ceil(canvas.height / 16), 1)
     .end()
 
     // Starting render pass encoder

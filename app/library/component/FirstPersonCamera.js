@@ -220,7 +220,7 @@ export class FirstPersonCamera {
     this.orient(event.movementX / 5, event.movementY / 5);
 
     if (this.debugMouseMove) {
-      this.debugMouseMove.innerText = `${event.movementX} x ${event.movementY}`;
+      this.debugMouseMove.innerText = `${event.movementX.toFixed(1)} x ${event.movementY.toFixed(1)}`;
 
       clearTimeout(this.debugMouseTimer);
       this.debugMouseTimer = setTimeout(() => {

@@ -98,9 +98,10 @@ export class EncoderBuilder {
   }
 
   /**
-   *
+   * @returns {GPUQueue}
    */
   submit() {
     this.device.queue.submit([this.commandEncoder.finish()]);
+    return this.device.queue;
   }
 }

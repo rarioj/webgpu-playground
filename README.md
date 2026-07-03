@@ -19,7 +19,7 @@ Any external libraries are loaded directly from within the HTML file, with no re
 
 ### 🏗️ Learning
 
-- 🎥 [WebGPU for Beginners](https://www.youtube.com/playlist?list=PLn3eTxaOtL2Ns3wkxdyS3CiqkJuwQdZzn) by The Graphics Guy → [Hello Triangle!](./03-webgpu-for-beginners/01-hello-triangle/index.html) | [Vertex Buffers](./03-webgpu-for-beginners/02-vertex-buffers/index.html) | [Transformations](./03-webgpu-for-beginners/03-transformations/index.html) | [Textures](./03-webgpu-for-beginners/04-textures/index.html) | [First Person Camera](./03-webgpu-for-beginners/05-first-person-camera/index.html) | [Multiple Triangles + Depth Testing](./03-webgpu-for-beginners/06-multiple-triangles-depth-testing/index.html) | [Multiple Objects + Bind Groups and Bindings](./03-webgpu-for-beginners/07-multiple-objects-bind-groups-layouts/index.html) | [Loading OBJ Models](./03-webgpu-for-beginners/08-obj-models/index.html) | [Cubemaps + Mipmaps](./03-webgpu-for-beginners/09-cubemaps-mipmaps/index.html) | [Framebuffers + Alpha Blending](./03-webgpu-for-beginners/10-framebuffers-alpha-blending/index.html) | [Screen Warping + Rendering a Gun](./03-webgpu-for-beginners/11-screen-curve-gun/index.html) | [Ray Tracing: Compute Shaders 101 + Getting Data In](./03-webgpu-for-beginners/12-compute-shaders-getting-data/index.html)
+- 🎥 [WebGPU for Beginners](https://www.youtube.com/playlist?list=PLn3eTxaOtL2Ns3wkxdyS3CiqkJuwQdZzn) by The Graphics Guy → **[Rasterized Graphics]** [Hello Triangle!](./03-webgpu-for-beginners/01-hello-triangle/index.html) | [Vertex Buffers](./03-webgpu-for-beginners/02-vertex-buffers/index.html) | [Transformations](./03-webgpu-for-beginners/03-transformations/index.html) | [Textures](./03-webgpu-for-beginners/04-textures/index.html) | [First Person Camera](./03-webgpu-for-beginners/05-first-person-camera/index.html) | [Multiple Triangles + Depth Testing](./03-webgpu-for-beginners/06-multiple-triangles-depth-testing/index.html) | [Multiple Objects + Bind Groups and Bindings](./03-webgpu-for-beginners/07-multiple-objects-bind-groups-layouts/index.html) | [Loading OBJ Models](./03-webgpu-for-beginners/08-obj-models/index.html) | [Cubemaps + Mipmaps](./03-webgpu-for-beginners/09-cubemaps-mipmaps/index.html) | [Framebuffers + Alpha Blending](./03-webgpu-for-beginners/10-framebuffers-alpha-blending/index.html) | [Screen Warping + Rendering a Gun](./03-webgpu-for-beginners/11-screen-curve-gun/index.html) → **[Compute Shaders: Ray Tracing]** [Compute Shaders 101 + Getting Data In](./03-webgpu-for-beginners/12-compute-shaders-getting-data/index.html) | [Acceleration Structures](./03-webgpu-for-beginners/13-acceleration-structures/index.html)
 - [WebGPU Fundamentals](https://webgpufundamentals.org/) → [Drawing triangles to textures](./04-webgpu-fundamentals/01-drawing-triangles-to-textures/index.html) | [Run computations on the GPU](./04-webgpu-fundamentals/02-run-computations-on-gpu/index.html)
 
 ### 📝 To Learn
@@ -42,14 +42,12 @@ Not in any particular order.
 
 ### Documentation and Specification
 
-- WebGPU ﹝ [Published Version](https://www.w3.org/TR/webgpu/) | [Editor's Draft](https://gpuweb.github.io/gpuweb/) ﹞
-- WebGPU Shading Language ﹝ [Published Version](https://www.w3.org/TR/WGSL/) | [Editor's Draft](https://gpuweb.github.io/gpuweb/wgsl/) ﹞
-- [Can I use WebGPU?](https://caniuse.com/webgpu)
-- [WebGPU API](https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API)
-- [WebGPU API reference](https://gpuweb.github.io/types/index.html)
+- [WebGPU API](https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API) - The MDN Web Docs site provides information about Open Web technologies including HTML, CSS, and APIs for both Web sites and progressive web apps.
+- [W3C GPU for the Web Community Group](https://github.com/gpuweb/gpuweb) - The repository for the W3C GPU for the Web Community Group WebGPU API and WebGPU Shading Language (WGSL) specifications. → [WebGPU (Published Version)](https://www.w3.org/TR/webgpu/) | [WebGPU (Editor's Draft)](https://gpuweb.github.io/gpuweb/) | [WGSL (Published Version)](https://www.w3.org/TR/WGSL/) | [WGSL (Editor's Draft)](https://gpuweb.github.io/gpuweb/wgsl/) | [WebGPU API Reference](https://gpuweb.github.io/types/index.html)
 
 ### Tools and Libraries
 
+- [Can I use WebGPU?](https://caniuse.com/webgpu)
 - [Showdown](https://github.com/showdownjs/showdown) - A JavaScript Markdown to HTML converter, based on the original works by John Gruber.
 - [Pico CSS](https://picocss.com/) - A minimalist and lightweight starter kit that prioritizes semantic syntax, making every HTML element responsive and elegant by default.
 - [wgpu-matrix](https://wgpu-matrix.org/) - Fast 3D math library for WebGPU.
