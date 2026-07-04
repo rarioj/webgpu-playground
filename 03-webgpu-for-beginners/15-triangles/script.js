@@ -2,6 +2,8 @@ import { WebGPUWrapper } from "./library/core/WebGPUWrapper.js";
 import { getQueryValue, loadResources, createDebugElement } from "./library/helper/utility.js";
 import { config } from "./config.js";
 import { Scene } from "./Scene.js";
+import { Sphere } from "./Sphere.js";
+import { Triangle } from "./Triangle.js";
 
 /*
  * Initialisation
@@ -23,12 +25,12 @@ const { device, context, format } = await webgpu.init({
 // Fetch all resources
 const resources = await loadResources(config.resources);
 
-const sphereCount = parseInt(getQueryValue("bubble", 128));
-const scene = new Scene(sphereCount);
+const objectCount = parseInt(getQueryValue("object", 128));
+const scene = new Scene(objectCount);
 const debugPerformance = createDebugElement({ label: "⏱️ " }).inner;
 const debugFramePerSec = createDebugElement({ label: "🏃‍♂️ " }).inner;
-const debugSphereCount = createDebugElement({ label: "🏀 " }).inner;
-debugSphereCount.innerText = `${sphereCount} bubbles`;
+const debugSphereCount = createDebugElement({ label: "📐 " }).inner;
+debugSphereCount.innerText = `${objectCount} objects`;
 
 /*
  * Buffers
@@ -36,9 +38,9 @@ debugSphereCount.innerText = `${sphereCount} bubbles`;
  */
 
 const { buffer: parameterBuffer } = webgpu.setupBuffer(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, 64).build();
-const { buffer: sphereBuffer } = webgpu.setupBuffer(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, 32 * scene.sphereCount).build();
+const { buffer: objectListBuffer } = webgpu.setupBuffer(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, 64 * scene.objectList.length).build();
 const { buffer: nodeBuffer } = webgpu.setupBuffer(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, 32 * scene.nodeUsed).build();
-const { buffer: sphereIndexBuffer } = webgpu.setupBuffer(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, 4 * scene.sphereCount).build();
+const { buffer: objectIndexBuffer } = webgpu.setupBuffer(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, 4 * scene.objectIndices.length).build();
 
 /*
  * Bind groups
@@ -80,7 +82,7 @@ const { bindGroupLayout: rayTracingBindGroupLayout, bindGroup: rayTracingBindGro
   .addBuffer(parameterBuffer, GPUShaderStage.COMPUTE, {
     type: "uniform",
   })
-  .addBuffer(sphereBuffer, GPUShaderStage.COMPUTE, {
+  .addBuffer(objectListBuffer, GPUShaderStage.COMPUTE, {
     type: "read-only-storage",
     hasDynamicOffset: false,
   })
@@ -88,7 +90,7 @@ const { bindGroupLayout: rayTracingBindGroupLayout, bindGroup: rayTracingBindGro
     type: "read-only-storage",
     hasDynamicOffset: false,
   })
-  .addBuffer(sphereIndexBuffer, GPUShaderStage.COMPUTE, {
+  .addBuffer(objectIndexBuffer, GPUShaderStage.COMPUTE, {
     type: "read-only-storage",
     hasDynamicOffset: false,
   })
@@ -141,32 +143,20 @@ function render() {
     scene.camera.position[0],
     scene.camera.position[1],
     scene.camera.position[2],
-    0.0, // padding
+    maxBounces,
     scene.camera.forward[0],
     scene.camera.forward[1],
     scene.camera.forward[2],
-    0.0, // padding
+    scene.objectList.length,
     scene.camera.right[0],
     scene.camera.right[1],
     scene.camera.right[2],
-    maxBounces,
+    0.0, // padding
     scene.camera.up[0],
     scene.camera.up[1],
     scene.camera.up[2],
-    scene.sphereCount,
+    0.0, // padding
   ]);
-
-  const sphereData = new Float32Array(8 * scene.sphereCount);
-  for (let i = 0; i < scene.sphereCount; i++) {
-    sphereData[8 * i] = scene.spheres[i].center[0];
-    sphereData[8 * i + 1] = scene.spheres[i].center[1];
-    sphereData[8 * i + 2] = scene.spheres[i].center[2];
-    sphereData[8 * i + 3] = 0.0; // padding;
-    sphereData[8 * i + 4] = scene.spheres[i].color[0];
-    sphereData[8 * i + 5] = scene.spheres[i].color[1];
-    sphereData[8 * i + 6] = scene.spheres[i].color[2];
-    sphereData[8 * i + 7] = scene.spheres[i].radius;
-  }
 
   const nodeData = new Float32Array(8 * scene.nodeUsed);
   for (let i = 0; i < scene.nodeUsed; i++) {
@@ -177,12 +167,41 @@ function render() {
     nodeData[8 * i + 4] = scene.nodes[i].maxCorner[0];
     nodeData[8 * i + 5] = scene.nodes[i].maxCorner[1];
     nodeData[8 * i + 6] = scene.nodes[i].maxCorner[2];
-    nodeData[8 * i + 7] = scene.nodes[i].sphereCount;
+    nodeData[8 * i + 7] = scene.nodes[i].primitiveCount;
   }
 
-  const sphereIndexData = new Float32Array(scene.sphereCount);
-  for (let i = 0; i < scene.sphereCount; i++) {
-    sphereIndexData[i] = scene.sphereIndices[i];
+  const objectIndexData = new Uint32Array(scene.objectIndices.length);
+  for (let i = 0; i < scene.objectIndices.length; i++) {
+    objectIndexData[i] = scene.objectIndices[i];
+  }
+
+  const objectListData = new Float32Array(16 * scene.objectList.length);
+  for (let i = 0; i < scene.objectList.length; i++) {
+    const objectInstance = scene.objectList[i];
+    if (objectInstance instanceof Sphere) {
+      objectListData[16 * i] = objectInstance.center[0];
+      objectListData[16 * i + 1] = objectInstance.center[1];
+      objectListData[16 * i + 2] = objectInstance.center[2];
+      objectListData[16 * i + 3] = 0.0; // padding; 0 = circle, 1 = triangle
+      objectListData[16 * i + 4] = objectInstance.color[0];
+      objectListData[16 * i + 5] = objectInstance.color[1];
+      objectListData[16 * i + 6] = objectInstance.color[2];
+      objectListData[16 * i + 7] = objectInstance.radius;
+      for (let pad = 8; pad < 16; pad++) {
+        objectListData[16 * i + pad] = 0.0; // padding; 0 = circle, 1 = triangle
+      }
+    } else if (objectInstance instanceof Triangle) {
+      for (let corner = 0; corner < 3; corner++) {
+        for (let dimension = 0; dimension < 3; dimension++) {
+          objectListData[16 * i + 4 * corner + dimension] = objectInstance.corners[corner][dimension];
+        }
+        objectListData[16 * i + 4 * corner + 3] = 1.0; // padding; 0 = circle, 1 = triangle
+      }
+      for (let channel = 0; channel < 3; channel++) {
+        objectListData[16 * i + 12 + channel] = objectInstance.color[channel];
+      }
+      objectListData[16 * i + 15] = 1.0; // padding; 0 = circle, 1 = triangle
+    }
   }
 
   const colorAttachments = [
@@ -201,9 +220,9 @@ function render() {
 
     // Writing buffers
     .queueBuffer(parameterBuffer, 0, parameterData, 0, 16)
-    .queueBuffer(sphereBuffer, 0, sphereData, 0, 8 * scene.spheres.length)
+    .queueBuffer(objectListBuffer, 0, objectListData, 0, 16 * scene.objectList.length)
     .queueBuffer(nodeBuffer, 0, nodeData, 0, 8 * scene.nodeUsed)
-    .queueBuffer(sphereIndexBuffer, 0, sphereIndexData, 0, scene.spheres.length)
+    .queueBuffer(objectIndexBuffer, 0, objectIndexData, 0, scene.objectIndices.length)
 
     // Starting compute pass encoder
     .beginComputePass()
