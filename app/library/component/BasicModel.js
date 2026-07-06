@@ -1,4 +1,5 @@
 import { vec3, mat4 } from "https://wgpu-matrix.org/dist/3.x/wgpu-matrix.module.js";
+import { convertDegreeToRadian } from "../helper/utility.js";
 
 /**
  * @classdesc
@@ -37,6 +38,9 @@ export class BasicModel {
   init() {
     this.matrix = mat4.identity();
     this.matrix = mat4.translate(this.matrix, this.position);
+    this.matrix = mat4.rotateX(this.matrix, convertDegreeToRadian(this.eulers[0]));
+    this.matrix = mat4.rotateY(this.matrix, convertDegreeToRadian(this.eulers[1]));
+    this.matrix = mat4.rotateZ(this.matrix, convertDegreeToRadian(this.eulers[2]));
   }
 
   /**

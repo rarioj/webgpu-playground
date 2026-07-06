@@ -5,7 +5,7 @@ const element = document.querySelector("section");
 const resources = await loadResources([
   {
     name: "content",
-    url: "./README.md",
+    url: "./HOME.md",
     type: "text",
   },
 ]);

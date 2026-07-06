@@ -1,8 +1,7 @@
-import { vec3 } from "https://wgpu-matrix.org/dist/3.x/wgpu-matrix.module.js";
-import { Sphere } from "./Sphere.js";
-import { Triangle } from "./Triangle.js";
+import { vec3, mat4 } from "https://wgpu-matrix.org/dist/3.x/wgpu-matrix.module.js";
 import { Camera } from "./Camera.js";
-import { getRandomBetween } from "./library/helper/utility.js";
+import { getRandomBetween, parseObjCode, convertDegreeToRadian } from "./library/helper/utility.js";
+import { BasicModel } from "./library/component/BasicModel.js";
 
 /**
  * @typedef {Object} NodeObject
@@ -22,9 +21,9 @@ export class Scene {
   camera = null;
 
   /**
-   * @type {number}
+   * @type {BasicModel}
    */
-  sphereCount = 0;
+  statueModel = null;
 
   /**
    * @type {number}
@@ -32,9 +31,14 @@ export class Scene {
   triangleCount = 0;
 
   /**
-   * @type {(Sphere|Triangle)[]}
+   * @type {{center: vec3, color: vec3, corners: vec3[], normals: vec3[]}[]}
    */
   objectList = [];
+
+  /**
+   * @type {number[]}
+   */
+  objectIndices = [];
 
   /**
    * @type {NodeObject[]}
@@ -47,59 +51,48 @@ export class Scene {
   nodeUsed = 0;
 
   /**
-   * @type {number[]}
+   * @param {string} objCode
    */
-  objectIndices = [];
-
-  /**
-   * @param {number} [objectCount]
-   */
-  constructor(objectCount = 32) {
+  constructor(objCode) {
     this.camera = new Camera();
-    this.camera.setPosition(-30.0, 0.0, 0.0);
+    this.camera.setPosition(-10, 0, 0);
 
-    this.sphereCount = Math.floor(objectCount / 4);
-    this.triangleCount = objectCount - this.sphereCount;
+    this.statueModel = new BasicModel();
+    this.statueModel.setPosition(0, 0, 0);
+    this.statueModel.setEulers(90, 90, 0);
+    this.statueModel.init();
+    this.statueModel.setUpdateCallback((obj) => {
+      obj.eulers[1] += 4;
+      obj.eulers[1] %= 360;
+    });
 
-    this.objectList = new Array(objectCount);
-    for (let i = 0; i < this.sphereCount; i++) {
-      this.objectList[i] = new Sphere(
-        // center
-        [getRandomBetween(-50.0, 100.0), getRandomBetween(-50.0, 100.0), getRandomBetween(-50.0, 100.0)],
-        // color
-        [getRandomBetween(0.85, 1.0), getRandomBetween(0.85, 1.0), getRandomBetween(0.85, 1.0)],
-        // radius
-        getRandomBetween(0.1, 2.9),
-      );
-    }
-    for (let i = this.sphereCount; i < objectCount; i++) {
-      this.objectList[i] = new Triangle(
-        // center
-        [getRandomBetween(-50.0, 100.0), getRandomBetween(-50.0, 100.0), getRandomBetween(-50.0, 100.0)],
-        // color
-        [getRandomBetween(0.85, 1.0), getRandomBetween(0.85, 1.0), getRandomBetween(0.85, 1.0)],
-        // offsets
-        [
-          [getRandomBetween(-3, 6), getRandomBetween(-3, 6), getRandomBetween(-3, 6)],
-          [getRandomBetween(-3, 6), getRandomBetween(-3, 6), getRandomBetween(-3, 6)],
-          [getRandomBetween(-3, 6), getRandomBetween(-3, 6), getRandomBetween(-3, 6)],
-        ],
-      );
-    }
+    parseObjCode(
+      objCode,
+      {
+        useTexture: false,
+        preTransform: (() => {
+          let transform = mat4.identity();
+          transform = mat4.multiply(transform, mat4.scaling([0.15, 0.15, 0.15]));
+          return transform;
+        })(),
+      },
+      this.objectList,
+    );
+    this.triangleCount = this.objectList.length;
 
-    this.objectIndices = new Array(objectCount);
-    for (let i = 0; i < objectCount; i++) {
+    this.objectIndices = new Array(this.triangleCount);
+    for (let i = 0; i < this.triangleCount; i++) {
       this.objectIndices[i] = i;
     }
 
-    this.nodes = new Array(2 * objectCount - 1);
-    for (let i = 0; i < 2 * objectCount - 1; i++) {
+    this.nodes = new Array(2 * this.triangleCount - 1);
+    for (let i = 0; i < 2 * this.triangleCount - 1; i++) {
       this.nodes[i] = {};
     }
 
     const rootNode = this.nodes[0];
     rootNode.leftChild = 0;
-    rootNode.primitiveCount = objectCount;
+    rootNode.primitiveCount = this.triangleCount;
     this.nodeUsed++;
 
     this.updateBounds(0);
@@ -116,20 +109,10 @@ export class Scene {
 
     for (let i = 0; i < currentNode.primitiveCount; i++) {
       const objectInstance = this.objectList[this.objectIndices[currentNode.leftChild + i]];
-
-      if (objectInstance instanceof Sphere) {
-        const axis = [objectInstance.radius, objectInstance.radius, objectInstance.radius];
-        const tempCorner = vec3.create();
-        vec3.subtract(objectInstance.center, axis, tempCorner);
-        vec3.min(currentNode.minCorner, tempCorner, currentNode.minCorner);
-        vec3.add(objectInstance.center, axis, tempCorner);
-        vec3.max(currentNode.maxCorner, tempCorner, currentNode.maxCorner);
-      } else if (objectInstance instanceof Triangle) {
-        objectInstance.corners.forEach((corner) => {
-          vec3.min(currentNode.minCorner, corner, currentNode.minCorner);
-          vec3.max(currentNode.maxCorner, corner, currentNode.maxCorner);
-        });
-      }
+      objectInstance.corners.forEach((corner) => {
+        currentNode.minCorner = vec3.min(currentNode.minCorner, corner);
+        currentNode.maxCorner = vec3.max(currentNode.maxCorner, corner);
+      });
     }
   }
 

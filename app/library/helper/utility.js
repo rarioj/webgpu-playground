@@ -188,14 +188,17 @@ export async function loadResources(resources) {
  * @param {boolean} [options.useTexture]
  * @param {boolean} [options.useNormal]
  * @param {mat4} [options.preTransform]
+ * @param {vec3} [options.triangleColor]
+ * @param {{center: vec3, color: vec3, corners: vec3[], normals: vec3[]}[]} [triangleList]
  * @returns {Float32Array}
  */
-export function parseObjCode(text, options = {}) {
+export function parseObjCode(text, options = {}, triangleList = []) {
   const {
     useVertex = true,
     useTexture = true,
     useNormal = false, // compatible with older learning material
     preTransform = null,
+    triangleColor = [1.0, 1.0, 1.0],
   } = options;
 
   const v = [];
@@ -205,30 +208,35 @@ export function parseObjCode(text, options = {}) {
   const lines = text.split(/\r?\n/).filter((line) => line.trim() !== "");
 
   /**
-   * @param {string} data "a/b/c"
+   * @param {string} data "v/vt/vn"
    */
-  const triangle = (data) => {
+  const processTriangle = (data) => {
     const vtn = data.split("/");
+    let vTarget = [];
+    let vtTarget = [];
+    let vnTarget = [];
 
     if (useVertex) {
-      const vTarget = v[parseInt(vtn[0]) - 1];
+      vTarget = v[parseInt(vtn[0]) - 1]; // v
       vertices.push(vTarget[0]); // x
       vertices.push(vTarget[1]); // y
       vertices.push(vTarget[2]); // z
     }
 
     if (useTexture) {
-      const vtTarget = vt[parseInt(vtn[1]) - 1];
+      vtTarget = vt[parseInt(vtn[1]) - 1]; // vt
       vertices.push(vtTarget[0]); // u
       vertices.push(vtTarget[1]); // v
     }
 
     if (useNormal) {
-      const vnTarget = vn[parseInt(vtn[2]) - 1];
+      vnTarget = vn[parseInt(vtn[2]) - 1]; // vn
       vertices.push(vnTarget[0]); // x
       vertices.push(vnTarget[1]); // y
       vertices.push(vnTarget[2]); // z
     }
+
+    return { v: vTarget, vt: vtTarget, vn: vnTarget };
   };
 
   for (const line of lines) {
@@ -261,9 +269,19 @@ export function parseObjCode(text, options = {}) {
       case "f":
         // f: v1 v2 v3 v4 ...
         for (let i = 0; i < words.length - 2; i++) {
-          triangle(words[0]);
-          triangle(words[1 + i]);
-          triangle(words[2 + i]);
+          const { v: vertex1, vt: texture1, vn: normal1 } = processTriangle(words[0]);
+          const { v: vertex2, vt: texture2, vn: normal2 } = processTriangle(words[1 + i]);
+          const { v: vertex3, vt: texture3, vn: normal3 } = processTriangle(words[2 + i]);
+          triangleList.push({
+            center: new Float32Array([
+              (vertex1[0] + vertex2[0] + vertex3[0]) / 3,
+              (vertex1[1] + vertex2[1] + vertex3[1]) / 3,
+              (vertex1[2] + vertex2[2] + vertex3[2]) / 3,
+            ]),
+            color: new Float32Array(triangleColor),
+            corners: [vertex1, vertex2, vertex3],
+            normals: [normal1, normal2, normal2],
+          });
         }
         break;
       default:

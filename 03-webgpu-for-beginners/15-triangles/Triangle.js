@@ -17,7 +17,7 @@ export class Triangle {
   /**
    * @type {vec3[]}
    */
-  corners;
+  corners = [];
 
   /**
    * @param {vec3} center
@@ -27,7 +27,6 @@ export class Triangle {
   constructor(center, color, offsets) {
     this.center = [0, 0, 0];
     this.color = color;
-    this.corners = [];
 
     const weight = [0.333333, 0.333333, 0.333333];
 
