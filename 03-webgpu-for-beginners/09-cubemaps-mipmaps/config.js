@@ -53,7 +53,7 @@ export const resourceArray = [
 ];
 
 [50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 307].forEach((value1, index1) => {
-  [512, 256, 128, 64, 32, 16].forEach((value2, index2) => {
+  [1024, 512, 256, 128, 64, 32, 16].forEach((value2, index2) => {
     resourceArray.push({
       name: "image",
       url: `./assets/images/${value1}-${value2}.webp`,

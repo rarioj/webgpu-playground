@@ -13,7 +13,7 @@ const resources = await loadResources([
   },
   {
     name: "image1",
-    url: `./assets/images/10-512.webp`,
+    url: `./assets/images/11-1024.webp`,
     type: "blob",
   },
 ]);

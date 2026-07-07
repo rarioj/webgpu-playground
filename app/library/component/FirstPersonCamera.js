@@ -51,6 +51,26 @@ export class FirstPersonCamera {
   up = null;
 
   /**
+   * @type {boolean}
+   */
+  flipX = false;
+
+  /**
+   * @type {boolean}
+   */
+  flipY = false;
+
+  /**
+   * @type {number}
+   */
+  moveSpeed = 0.02;
+
+  /**
+   * @type {number}
+   */
+  orientSpeed = 1;
+
+  /**
    * @type {Object}
    */
   keypresses = {};
@@ -82,22 +102,34 @@ export class FirstPersonCamera {
    * @param {number} [options.aspect]
    * @param {number} [options.near]
    * @param {number} [options.far]
+   * @param {boolean} [options.flipX]
+   * @param {boolean} [options.flipY]
+   * @param {number} [options.moveSpeed]
+   * @param {number} [options.orientSpeed]
    * @param {boolean} [options.debug]
    */
   constructor(canvas, options = {}) {
     this.canvas = canvas;
 
-    const { fov, aspect, near, far, debug } = {
+    const { fov, aspect, near, far, flipX, flipY, moveSpeed, orientSpeed, debug } = {
       ...{
         fov: Math.PI / 4,
         aspect: this.canvas.width / this.canvas.height,
         near: 0.1,
         far: 10,
+        flipX: false,
+        flipY: false,
+        moveSpeed: 0.02,
+        orientSpeed: 1,
         debug: true,
       },
       ...options,
     };
     this.projection = mat4.perspective(fov, aspect, near, far);
+    this.flipX = flipX;
+    this.flipY = flipY;
+    this.moveSpeed = moveSpeed;
+    this.orientSpeed = orientSpeed;
 
     const boundKeydownEvent = this.keydown.bind(this);
     const boundKeyupEvent = this.keyup.bind(this);
@@ -136,8 +168,8 @@ export class FirstPersonCamera {
    * @param {number} y
    */
   orient(x, y) {
-    this.eulers[1] = Math.min(89, Math.max(-89, this.eulers[1] - y));
-    this.eulers[2] -= x;
+    this.eulers[1] = Math.min(89, Math.max(-89, this.eulers[1] - y * this.orientSpeed));
+    this.eulers[2] -= x * this.orientSpeed;
     this.eulers[2] %= 360;
   }
 
@@ -172,16 +204,16 @@ export class FirstPersonCamera {
    */
   keydown(event) {
     if (event.code == "KeyW") {
-      this.movements.forward = 0.02;
+      this.movements.forward = this.moveSpeed;
     }
     if (event.code == "KeyS") {
-      this.movements.forward = -0.02;
+      this.movements.forward = -this.moveSpeed;
     }
     if (event.code == "KeyA") {
-      this.movements.right = -0.02;
+      this.movements.right = -this.moveSpeed;
     }
     if (event.code == "KeyD") {
-      this.movements.right = 0.02;
+      this.movements.right = this.moveSpeed;
     }
 
     if (this.debugKeyPress) {
@@ -217,10 +249,12 @@ export class FirstPersonCamera {
    * @param {MouseEvent} event
    */
   mousemove(event) {
-    this.orient(event.movementX / 5, event.movementY / 5);
+    const moveX = this.flipX ? -event.movementX : event.movementX;
+    const moveY = this.flipY ? -event.movementY : event.movementY;
+    this.orient(moveX / 5, moveY / 5);
 
     if (this.debugMouseMove) {
-      this.debugMouseMove.innerText = `${event.movementX.toFixed(1)} x ${event.movementY.toFixed(1)}`;
+      this.debugMouseMove.innerText = `${moveX.toFixed(1)} x ${moveY.toFixed(1)}`;
 
       clearTimeout(this.debugMouseTimer);
       this.debugMouseTimer = setTimeout(() => {
@@ -245,7 +279,7 @@ export class FirstPersonCamera {
         break;
       case "pointerdown":
         this.mouseIsDragging = true;
-        this.movements.forward = 0.02;
+        this.movements.forward = this.moveSpeed;
         this.canvas.setPointerCapture(event.pointerId);
         break;
       case "pointermove":

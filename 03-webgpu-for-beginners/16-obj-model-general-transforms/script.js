@@ -137,6 +137,7 @@ let fpsCurrent = 0;
  */
 function render() {
   scene.statueModel.update();
+  scene.camera.update();
 
   const parameterData = new Float32Array([
     scene.camera.position[0],

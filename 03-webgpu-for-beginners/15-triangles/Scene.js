@@ -1,7 +1,7 @@
 import { vec3 } from "https://wgpu-matrix.org/dist/3.x/wgpu-matrix.module.js";
 import { Sphere } from "./Sphere.js";
 import { Triangle } from "./Triangle.js";
-import { Camera } from "./Camera.js";
+import { FirstPersonCamera } from "./library/component/FirstPersonCamera.js";
 import { getRandomBetween } from "./library/helper/utility.js";
 
 /**
@@ -17,7 +17,7 @@ import { getRandomBetween } from "./library/helper/utility.js";
  */
 export class Scene {
   /**
-   * @type {Camera}
+   * @type {FirstPersonCamera}
    */
   camera = null;
 
@@ -55,7 +55,7 @@ export class Scene {
    * @param {number} [objectCount]
    */
   constructor(objectCount = 32) {
-    this.camera = new Camera();
+    this.camera = new FirstPersonCamera(document.querySelector("canvas"), { flipY: true, moveSpeed: 0.5 });
     this.camera.setPosition(-30.0, 0.0, 0.0);
 
     this.sphereCount = Math.floor(objectCount / 4);

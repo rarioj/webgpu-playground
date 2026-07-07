@@ -87,28 +87,44 @@ fn hitRayTriangle(ray: Ray, triangle: ObjectStructure, tMin: f32, tMax: f32, old
 
     // Edge B - A and edge C - A
     var systemMatrix: mat3x3<f32> = mat3x3<f32>(ray.direction, triangle.cornerA - triangle.cornerB, triangle.cornerA - triangle.cornerC);
-    let denominator: f32 = determinant(systemMatrix);
+    // Manual calculation due to wgsl-analyzer extension bug
+    // let denominator: f32 = determinant(systemMatrix);
+    let denominator: f32 = systemMatrix[0][0] * (systemMatrix[1][1] * systemMatrix[2][2] - systemMatrix[1][2] * systemMatrix[2][1]) -
+                            systemMatrix[0][1] * (systemMatrix[1][0] * systemMatrix[2][2] - systemMatrix[1][2] * systemMatrix[2][0]) +
+                            systemMatrix[0][2] * (systemMatrix[1][0] * systemMatrix[2][1] - systemMatrix[1][1] * systemMatrix[2][0]);
     if abs(denominator) < 0.000001 {
         return newState;
     }
 
     // Edge A origin and edge C - A
     systemMatrix = mat3x3<f32>(ray.direction, triangle.cornerA - ray.origin, triangle.cornerA - triangle.cornerC);
-    let uHorizontal: f32 = determinant(systemMatrix) / denominator;
+    // Manual calculation due to wgsl-analyzer extension bug
+    // let uHorizontal: f32 = determinant(systemMatrix) / denominator;
+    let uHorizontal: f32 = (systemMatrix[0][0] * (systemMatrix[1][1] * systemMatrix[2][2] - systemMatrix[1][2] * systemMatrix[2][1]) -
+                            systemMatrix[0][1] * (systemMatrix[1][0] * systemMatrix[2][2] - systemMatrix[1][2] * systemMatrix[2][0]) +
+                            systemMatrix[0][2] * (systemMatrix[1][0] * systemMatrix[2][1] - systemMatrix[1][1] * systemMatrix[2][0])) / denominator;
     if uHorizontal < 0.0 || uHorizontal > 1.0 {
         return newState;
     }
 
     // Edge B - A and edge A origin
     systemMatrix = mat3x3<f32>(ray.direction, triangle.cornerA - triangle.cornerB, triangle.cornerA - ray.origin);
-    let vVertical: f32 = determinant(systemMatrix) / denominator;
+    // Manual calculation due to wgsl-analyzer extension bug
+    // let vVertical: f32 = determinant(systemMatrix) / denominator;
+    let vVertical: f32 = (systemMatrix[0][0] * (systemMatrix[1][1] * systemMatrix[2][2] - systemMatrix[1][2] * systemMatrix[2][1]) -
+                            systemMatrix[0][1] * (systemMatrix[1][0] * systemMatrix[2][2] - systemMatrix[1][2] * systemMatrix[2][0]) +
+                            systemMatrix[0][2] * (systemMatrix[1][0] * systemMatrix[2][1] - systemMatrix[1][1] * systemMatrix[2][0])) / denominator;
     if vVertical < 0.0 || uHorizontal + vVertical > 1.0 {
         return newState;
     }
 
     // Edge B - A and edge A origin
     systemMatrix = mat3x3<f32>(triangle.cornerA - ray.origin, triangle.cornerA - triangle.cornerB, triangle.cornerA - triangle.cornerC);
-    let tValue: f32 = determinant(systemMatrix) / denominator;
+    // Manual calculation due to wgsl-analyzer extension bug
+    // let tValue: f32 = determinant(systemMatrix) / denominator;
+    let tValue: f32 = (systemMatrix[0][0] * (systemMatrix[1][1] * systemMatrix[2][2] - systemMatrix[1][2] * systemMatrix[2][1]) -
+                        systemMatrix[0][1] * (systemMatrix[1][0] * systemMatrix[2][2] - systemMatrix[1][2] * systemMatrix[2][0]) +
+                        systemMatrix[0][2] * (systemMatrix[1][0] * systemMatrix[2][1] - systemMatrix[1][1] * systemMatrix[2][0])) / denominator;
 
     if tValue > tMin && tValue < tMax {
         let newNormal: vec3<f32> = (1.0 - uHorizontal - vVertical) * triangle.normalA + uHorizontal * triangle.normalB + vVertical * triangle.normalC;
@@ -215,7 +231,7 @@ fn rayColor(ray: Ray) -> vec3<f32> {
     for (var bounce: u32 = 0u; bounce < u32(scene.maxBounces); bounce++) {
         result = rayTrace(objectRay);
         if !result.hit {
-            color = color * textureSampleLevel(skyTextureView, skySampler, worldRay.direction, 0.0).rgb;
+            color = color * textureSampleLevel(skyTextureView, skySampler, ROTATION * worldRay.direction, 0.0).rgb;
             break;
         }
 
@@ -243,7 +259,7 @@ fn computeMain(@builtin(global_invocation_id) GlobalInvocationId: vec3<u32>) {
     let verticalCoeff: f32 = (f32(screenPosition.y) - f32(screenSize.y) / 2.0) / f32(screenSize.y);
 
     var ray: Ray;
-    ray.direction = normalize(ROTATION * (scene.cameraForward + horizontalCoeff * scene.cameraRight + verticalCoeff * scene.cameraUp));
+    ray.direction = normalize(scene.cameraForward + horizontalCoeff * scene.cameraRight + verticalCoeff * scene.cameraUp);
     ray.origin = scene.cameraPosition;
 
     var pixelColor: vec3<f32> = rayColor(ray);

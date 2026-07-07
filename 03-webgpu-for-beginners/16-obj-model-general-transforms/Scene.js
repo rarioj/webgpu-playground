@@ -1,5 +1,5 @@
 import { vec3, mat4 } from "https://wgpu-matrix.org/dist/3.x/wgpu-matrix.module.js";
-import { Camera } from "./Camera.js";
+import { FirstPersonCamera } from "./library/component/FirstPersonCamera.js";
 import { getRandomBetween, parseObjCode, convertDegreeToRadian } from "./library/helper/utility.js";
 import { BasicModel } from "./library/component/BasicModel.js";
 
@@ -16,7 +16,7 @@ import { BasicModel } from "./library/component/BasicModel.js";
  */
 export class Scene {
   /**
-   * @type {Camera}
+   * @type {FirstPersonCamera}
    */
   camera = null;
 
@@ -54,16 +54,16 @@ export class Scene {
    * @param {string} objCode
    */
   constructor(objCode) {
-    this.camera = new Camera();
+    this.camera = new FirstPersonCamera(document.querySelector("canvas"), { far: 100, flipY: true, moveSpeed: 0.5 });
     this.camera.setPosition(-10, 0, 0);
 
     this.statueModel = new BasicModel();
     this.statueModel.setPosition(0, 0, 0);
-    this.statueModel.setEulers(90, 90, 0);
+    this.statueModel.setEulers(180, 0, 0);
     this.statueModel.init();
     this.statueModel.setUpdateCallback((obj) => {
-      obj.eulers[1] += 4;
-      obj.eulers[1] %= 360;
+      obj.eulers[2] += 1;
+      obj.eulers[2] %= 360;
     });
 
     parseObjCode(

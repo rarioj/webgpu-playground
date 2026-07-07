@@ -164,8 +164,7 @@ fn trace(ray: Ray) -> RenderState {
     }
 
     if !renderState.hit {
-        // renderState.color = vec3<f32>(1.0, 1.0, 1.0);
-        renderState.color = textureSampleLevel(skyTextureView, skySampler, ray.direction, 0.0).rgb;
+        renderState.color = textureSampleLevel(skyTextureView, skySampler, ROTATION * ray.direction, 0.0).rgb;
     }
 
     return renderState;
@@ -202,13 +201,11 @@ fn computeMain(@builtin(global_invocation_id) GlobalInvocationId: vec3<u32>) {
     let screenSize: vec2<i32> = vec2<i32>(textureDimensions(colorBuffer));
     let screenPosition: vec2<i32> = vec2<i32>(i32(GlobalInvocationId.x), i32(GlobalInvocationId.y));
 
-    if screenPosition.x >= screenSize.x || screenPosition.y >= screenSize.y { return; }
-
     let horizontalCoeff: f32 = (f32(screenPosition.x) - f32(screenSize.x) / 2.0) / f32(screenSize.x);
     let verticalCoeff: f32 = (f32(screenPosition.y) - f32(screenSize.y) / 2.0) / f32(screenSize.y);
 
     var ray: Ray;
-    ray.direction = normalize(ROTATION * (scene.cameraForward + horizontalCoeff * scene.cameraRight + verticalCoeff * scene.cameraUp));
+    ray.direction = normalize(scene.cameraForward + horizontalCoeff * scene.cameraRight + verticalCoeff * scene.cameraUp);
     ray.origin = scene.cameraPosition;
 
     var pixelColor: vec3<f32> = fetchRayColor(ray);
