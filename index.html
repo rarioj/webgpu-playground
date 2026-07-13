@@ -3,13 +3,50 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>WebGPU Playground</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.min.css" />
+    <title>WebGPU Playground</title>
   </head>
   <body>
     <main>
       <section></section>
+      <footer>
+        <nav>
+          <ul>
+            <li
+              ><strong><a href="https://rarioj.github.io/webgpu-playground/">WebGPU Playground</a></strong></li
+            >
+          </ul>
+          <ul>
+            <li
+              ><a href="https://webgpu.org/"><img src="./assets/icons/webgpu-horizontal.svg" style="width: auto; height: 36px; margin-top: 8px" /></a
+            ></li>
+            <li
+              ><a href="https://picocss.com/"
+                ><img
+                  class="theme-toggle"
+                  src="./assets/icons/pico-dark.svg"
+                  data-light-icon="./assets/icons/pico-light.svg"
+                  data-dark-icon="./assets/icons/pico-dark.svg"
+                  style="width: auto; height: 32px" /></a
+            ></li>
+            <li
+              ><a href="https://github.com/rarioj/webgpu-playground"
+                ><img
+                  class="theme-toggle"
+                  src="./assets/icons/github-dark.svg"
+                  data-light-icon="./assets/icons/github-light.svg"
+                  data-dark-icon="./assets/icons/github-dark.svg"
+                  style="width: auto; height: 32px; margin-top: 4px" /></a
+            ></li>
+            <li id="theme-toggle"></li>
+          </ul>
+        </nav>
+      </footer>
     </main>
-    <script type="module" src="./script.js"></script>
+    <script type="module">
+      import { serveMarkdown, applyThemeCreateToggle } from "./src/helper/content.js";
+      await serveMarkdown("./INDEX.md", document.querySelector("section"));
+      applyThemeCreateToggle(document.getElementById("theme-toggle"));
+    </script>
   </body>
 </html>

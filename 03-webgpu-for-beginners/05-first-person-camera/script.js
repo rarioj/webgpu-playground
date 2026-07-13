@@ -1,122 +1,101 @@
-import { initGPU, makeShaderModule, makeImagesTexture } from "./library/helper/webgpu.js";
-import { loadResources } from "./library/helper/utility.js";
-import { FirstPersonCamera } from "./library/component/FirstPersonCamera.js";
-import { Scene } from "./Scene.js";
-import { BasicMesh } from "./library/component/BasicMesh.js";
+import { WebGPUCore } from "./src/webgpu/WebGPUCore.js";
+import { createCanvas } from "./src/helper/elements.js";
+import { loadAssets } from "./src/helper/utilities.js";
+import { FirstPersonCamera } from "./src/components/FirstPersonCamera.js";
+import { BaseModel } from "./src/components/BaseModel.js";
 
-const canvas = document.querySelector("canvas");
-const { device, context } = await initGPU({ canvas });
-const resources = await loadResources([
+//// Initialisation
+
+const canvas = createCanvas({
+  container: document.querySelector("article"),
+  width: 800,
+  height: 600,
+  style: {
+    outline: "1px solid black",
+  },
+});
+const webgpu = new WebGPUCore(canvas);
+const { context, format } = await webgpu.init();
+
+const camera = new FirstPersonCamera({ canvas, debug: true });
+camera.setPosition(-2.5, 0, 0);
+
+const model = new BaseModel();
+model.setUpdateCallback((updateObject) => {
+  const eulers = updateObject.eulers;
+  eulers[2]++;
+  eulers[2] = eulers[2] % 360;
+  updateObject.setEulers(eulers[0], eulers[1], eulers[2]);
+});
+
+//// Assets
+
+const assets = await loadAssets([
   {
     name: "shader",
-    url: "./shader.wgsl",
+    url: "./shaders/shader.wgsl",
     type: "text",
   },
   {
     name: "image",
-    url: `./assets/images/13-1024.webp`,
+    url: `./assets/images/95-1024.webp`,
     type: "blob",
   },
 ]);
-const shaderModule = makeShaderModule(device, resources.shader);
-const { texture: imageTexture, view: imageView, sampler: imageSampler } = await makeImagesTexture(context, [resources.image]);
 
-// --- Set up camera and scene
-const camera = new FirstPersonCamera(canvas);
-camera.position = [-2, 0, 0.5];
-const scene = new Scene();
+const { view, sampler } = await webgpu.createTextureViewSampler([assets.image]);
 
-// --- Set up triangle material
-const triangle = new BasicMesh(
-  device,
-  new Float32Array([
-    //x, y, z, u, v
-    // triangle 1, point 1
-    0.0, 0.0, 0.5, 0.5, 0.0,
-    // triangle 1, point 2
-    0.0, -0.5, -0.5, 0.0, 1.0,
-    // triangle 1, point 3
-    0.0, 0.5, -0.5, 1.0, 1.0,
-  ]),
-);
+//// Buffers
 
-// --- Set up uniform buffer
-const uniformBuffer = device.createBuffer({
-  size: 64 * 3, // 4x4 matrix * 3 types (projection, view, model)
-  usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-});
+const { buffer: triangleBuffer, bufferLayout: triangleBufferLayout } = webgpu
+  .setupBuffer(
+    GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+    new Float32Array([
+      //x, y, z, u, v
+      // top corner
+      0.0, 0.0, 0.5, 0.5, 0.0,
+      // bottom left corner
+      0.0, -0.5, -0.5, 0.0, 1.0,
+      // bottom right corner
+      0.0, 0.5, -0.5, 1.0, 1.0,
+    ]),
+  )
+  .addVertexAttribute(3) // x, y, z
+  .addVertexAttribute(2) // u, v
+  .build();
 
-// --- Set up bind groups and layouts
-const bindGroupLayout = device.createBindGroupLayout({
-  entries: [
-    {
-      binding: 0,
-      visibility: GPUShaderStage.VERTEX,
-      buffer: {},
-    },
-    {
-      binding: 1,
-      visibility: GPUShaderStage.FRAGMENT,
-      texture: {},
-    },
-    {
-      binding: 2,
-      visibility: GPUShaderStage.FRAGMENT,
-      sampler: {},
-    },
-  ],
-});
-const bindGroup = device.createBindGroup({
-  layout: bindGroupLayout,
-  entries: [
-    {
-      binding: 0,
-      resource: {
-        buffer: uniformBuffer,
-      },
-    },
-    {
-      binding: 1,
-      resource: imageView,
-    },
-    {
-      binding: 2,
-      resource: imageSampler,
-    },
-  ],
-});
+const { buffer: uniformBuffer } = webgpu
+  .setupBuffer(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, 64 * 3) // 4x4 matrix * 3 types (model, view, projection)
+  .build();
 
-// --- Set up pipelines and layouts
-const pipelineLayout = device.createPipelineLayout({ bindGroupLayouts: [bindGroupLayout] });
-const pipeline = device.createRenderPipeline({
-  layout: pipelineLayout,
-  vertex: {
-    module: shaderModule,
-    entryPoint: "vertexMain",
-    buffers: [triangle.bufferLayout],
-  },
-  fragment: {
-    module: shaderModule,
-    entryPoint: "fragmentMain",
-    targets: [{ format: context.getConfiguration().format }],
-  },
-  primitive: {
-    topology: "triangle-list",
-  },
-});
+//// Bind groups
+
+const { bindGroup, bindGroupLayout } = webgpu
+  .setupBindGroup()
+  .addBuffer(uniformBuffer, GPUShaderStage.VERTEX)
+  .addTexture(view, GPUShaderStage.FRAGMENT)
+  .addSampler(sampler, GPUShaderStage.FRAGMENT)
+  .build();
+
+//// Pipelines
+
+const { pipeline } = webgpu
+  .setupPipeline()
+  .addBindGroupLayout(bindGroupLayout)
+  .setShaderCode(assets.shader)
+  .setVertexShader("vertexMain", { buffers: [triangleBufferLayout] })
+  .setFragmentShader("fragmentMain", { targets: [{ format }] })
+  .setPrimitive({ topology: "triangle-list" })
+  .build();
+
+//// Renderer
 
 function render() {
-  scene.update();
   camera.update();
+  model.update();
 
-  scene.models.forEach((model) => {
-    device.queue.writeBuffer(uniformBuffer, 0, model.matrix);
-  });
-  device.queue.writeBuffer(uniformBuffer, 64, camera.view);
-  device.queue.writeBuffer(uniformBuffer, 128, camera.projection);
-
-  const encoder = device.createCommandEncoder();
-  const renderPass = encoder.beginRenderPass({
+  /** @type {GPURenderPassDescriptor} */
+  const renderPassDescriptor = {
     colorAttachments: [
       {
         view: context.getCurrentTexture().createView(),
@@ -125,14 +104,21 @@ function render() {
         clearValue: { r: 0.25, g: 0.25, b: 0.25, a: 1.0 },
       },
     ],
-  });
-  renderPass.setPipeline(pipeline);
-  renderPass.setVertexBuffer(0, triangle.bufferData);
-  renderPass.setBindGroup(0, bindGroup);
-  renderPass.draw(3, 1, 0, 0);
-  renderPass.end();
+  };
 
-  device.queue.submit([encoder.finish()]);
+  webgpu.queueWriteBuffer(uniformBuffer, 0, model.matrix);
+  webgpu.queueWriteBuffer(uniformBuffer, 64, camera.view);
+  webgpu.queueWriteBuffer(uniformBuffer, 128, camera.projection);
+
+  webgpu
+    .setupEncoder()
+    .beginRenderPass(renderPassDescriptor)
+    .setPipeline(pipeline)
+    .setVertexBuffer(0, triangleBuffer)
+    .setBindGroup(0, bindGroup)
+    .draw(3, 1)
+    .end()
+    .queueSubmit();
 
   requestAnimationFrame(render);
 }

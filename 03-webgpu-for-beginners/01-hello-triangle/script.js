@@ -1,44 +1,49 @@
-import { initGPU, makeShaderModule } from "./library/helper/webgpu.js";
-import { loadResources } from "./library/helper/utility.js";
+import { WebGPUCore } from "./src/webgpu/WebGPUCore.js";
+import { createCanvas } from "./src/helper/elements.js";
+import { loadAssets } from "./src/helper/utilities.js";
 
-const canvas = document.querySelector("canvas");
-const { device, context } = await initGPU({ canvas });
-const resources = await loadResources([
+//// Initialisation
+
+const canvas = createCanvas({
+  container: document.querySelector("article"),
+  width: 512,
+  height: 512,
+  style: {
+    outline: "1px solid black",
+  },
+});
+const webgpu = new WebGPUCore(canvas);
+const { context, format } = await webgpu.init();
+
+//// Assets
+
+const assets = await loadAssets([
   {
     name: "shader",
-    url: "./shader.wgsl",
+    url: "./shaders/shader.wgsl",
     type: "text",
   },
 ]);
-const shaderModule = makeShaderModule(device, resources.shader);
 
-// --- Set up bind groups and layouts
-const bindGroupLayout = device.createBindGroupLayout({ entries: [] });
-const bindGroup = device.createBindGroup({
-  layout: bindGroupLayout,
-  entries: [],
-});
+//// Bind groups
 
-// --- Set up pipelines and layouts
-const pipelineLayout = device.createPipelineLayout({ bindGroupLayouts: [bindGroupLayout] });
-const pipeline = device.createRenderPipeline({
-  layout: pipelineLayout,
-  vertex: {
-    module: shaderModule,
-    entryPoint: "vertexMain",
-  },
-  fragment: {
-    module: shaderModule,
-    entryPoint: "fragmentMain",
-    targets: [{ format: context.getConfiguration().format }],
-  },
-  primitive: {
-    topology: "triangle-list",
-  },
-});
+const { bindGroup, bindGroupLayout } = webgpu.setupBindGroup().build();
 
-const encoder = device.createCommandEncoder();
-const renderPass = encoder.beginRenderPass({
+//// Pipelines
+
+const { pipeline } = webgpu
+  .setupPipeline()
+  .addBindGroupLayout(bindGroupLayout)
+  .setShaderCode(assets.shader)
+  .setVertexShader("vertexMain")
+  .setFragmentShader("fragmentMain", { targets: [{ format }] })
+  .setPrimitive({ topology: "triangle-list" })
+  .build();
+
+//// Renderer
+
+/** @type {GPURenderPassDescriptor} */
+const renderPassDescriptor = {
   colorAttachments: [
     {
       view: context.getCurrentTexture().createView(),
@@ -47,10 +52,6 @@ const renderPass = encoder.beginRenderPass({
       clearValue: { r: 0.25, g: 0.25, b: 0.25, a: 1.0 },
     },
   ],
-});
-renderPass.setPipeline(pipeline);
-renderPass.setBindGroup(0, bindGroup);
-renderPass.draw(3, 1, 0, 0);
-renderPass.end();
+};
 
-device.queue.submit([encoder.finish()]);
+webgpu.setupEncoder().beginRenderPass(renderPassDescriptor).setPipeline(pipeline).setBindGroup(0, bindGroup).draw(3, 1).end().queueSubmit();

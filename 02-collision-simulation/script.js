@@ -1,95 +1,90 @@
-import { getQueryValue, loadResources, getRandomBetween } from "./library/helper/utility.js";
-import { initGPU, makeShaderModule } from "./library/helper/webgpu.js";
+import { WebGPUCore } from "./src/webgpu/WebGPUCore.js";
+import { createCanvas } from "./src/helper/elements.js";
+import { getQueryValue, loadAssets } from "./src/helper/utilities.js";
+import { getRandom } from "./src/helper/maths.js";
 
 const NUM_BALLS = Math.floor(parseInt(getQueryValue("balls", 100)));
 const BUFFER_SIZE = NUM_BALLS * 6 * Float32Array.BYTES_PER_ELEMENT;
 const MIN_RADIUS = Math.floor(parseInt(getQueryValue("min_radius", 2)));
 const MAX_RADIUS = Math.floor(parseInt(getQueryValue("max_radius", 10)));
 
-const { device } = await initGPU();
-const resources = await loadResources([
+//// Initialisation
+
+const canvas = createCanvas({
+  container: document.querySelector("article"),
+  width: Math.floor(parseInt(getQueryValue("width", 512))),
+  height: Math.floor(parseInt(getQueryValue("height", 512))),
+  style: {
+    outline: "1px solid black",
+  },
+});
+const webgpu = new WebGPUCore(); // no canvas, use 2d context
+const { device } = await webgpu.init();
+const context = canvas.getContext("2d");
+
+//// Assets
+
+const assets = await loadAssets([
   {
     name: "compute",
-    url: "./compute.wgsl",
+    url: "./shaders/compute.wgsl",
     type: "text",
   },
 ]);
-const computeModule = makeShaderModule(device, resources.compute);
 
-const canvas = document.querySelector("canvas");
-canvas.width = Math.floor(parseInt(getQueryValue("width", 512)));
-canvas.height = Math.floor(parseInt(getQueryValue("height", 512)));
-const context = canvas.getContext("2d");
+//// Buffers
 
-const inputBuffer = device.createBuffer({
-  size: BUFFER_SIZE,
-  usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-});
-const outputBuffer = device.createBuffer({
-  size: BUFFER_SIZE,
-  usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
-});
-const stagingBuffer = device.createBuffer({
-  size: BUFFER_SIZE,
-  usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
-});
-const sceneBuffer = device.createBuffer({
-  size: 2 * Float32Array.BYTES_PER_ELEMENT,
-  usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-});
-device.queue.writeBuffer(sceneBuffer, 0, new Float32Array([canvas.width, canvas.height]));
+const { buffer: inputBuffer } = webgpu
+  .setupBuffer(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, BUFFER_SIZE)
+  .setLabel("Input buffer")
+  .build();
+const { buffer: outputBuffer } = webgpu
+  .setupBuffer(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC, BUFFER_SIZE)
+  .setLabel("Output buffer")
+  .build();
+const { buffer: stagingBuffer } = webgpu
+  .setupBuffer(GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST, BUFFER_SIZE)
+  .setLabel("Staging buffer")
+  .build();
+const { buffer: sceneBuffer } = webgpu
+  .setupBuffer(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, 2 * Float32Array.BYTES_PER_ELEMENT)
+  .setLabel("Scene buffer")
+  .build();
 
-const bindGroupLayout = device.createBindGroupLayout({
-  entries: [
-    {
-      binding: 0,
-      visibility: GPUShaderStage.COMPUTE,
-      buffer: { type: "read-only-storage" },
-    },
-    {
-      binding: 1,
-      visibility: GPUShaderStage.COMPUTE,
-      buffer: { type: "storage" },
-    },
-    {
-      binding: 2,
-      visibility: GPUShaderStage.COMPUTE,
-      buffer: { type: "read-only-storage" },
-    },
-  ],
-});
+webgpu.queueWriteBuffer(sceneBuffer, 0, new Float32Array([canvas.width, canvas.height]));
 
-const bindGroup = device.createBindGroup({
-  layout: bindGroupLayout,
-  entries: [
-    {
-      binding: 0,
-      resource: {
-        buffer: inputBuffer,
-      },
-    },
-    {
-      binding: 1,
-      resource: {
-        buffer: outputBuffer,
-      },
-    },
-    {
-      binding: 2,
-      resource: {
-        buffer: sceneBuffer,
-      },
-    },
-  ],
-});
+let updatedBallStates = null;
+let currentBallStates = new Float32Array(new ArrayBuffer(BUFFER_SIZE));
+for (let i = 0; i < NUM_BALLS; i++) {
+  currentBallStates[i * 6 + 0] = getRandom(MIN_RADIUS, MAX_RADIUS); // radius
+  currentBallStates[i * 6 + 1] = 0; // padding
+  currentBallStates[i * 6 + 2] = getRandom(0, canvas.width); // position.x
+  currentBallStates[i * 6 + 3] = getRandom(0, canvas.height); // position.y
+  currentBallStates[i * 6 + 4] = getRandom(-100, 100); // velocity.x
+  currentBallStates[i * 6 + 5] = getRandom(-100, 100); // velocity.y
+}
 
-const computePipeline = device.createComputePipeline({
-  layout: device.createPipelineLayout({ bindGroupLayouts: [bindGroupLayout] }),
-  compute: {
-    module: computeModule,
-    entryPoint: "main",
-  },
-});
+//// Bind groups
+
+const { bindGroup, bindGroupLayout } = webgpu
+  .setupBindGroup()
+  .setLabel("Bind group", "Bind group layout")
+  .addBuffer(inputBuffer, GPUShaderStage.COMPUTE, { type: "read-only-storage" })
+  .addBuffer(outputBuffer, GPUShaderStage.COMPUTE, { type: "storage" })
+  .addBuffer(sceneBuffer, GPUShaderStage.COMPUTE, { type: "read-only-storage" })
+  .build();
+
+//// Pipelines
+
+const { pipeline } = webgpu
+  .setupPipeline()
+  .setLabel("Compute pipeline")
+  .addBindGroupLayout(bindGroupLayout)
+  .setShaderCode(assets.compute)
+  .setComputeShader("main")
+  .build();
+
+//// Renderer
 
 function animateFrame() {
   return new Promise((event) => requestAnimationFrame(event));
@@ -127,39 +122,32 @@ function updateCanvas(data) {
   context.restore();
 }
 
-let inputBalls = new Float32Array(new ArrayBuffer(BUFFER_SIZE));
-for (let i = 0; i < NUM_BALLS; i++) {
-  inputBalls[i * 6 + 0] = getRandomBetween(MIN_RADIUS, MAX_RADIUS); // radius
-  inputBalls[i * 6 + 1] = 0; // padding?
-  inputBalls[i * 6 + 2] = getRandomBetween(0, canvas.width); // position.x
-  inputBalls[i * 6 + 3] = getRandomBetween(0, canvas.height); // position.y
-  inputBalls[i * 6 + 4] = getRandomBetween(-100, 100); // velocity.x
-  inputBalls[i * 6 + 5] = getRandomBetween(-100, 100); // velocity.y
-}
-let newInputBalls = null;
-
 while (true) {
   performance.mark("webgpu start");
-  device.queue.writeBuffer(inputBuffer, 0, inputBalls);
 
-  const encoder = device.createCommandEncoder();
-  const computePass = encoder.beginComputePass();
-  computePass.setPipeline(computePipeline);
-  computePass.setBindGroup(0, bindGroup);
-  computePass.dispatchWorkgroups(Math.ceil(BUFFER_SIZE / 64));
-  computePass.end();
-  encoder.copyBufferToBuffer(outputBuffer, 0, stagingBuffer, 0, BUFFER_SIZE);
-  device.queue.submit([encoder.finish()]);
+  webgpu.queueWriteBuffer(inputBuffer, 0, currentBallStates);
+
+  const builder = webgpu
+    .setupEncoder()
+    .beginComputePass()
+    .setPipeline(pipeline)
+    .setBindGroup(0, bindGroup)
+    .dispatchWorkgroups(Math.ceil(BUFFER_SIZE / 64))
+    .end()
+    .copyBufferToBuffer(outputBuffer, 0, stagingBuffer, 0, BUFFER_SIZE)
+    .queueSubmit();
 
   await stagingBuffer.mapAsync(GPUMapMode.READ, 0, BUFFER_SIZE);
 
   const copyArrayBuffer = stagingBuffer.getMappedRange(0, BUFFER_SIZE).slice();
-  newInputBalls = new Float32Array(copyArrayBuffer);
+  updatedBallStates = new Float32Array(copyArrayBuffer);
   stagingBuffer.unmap();
+
   performance.mark("webgpu end");
   performance.measure("webgpu", "webgpu start", "webgpu end");
 
-  updateCanvas(newInputBalls);
-  inputBalls = newInputBalls;
+  updateCanvas(updatedBallStates);
+
+  currentBallStates = updatedBallStates;
   await animateFrame();
 }

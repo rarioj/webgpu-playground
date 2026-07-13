@@ -1,202 +1,124 @@
-import { initGPU, makeShaderModule } from "./library/helper/webgpu.js";
-import { loadResources } from "./library/helper/utility.js";
+import { WebGPUCore } from "./src/webgpu/WebGPUCore.js";
+import { createCanvas } from "./src/helper/elements.js";
+import { getQueryValue, loadAssets } from "./src/helper/utilities.js";
 
-const GRID_SIZE = 64;
+const GRID_SIZE = Math.floor(parseInt(getQueryValue("size", 64)));
 const UPDATE_INTERVAL = 100;
-const POPULATION = 0.2; // min: 0 - max: 1
+const POPULATION = 0.15; // min: 0 - max: 1
 const WORKGROUP_SIZE = 8;
 const WORKGROUP_COUNT = Math.ceil(GRID_SIZE / WORKGROUP_SIZE);
 
-const canvas = document.querySelector("canvas");
-const { device, context } = await initGPU({ canvas });
-const resources = await loadResources([
+//// Initialisation
+
+const canvas = createCanvas({
+  container: document.querySelector("article"),
+  width: 512,
+  height: 512,
+  style: {
+    outline: "1px solid black",
+  },
+});
+const webgpu = new WebGPUCore(canvas);
+const { context, format } = await webgpu.init();
+
+//// Assets
+
+const assets = await loadAssets([
   {
     name: "render",
-    url: "./render.wgsl",
+    url: "./shaders/render.wgsl",
     type: "text",
   },
   {
     name: "simulation",
-    url: "./simulation.wgsl",
+    url: "./shaders/simulation.wgsl",
     type: "text",
   },
 ]);
-const renderModule = makeShaderModule(device, resources.render);
-const simulationModule = makeShaderModule(device, resources.simulation, {
-  replacements: [[`2 /* WORKGROUP_SIZE */;`, `${WORKGROUP_SIZE};`]],
-});
 
-// --- Cell vertex buffer
+//// Buffers
+
 const vertexArray = new Float32Array([
-  //x1,   y1,  x2,   y2,  x3,  y3, - triangle 1
+  //x1,   y1,  x2,   y2,  x3,  y3
   -0.8, -0.8, 0.8, -0.8, 0.8, 0.8,
-  //x1,   y1,  x2,   y2,  x3,  y3, - triangle 2
+  //x1,   y1,  x2,  y2,   x3,  y3
   -0.8, -0.8, 0.8, 0.8, -0.8, 0.8,
 ]);
-const vertexBuffer = device.createBuffer({
-  label: "Cell vertex buffer",
-  size: vertexArray.byteLength,
-  usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-});
-device.queue.writeBuffer(vertexBuffer, 0, vertexArray);
+const { buffer: vertexBuffer } = webgpu
+  .setupBuffer(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST, vertexArray.byteLength)
+  .setLabel("Vertex buffer")
+  .build();
 
-// --- Grid uniform buffer
 const uniformArray = new Float32Array([GRID_SIZE, GRID_SIZE]);
-const uniformBuffer = device.createBuffer({
-  label: "Grid uniform buffer",
-  size: uniformArray.byteLength,
-  usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-});
-device.queue.writeBuffer(uniformBuffer, 0, uniformArray);
+const { buffer: uniformBuffer } = webgpu
+  .setupBuffer(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, uniformArray.byteLength)
+  .setLabel("Uniform buffer")
+  .build();
 
-// --- Cell state buffer
 const cellStateArray = new Uint32Array(GRID_SIZE * GRID_SIZE);
-const cellStateBuffers = [
-  device.createBuffer({
-    label: "Cell state buffer A",
-    size: cellStateArray.byteLength,
-    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-  }),
-  device.createBuffer({
-    label: "Cell state buffer B",
-    size: cellStateArray.byteLength,
-    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-  }),
-];
 for (let i = 0; i < cellStateArray.length; i++) {
   cellStateArray[i] = Math.random() < POPULATION ? 1 : 0; // random initial cell state
 }
-device.queue.writeBuffer(cellStateBuffers[0], 0, cellStateArray);
+const { buffer: cellStateBufferA, bufferLayout: cellStateBufferLayout } = webgpu
+  .setupBuffer(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, cellStateArray.byteLength)
+  .setLabel("Cell state A buffer")
+  .addVertexAttribute(2)
+  .build();
+const { buffer: cellStateBufferB } = webgpu
+  .setupBuffer(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, cellStateArray.byteLength)
+  .setLabel("Cell state B buffer")
+  .build();
 
-// --- Layout for bind group and pipeline
-const bindGroupLayout = device.createBindGroupLayout({
-  label: "Cell bind group layout",
-  entries: [
-    {
-      binding: 0,
-      visibility: GPUShaderStage.VERTEX | GPUShaderStage.COMPUTE,
-      buffer: {},
-    },
-    {
-      binding: 1,
-      visibility: GPUShaderStage.VERTEX | GPUShaderStage.COMPUTE,
-      buffer: { type: "read-only-storage" },
-    },
-    {
-      binding: 2,
-      visibility: GPUShaderStage.COMPUTE,
-      buffer: { type: "storage" },
-    },
-  ],
-});
-const pipelineLayout = device.createPipelineLayout({
-  label: "Cell pipeline layout",
-  bindGroupLayouts: [bindGroupLayout],
-});
+webgpu.queueWriteBuffer(vertexBuffer, 0, vertexArray);
+webgpu.queueWriteBuffer(uniformBuffer, 0, uniformArray);
+webgpu.queueWriteBuffer(cellStateBufferA, 0, cellStateArray);
 
-// --- Render pipeline
-const renderPipeline = device.createRenderPipeline({
-  label: "Render pipeline",
-  layout: pipelineLayout,
-  vertex: {
-    module: renderModule,
-    entryPoint: "vertexMain",
-    buffers: [
-      {
-        arrayStride: 8,
-        attributes: [
-          {
-            format: "float32x2",
-            offset: 0,
-            shaderLocation: 0,
-          },
-        ],
-      },
-    ],
-  },
-  fragment: {
-    module: renderModule,
-    entryPoint: "fragmentMain",
-    targets: [{ format: context.getConfiguration().format }],
-  },
-});
+//// Bind groups
 
-// --- Simulation pipeline
-const simulationPipeline = device.createComputePipeline({
-  label: "Simulation pipeline",
-  layout: pipelineLayout,
-  compute: {
-    module: simulationModule,
-    entryPoint: "computeMain",
-  },
-});
+const { bindGroup: bindGroupA, bindGroupLayout: bindGroupLayout } = webgpu
+  .setupBindGroup()
+  .setLabel("Bind group A - B", "Bind group layout")
+  .addBuffer(uniformBuffer, GPUShaderStage.VERTEX | GPUShaderStage.COMPUTE)
+  .addBuffer(cellStateBufferA, GPUShaderStage.VERTEX | GPUShaderStage.COMPUTE, { type: "read-only-storage" })
+  .addBuffer(cellStateBufferB, GPUShaderStage.COMPUTE, { type: "storage" })
+  .build();
 
-// --- Final bind groups
-const bindGroups = [
-  device.createBindGroup({
-    label: "Cell renderer bind group A",
-    layout: bindGroupLayout,
-    entries: [
-      {
-        binding: 0,
-        resource: {
-          buffer: uniformBuffer,
-        },
-      },
-      {
-        binding: 1,
-        resource: {
-          buffer: cellStateBuffers[0],
-        },
-      },
-      {
-        binding: 2,
-        resource: {
-          buffer: cellStateBuffers[1],
-        },
-      },
-    ],
-  }),
-  device.createBindGroup({
-    label: "Cell renderer bind group B",
-    layout: bindGroupLayout,
-    entries: [
-      {
-        binding: 0,
-        resource: {
-          buffer: uniformBuffer,
-        },
-      },
-      {
-        binding: 1,
-        resource: {
-          buffer: cellStateBuffers[1],
-        },
-      },
-      {
-        binding: 2,
-        resource: {
-          buffer: cellStateBuffers[0],
-        },
-      },
-    ],
-  }),
-];
+const { bindGroup: bindGroupB } = webgpu
+  .setupBindGroup(bindGroupLayout)
+  .setLabel("Bind group B - A")
+  .addBuffer(uniformBuffer, GPUShaderStage.VERTEX | GPUShaderStage.COMPUTE)
+  .addBuffer(cellStateBufferB, GPUShaderStage.VERTEX | GPUShaderStage.COMPUTE, { type: "read-only-storage" })
+  .addBuffer(cellStateBufferA, GPUShaderStage.COMPUTE, { type: "storage" })
+  .build();
+
+//// Pipelines
+
+const { pipeline: renderPipeline, pipelineLayout: pipelineLayout } = webgpu
+  .setupPipeline()
+  .setLabel("Render pipeline", "Pipeline layout")
+  .addBindGroupLayout(bindGroupLayout)
+  .setShaderCode(assets.render)
+  .setVertexShader("vertexMain", { buffers: [cellStateBufferLayout] })
+  .setFragmentShader("fragmentMain", { targets: [{ format }] })
+  .build();
+
+const { pipeline: simulationPipeline } = webgpu
+  .setupPipeline(pipelineLayout)
+  .setLabel("Compute pipeline")
+  .setShaderCode(assets.simulation, { replacements: [[`2 /* WORKGROUP_SIZE */;`, `${WORKGROUP_SIZE};`]] })
+  .setComputeShader("computeMain")
+  .build();
+
+//// Renderer
 
 let step = 0;
 
-function nextFrame() {
-  const encoder = device.createCommandEncoder();
+function render() {
+  const computeBindGroup = step % 2 === 0 ? bindGroupA : bindGroupB;
+  const renderBindGroup = step % 2 === 0 ? bindGroupB : bindGroupA;
 
-  const computePass = encoder.beginComputePass();
-  computePass.setPipeline(simulationPipeline);
-  computePass.setBindGroup(0, bindGroups[step % 2]);
-  computePass.dispatchWorkgroups(WORKGROUP_COUNT, WORKGROUP_COUNT);
-  computePass.end();
-
-  step++;
-
-  const renderPass = encoder.beginRenderPass({
+  /** @type {GPURenderPassDescriptor} */
+  const renderPassDescriptor = {
     colorAttachments: [
       {
         view: context.getCurrentTexture().createView(),
@@ -205,14 +127,23 @@ function nextFrame() {
         clearValue: { r: 0, g: 0, b: 0, a: 1.0 },
       },
     ],
-  });
-  renderPass.setPipeline(renderPipeline);
-  renderPass.setBindGroup(0, bindGroups[step % 2]);
-  renderPass.setVertexBuffer(0, vertexBuffer);
-  renderPass.draw(vertexArray.length / 2, GRID_SIZE * GRID_SIZE);
-  renderPass.end();
+  };
+  webgpu
+    .setupEncoder()
+    .beginComputePass()
+    .setPipeline(simulationPipeline)
+    .setBindGroup(0, computeBindGroup)
+    .dispatchWorkgroups(WORKGROUP_COUNT, WORKGROUP_COUNT)
+    .end()
+    .beginRenderPass(renderPassDescriptor)
+    .setPipeline(renderPipeline)
+    .setBindGroup(0, renderBindGroup)
+    .setVertexBuffer(0, vertexBuffer)
+    .draw(vertexArray.length / 2, GRID_SIZE * GRID_SIZE)
+    .end()
+    .queueSubmit();
 
-  device.queue.submit([encoder.finish()]);
+  step++;
 }
 
-setInterval(nextFrame, UPDATE_INTERVAL);
+setInterval(render, UPDATE_INTERVAL);

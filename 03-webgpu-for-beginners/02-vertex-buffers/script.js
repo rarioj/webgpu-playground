@@ -1,49 +1,68 @@
-import { initGPU, makeShaderModule } from "./library/helper/webgpu.js";
-import { loadResources } from "./library/helper/utility.js";
-import { Triangle } from "./Triangle.js";
+import { WebGPUCore } from "./src/webgpu/WebGPUCore.js";
+import { createCanvas } from "./src/helper/elements.js";
+import { loadAssets } from "./src/helper/utilities.js";
 
-const canvas = document.querySelector("canvas");
-const { device, context } = await initGPU({ canvas });
-const resources = await loadResources([
+//// Initialisation
+
+const canvas = createCanvas({
+  container: document.querySelector("article"),
+  width: 512,
+  height: 512,
+  style: {
+    outline: "1px solid black",
+  },
+});
+const webgpu = new WebGPUCore(canvas);
+const { context, format } = await webgpu.init();
+
+//// Assets
+
+const assets = await loadAssets([
   {
     name: "shader",
-    url: "./shader.wgsl",
+    url: "./shaders/shader.wgsl",
     type: "text",
   },
 ]);
-const shaderModule = makeShaderModule(device, resources.shader);
 
-// --- Set up triangle
-const triangle = new Triangle(device);
+//// Buffers
 
-// --- Set up bind groups and layouts
-const bindGroupLayout = device.createBindGroupLayout({ entries: [] });
-const bindGroup = device.createBindGroup({
-  layout: bindGroupLayout,
-  entries: [],
-});
+const { buffer, bufferLayout } = webgpu
+  .setupBuffer(
+    GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+    new Float32Array([
+      //x, y, r, g, b
+      // top corner (red)
+      0.0, 0.5, 1.0, 0.0, 0.0,
+      // bottom left corner (green)
+      -0.5, -0.5, 0.0, 1.0, 0.0,
+      // bottom right corner (blue)
+      0.5, -0.5, 0.0, 0.0, 1.0,
+    ]),
+  )
+  .addVertexAttribute(2) // x, y
+  .addVertexAttribute(3) // r, g, b
+  .build();
 
-// --- Set up pipelines and layouts
-const pipelineLayout = device.createPipelineLayout({ bindGroupLayouts: [bindGroupLayout] });
-const pipeline = device.createRenderPipeline({
-  layout: pipelineLayout,
-  vertex: {
-    module: shaderModule,
-    entryPoint: "vertexMain",
-    buffers: [triangle.bufferLayout],
-  },
-  fragment: {
-    module: shaderModule,
-    entryPoint: "fragmentMain",
-    targets: [{ format: context.getConfiguration().format }],
-  },
-  primitive: {
-    topology: "triangle-list",
-  },
-});
+//// Bind groups
 
-const encoder = device.createCommandEncoder();
-const renderPass = encoder.beginRenderPass({
+const { bindGroup, bindGroupLayout } = webgpu.setupBindGroup().build();
+
+//// Pipelines
+
+const { pipeline } = webgpu
+  .setupPipeline()
+  .addBindGroupLayout(bindGroupLayout)
+  .setShaderCode(assets.shader)
+  .setVertexShader("vertexMain", { buffers: [bufferLayout] })
+  .setFragmentShader("fragmentMain", { targets: [{ format }] })
+  .setPrimitive({ topology: "triangle-list" })
+  .build();
+
+//// Renderer
+
+/** @type {GPURenderPassDescriptor} */
+const renderPassDescriptor = {
   colorAttachments: [
     {
       view: context.getCurrentTexture().createView(),
@@ -52,11 +71,14 @@ const renderPass = encoder.beginRenderPass({
       clearValue: { r: 0.25, g: 0.25, b: 0.25, a: 1.0 },
     },
   ],
-});
-renderPass.setPipeline(pipeline);
-renderPass.setVertexBuffer(0, triangle.bufferData);
-renderPass.setBindGroup(0, bindGroup);
-renderPass.draw(3, 1, 0, 0);
-renderPass.end();
+};
 
-device.queue.submit([encoder.finish()]);
+webgpu
+  .setupEncoder()
+  .beginRenderPass(renderPassDescriptor)
+  .setPipeline(pipeline)
+  .setVertexBuffer(0, buffer)
+  .setBindGroup(0, bindGroup)
+  .draw(3, 1)
+  .end()
+  .queueSubmit();

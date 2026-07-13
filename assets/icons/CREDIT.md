@@ -1,0 +1,3 @@
+- [WebGPU](https://www.w3.org/2023/02/webgpu-logos.html)
+- [Pico ✨](https://picocss.com/docs/brand)
+- [GitHub](https://brand.github.com/foundations/logo)

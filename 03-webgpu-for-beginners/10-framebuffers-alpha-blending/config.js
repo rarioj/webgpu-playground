@@ -1,21 +1,19 @@
-import { mat4 } from "https://wgpu-matrix.org/dist/3.x/wgpu-matrix.module.js";
-
 export const config = {};
 
-config.resources = [
+config.assetArray = [
   {
     name: "shaderCode",
     url: "./shaders/shader.wgsl",
     type: "text",
   },
   {
-    name: "skyCode",
-    url: "./shaders/sky.wgsl",
+    name: "cubemapCode",
+    url: "./shaders/cubemap.wgsl",
     type: "text",
   },
   {
-    name: "alertCode",
-    url: "./shaders/alert.wgsl",
+    name: "strobeLightCode",
+    url: "./shaders/strobeLight.wgsl",
     type: "text",
   },
   {
@@ -79,7 +77,7 @@ config.resources = [
 
 [50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 766].forEach((value1, index1) => {
   [1024, 512, 256, 128, 64, 32, 16].forEach((value2, index2) => {
-    config.resources.push({
+    config.assetArray.push({
       name: "assetImages",
       url: `./assets/images/${value1}-${value2}.webp`,
       type: "blob",
@@ -88,37 +86,28 @@ config.resources = [
   });
 });
 
-config.transform = {
-  statue: () => {
-    let transform = mat4.identity();
-    transform = mat4.multiply(transform, mat4.scaling([0.15, 0.15, 0.15]));
-    return transform;
-  },
-};
+config.triangleVertices = [
+  //x, y, z, u, v
+  // triangle 1, point 1
+  0.0, 0.0, 0.5, 0.5, 0.0,
+  // triangle 1, point 2
+  0.0, -0.5, -0.5, 0.0, 1.0,
+  // triangle 1, point 3
+  0.0, 0.5, -0.5, 1.0, 1.0,
+];
 
-config.vertices = {
-  triangle: new Float32Array([
-    //x, y, z, u, v
-    // triangle 1, point 1
-    0.0, 0.0, 0.5, 0.5, 0.0,
-    // triangle 1, point 2
-    0.0, -0.5, -0.5, 0.0, 1.0,
-    // triangle 1, point 3
-    0.0, 0.5, -0.5, 1.0, 1.0,
-  ]),
-  quad: new Float32Array([
-    //x, y, z, u, v
-    // triangle 1, point 1
-    -0.5, -0.5, 0.0, 0.0, 0.0,
-    // triangle 1, point 2
-    0.5, -0.5, 0.0, 1.0, 0.0,
-    // triangle 1, point 3
-    0.5, 0.5, 0.0, 1.0, 1.0,
-    // triangle 2, point 1
-    0.5, 0.5, 0.0, 1.0, 1.0,
-    // triangle 2, point 2
-    -0.5, 0.5, 0.0, 0.0, 1.0,
-    // triangle 2, point 3
-    -0.5, -0.5, 0.0, 0.0, 0.0,
-  ]),
-};
+config.tileVertices = [
+  //x, y, z, u, v
+  // triangle 1, point 1
+  -0.5, -0.5, 0.0, 0.0, 0.0,
+  // triangle 1, point 2
+  0.5, -0.5, 0.0, 1.0, 0.0,
+  // triangle 1, point 3
+  0.5, 0.5, 0.0, 1.0, 1.0,
+  // triangle 2, point 1
+  0.5, 0.5, 0.0, 1.0, 1.0,
+  // triangle 2, point 2
+  -0.5, 0.5, 0.0, 0.0, 1.0,
+  // triangle 2, point 3
+  -0.5, -0.5, 0.0, 0.0, 0.0,
+];

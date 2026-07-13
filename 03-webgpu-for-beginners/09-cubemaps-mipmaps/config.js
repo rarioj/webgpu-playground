@@ -1,16 +1,16 @@
-export const resourceArray = [
+export const assetArray = [
   {
     name: "shader",
-    url: "./shader.wgsl",
+    url: "./shaders/shader.wgsl",
     type: "text",
   },
   {
     name: "cubemap",
-    url: "./cubemap.wgsl",
+    url: "./shaders/cubemap.wgsl",
     type: "text",
   },
   {
-    name: "model",
+    name: "statue",
     url: "./assets/models/Ballerina_V1/22048_Ballerina_V1.obj",
     type: "text",
   },
@@ -54,38 +54,37 @@ export const resourceArray = [
 
 [50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 307].forEach((value1, index1) => {
   [1024, 512, 256, 128, 64, 32, 16].forEach((value2, index2) => {
-    resourceArray.push({
+    assetArray.push({
       name: "image",
       url: `./assets/images/${value1}-${value2}.webp`,
       type: "blob",
-      group: "" + value1,
+      group: `${value1}`,
     });
   });
 });
 
-export const vertexMap = {
-  triangle: new Float32Array([
-    //x, y, z, u, v
-    // triangle 1, point 1
-    0.0, 0.0, 0.5, 0.5, 0.0,
-    // triangle 1, point 2
-    0.0, -0.5, -0.5, 0.0, 1.0,
-    // triangle 1, point 3
-    0.0, 0.5, -0.5, 1.0, 1.0,
-  ]),
-  quad: new Float32Array([
-    //x, y, z, u, v
-    // triangle 1, point 1
-    -0.5, -0.5, 0.0, 0.0, 0.0,
-    // triangle 1, point 2
-    0.5, -0.5, 0.0, 1.0, 0.0,
-    // triangle 1, point 3
-    0.5, 0.5, 0.0, 1.0, 1.0,
-    // triangle 2, point 1
-    0.5, 0.5, 0.0, 1.0, 1.0,
-    // triangle 2, point 2
-    -0.5, 0.5, 0.0, 0.0, 1.0,
-    // triangle 2, point 3
-    -0.5, -0.5, 0.0, 0.0, 0.0,
-  ]),
-};
+export const triangleVertices = [
+  //x, y, z, u, v
+  // triangle 1, point 1
+  0.0, 0.0, 0.5, 0.5, 0.0,
+  // triangle 1, point 2
+  0.0, -0.5, -0.5, 0.0, 1.0,
+  // triangle 1, point 2
+  0.0, 0.5, -0.5, 1.0, 1.0,
+];
+
+export const tileVertices = [
+  //x, y, z, u, v
+  // triangle 1, point 1
+  -0.5, -0.5, 0.0, 0.0, 0.0,
+  // triangle 1, point 2
+  0.5, -0.5, 0.0, 1.0, 0.0,
+  // triangle 1, point 3
+  0.5, 0.5, 0.0, 1.0, 1.0,
+  // triangle 2, point 1
+  0.5, 0.5, 0.0, 1.0, 1.0,
+  // triangle 2, point 2
+  -0.5, 0.5, 0.0, 0.0, 1.0,
+  // triangle 2, point 3
+  -0.5, -0.5, 0.0, 0.0, 0.0,
+];

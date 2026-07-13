@@ -1,7 +1,7 @@
-export const resourceArray = [
+export const assetArray = [
   {
     name: "shader",
-    url: "./shader.wgsl",
+    url: "./shaders/shader.wgsl",
     type: "text",
   },
   {
@@ -72,35 +72,35 @@ export const resourceArray = [
     group: true,
   },
   {
-    name: "model",
+    // statue
+    name: "statue",
     url: "./assets/models/Apollo_V1/16771_Apollo_V1_NEW.obj",
     type: "text",
   },
 ];
 
-export const vertexMap = {
-  triangle: new Float32Array([
-    //x, y, z, u, v
-    // triangle 1, point 1
-    0.0, 0.0, 0.5, 0.5, 0.0,
-    // triangle 1, point 2
-    0.0, -0.5, -0.5, 0.0, 1.0,
-    // triangle 1, point 3
-    0.0, 0.5, -0.5, 1.0, 1.0,
-  ]),
-  quad: new Float32Array([
-    //x, y, z, u, v
-    // triangle 1, point 1
-    -0.5, -0.5, 0.0, 0.0, 0.0,
-    // triangle 1, point 2
-    0.5, -0.5, 0.0, 1.0, 0.0,
-    // triangle 1, point 3
-    0.5, 0.5, 0.0, 1.0, 1.0,
-    // triangle 2, point 1
-    0.5, 0.5, 0.0, 1.0, 1.0,
-    // triangle 2, point 2
-    -0.5, 0.5, 0.0, 0.0, 1.0,
-    // triangle 2, point 3
-    -0.5, -0.5, 0.0, 0.0, 0.0,
-  ]),
-};
+export const triangleVertices = [
+  //x, y, z, u, v
+  // triangle 1, point 1
+  0.0, 0.0, 0.5, 0.5, 0.0,
+  // triangle 1, point 2
+  0.0, -0.5, -0.5, 0.0, 1.0,
+  // triangle 1, point 2
+  0.0, 0.5, -0.5, 1.0, 1.0,
+];
+
+export const tileVertices = [
+  //x, y, z, u, v
+  // triangle 1, point 1
+  -0.5, -0.5, 0.0, 0.0, 0.0,
+  // triangle 1, point 2
+  0.5, -0.5, 0.0, 1.0, 0.0,
+  // triangle 1, point 3
+  0.5, 0.5, 0.0, 1.0, 1.0,
+  // triangle 2, point 1
+  0.5, 0.5, 0.0, 1.0, 1.0,
+  // triangle 2, point 2
+  -0.5, 0.5, 0.0, 0.0, 1.0,
+  // triangle 2, point 3
+  -0.5, -0.5, 0.0, 0.0, 0.0,
+];
