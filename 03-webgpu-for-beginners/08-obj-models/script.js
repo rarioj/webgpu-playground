@@ -44,7 +44,7 @@ for (let i = -8; i < 8; i++) {
     scene.addModel(model, "tiles");
   }
 }
-const statue = new BaseModel();
+const statue = new BaseModel({ scale: [0.4, 0.4, 0.4] });
 statue.setPosition(0, 0, 0);
 statue.setUpdateCallback((updateObject) => {
   const eulers = updateObject.eulers;
@@ -74,7 +74,7 @@ const { buffer: tileBuffer } = webgpu
   .addVertexAttribute(2) // u, v
   .build();
 
-const statueData = parseOBJCode(assets.statue, { scale: 0.2 });
+const statueData = parseOBJCode(assets.statue, { transform: statue.matrix });
 const { buffer: statueBuffer } = webgpu
   .setupBuffer(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST, new Float32Array(statueData))
   .addVertexAttribute(3) // x, y, z

@@ -24,6 +24,8 @@ const { context, format } = await webgpu.init();
 
 const camera = new FirstPersonCamera({ canvas, debug: true });
 camera.setPosition(-7, -0.5, 0.5);
+// construct raw array data
+camera.arrayData = [camera.forward, 0, camera.scaledRight, 0, camera.scaledUp, 0];
 
 const scene = new SceneBuilder(camera);
 for (let i = -5; i < 5; i++) {
@@ -44,8 +46,7 @@ for (let i = -8; i < 8; i++) {
     scene.addModel(model, "tiles");
   }
 }
-const statue = new BaseModel();
-statue.setPosition(0, 0, 0);
+const statue = new BaseModel({ scale: [0.4, 0.4, 0.4] });
 statue.setUpdateCallback((updateObject) => {
   const eulers = updateObject.eulers;
   eulers[2]++;
@@ -96,7 +97,7 @@ const { buffer: tileBuffer } = webgpu
   .addVertexAttribute(2) // u, v (texture)
   .build();
 
-const statueData = parseOBJCode(assets.statueObj, { scale: 0.15 });
+const statueData = parseOBJCode(assets.statueObj, { transform: statue.matrix });
 const { buffer: statueBuffer, vertexCount: statueVertexCount } = webgpu
   .setupBuffer(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST, new Float32Array(statueData))
   .addVertexAttribute(3) // x, y, z (vertex)
@@ -117,7 +118,8 @@ const { buffer: timeBuffer } = webgpu
   .setupBuffer(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, 4) // 4-bytes integer
   .build();
 
-const gunData = parseOBJCode(assets.gunObj, { scale: 0.25, translate: [0.8, -1.75, -1.0], useNormal: true });
+// const gunData = parseOBJCode(assets.gunObj, { scale: 0.25, translate: [0.8, -1.75, -1.0], useNormal: true });
+const gunData = parseOBJCode(assets.gunObj, { transform: new BaseModel({ position: [0.8, -1.75, -1.0], scale: [0.25, 0.25, 0.25] }).matrix, useNormal: true });
 const {
   buffer: gunBuffer,
   bufferLayout: gunBufferLayout,
@@ -283,10 +285,11 @@ function render() {
     ],
   };
 
+  console.log(scene.camera.getFlatData());
   webgpu.queueWriteBuffer(objectBuffer, 0, scene.data, 0, scene.data.length);
   webgpu.queueWriteBuffer(uniformBuffer, 0, scene.camera.view);
   webgpu.queueWriteBuffer(uniformBuffer, 64, scene.camera.projection);
-  webgpu.queueWriteBuffer(cameraBuffer, 0, scene.camera.flatData(), 0, 12);
+  webgpu.queueWriteBuffer(cameraBuffer, 0, new Float32Array(scene.camera.getFlatData()), 0, 12);
   webgpu.queueWriteBuffer(timeBuffer, 0, new Float32Array([elapsedTime]));
 
   webgpu

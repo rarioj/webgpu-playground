@@ -1,4 +1,4 @@
-import { Base3DObject } from "./Base3DObject.js";
+import { BaseObject3D } from "./BaseObject3D.js";
 import { degreeToRadian } from "../helper/maths.js";
 
 import { vec3, mat4 } from "https://wgpu-matrix.org/dist/3.x/wgpu-matrix.module.js";
@@ -6,7 +6,7 @@ import { vec3, mat4 } from "https://wgpu-matrix.org/dist/3.x/wgpu-matrix.module.
 /**
  * @classdesc
  */
-export class BaseCamera extends Base3DObject {
+export class BaseCamera extends BaseObject3D {
   /**
    * @type {HTMLCanvasElement}
    */
@@ -75,35 +75,44 @@ export class BaseCamera extends Base3DObject {
     this.aspect = aspect;
     this.near = near;
     this.far = far;
+    this.forward = [0, 0, 0];
+    this.right = [0, 0, 0];
+    this.up = [0, 0, 0];
 
     this.updateView();
     this.updateProjection();
   }
 
   /**
-   * @returns {mat4}
+   *
    */
   updateView() {
     const phi = degreeToRadian(this.eulers[1]);
     const theta = degreeToRadian(this.eulers[2]);
 
-    this.forward = [Math.cos(theta) * Math.cos(phi), Math.sin(theta) * Math.cos(phi), Math.sin(phi)];
-    this.right = vec3.normalize(vec3.cross(this.forward, [0, 0, 1]));
-    this.up = vec3.normalize(vec3.cross(this.right, this.forward));
+    this.forward[0] = Math.cos(theta) * Math.cos(phi);
+    this.forward[1] = Math.sin(theta) * Math.cos(phi);
+    this.forward[2] = Math.sin(phi);
+
+    const right = vec3.normalize(vec3.cross(this.forward, [0, 0, 1]));
+    this.right[0] = right[0];
+    this.right[1] = right[1];
+    this.right[2] = right[2];
+
+    const up = vec3.normalize(vec3.cross(this.right, this.forward));
+    this.up[0] = up[0];
+    this.up[1] = up[1];
+    this.up[2] = up[2];
 
     const target = vec3.add(this.position, this.forward);
     this.view = mat4.lookAt(this.position, target, this.up);
-
-    return this.view;
   }
 
   /**
-   * @returns {mat4}
+   *
    */
   updateProjection() {
     this.projection = mat4.perspective(this.fov, this.aspect, this.near, this.far);
-
-    return this.projection;
   }
 
   /**
@@ -113,28 +122,5 @@ export class BaseCamera extends Base3DObject {
     super.update();
     this.updateView();
     // this.updateProjection();
-  }
-
-  /**
-   * @returns {Float32Array}
-   */
-  flatData() {
-    const dy = Math.tan(Math.PI / 8);
-    const dx = (dy * this.canvas.width) / this.canvas.height;
-
-    return new Float32Array([
-      this.forward[0],
-      this.forward[1],
-      this.forward[2],
-      0.0,
-      dx * this.right[0],
-      dx * this.right[1],
-      dx * this.right[2],
-      0.0,
-      dy * this.up[0],
-      dy * this.up[1],
-      dy * this.up[2],
-      0.0,
-    ]);
   }
 }

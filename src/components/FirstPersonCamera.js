@@ -8,6 +8,16 @@ import { vec3 } from "https://wgpu-matrix.org/dist/3.x/wgpu-matrix.module.js";
  */
 export class FirstPersonCamera extends BaseCamera {
   /**
+   * @type {number}
+   */
+  verticalScaling;
+
+  /**
+   * @type {number}
+   */
+  horizontalScaling;
+
+  /**
    * @type {boolean}
    */
   flipX;
@@ -33,6 +43,16 @@ export class FirstPersonCamera extends BaseCamera {
   pointerLockElement;
 
   /**
+   * @type {vec3}
+   */
+  scaledRight;
+
+  /**
+   * @type {vec3}
+   */
+  scaledUp;
+
+  /**
    * @type {{ forward: number, right: number, up: number }}
    */
   movements;
@@ -43,27 +63,14 @@ export class FirstPersonCamera extends BaseCamera {
   mouseIsDragging;
 
   /**
-   * @type {HTMLElement}
+   * @type {{keypress: HTMLElement, mousemove: HTMLElement, keystacks: {Object.<string, string>}, timer: number}}
    */
-  debugKeypress;
-
-  /**
-   * @type {HTMLElement}
-   */
-  debugMousemove;
-
-  /**
-   * @type {{Object.<string, string>}}
-   */
-  debugKeystacks;
-
-  /**
-   * @type {number}
-   */
-  debugMousetimer;
+  debugger;
 
   /**
    * @param {Object} [options]
+   * @param {number} [options.verticalScaling]
+   * @param {number} [options.horizontalScaling]
    * @param {boolean} [options.flipX]
    * @param {boolean} [options.flipY]
    * @param {number} [options.moveSpeed]
@@ -73,22 +80,36 @@ export class FirstPersonCamera extends BaseCamera {
   constructor(options = {}) {
     super(options);
 
-    const { flipX = false, flipY = false, moveSpeed = 0.02, orientSpeed = 1, pointerLockElement = this.canvas } = options;
+    const {
+      verticalScaling = Math.tan(Math.PI / 8),
+      horizontalScaling = (verticalScaling * this.canvas.width) / this.canvas.height,
+      flipX = false,
+      flipY = false,
+      moveSpeed = 0.02,
+      orientSpeed = 1,
+      pointerLockElement = this.canvas,
+    } = options;
 
+    this.verticalScaling = verticalScaling;
+    this.horizontalScaling = horizontalScaling;
     this.flipX = flipX;
     this.flipY = flipY;
     this.moveSpeed = moveSpeed;
     this.orientSpeed = orientSpeed;
     this.pointerLockElement = pointerLockElement;
+    this.scaledRight = [0, 0, 0];
+    this.scaledUp = [0, 0, 0];
     this.movements = { forward: 0, right: 0, up: 0 };
     this.mouseIsDragging = false;
 
     this.setupControl();
 
     if (this.debug) {
-      this.debugKeypress = addDebugElement({ label: "⌨" }).inner;
-      this.debugMousemove = addDebugElement({ label: "🖱" }).inner;
-      this.debugKeystacks = {};
+      this.debugger = {};
+      this.debugger.keypress = addDebugElement({ label: "⌨" }).inner;
+      this.debugger.mousemove = addDebugElement({ label: "🖱" }).inner;
+      this.debugger.keystacks = {};
+      this.debugger.timer = 0;
     }
   }
 
@@ -149,8 +170,8 @@ export class FirstPersonCamera extends BaseCamera {
     }
 
     if (this.debug) {
-      this.debugKeystacks[event.code] = event.code;
-      this.debugKeypress.innerText = Object.values(this.debugKeystacks).join("+");
+      this.debugger.keystacks[event.code] = event.code;
+      this.debugger.keypress.innerText = Object.values(this.debugger.keystacks).join("+");
     }
   }
 
@@ -172,8 +193,8 @@ export class FirstPersonCamera extends BaseCamera {
     }
 
     if (this.debug) {
-      delete this.debugKeystacks[event.code];
-      this.debugKeypress.innerText = Object.values(this.debugKeystacks).join("+");
+      delete this.debugger.keystacks[event.code];
+      this.debugger.keypress.innerText = Object.values(this.debugger.keystacks).join("+");
     }
   }
 
@@ -196,10 +217,10 @@ export class FirstPersonCamera extends BaseCamera {
     this.orient(moveX / 5, moveY / 5);
 
     if (this.debug) {
-      this.debugMousemove.innerText = `${moveX.toFixed(1)}x${moveY.toFixed(1)}`;
-      clearTimeout(this.debugMousetimer);
-      this.debugMousetimer = setTimeout(() => {
-        this.debugMousemove.innerText = "";
+      this.debugger.mousemove.innerText = `${moveX.toFixed(1)}x${moveY.toFixed(1)}`;
+      clearTimeout(this.debugger.timer);
+      this.debugger.timer = setTimeout(() => {
+        this.debugger.mousemove.innerText = "";
       }, 100);
     }
   }
@@ -237,8 +258,21 @@ export class FirstPersonCamera extends BaseCamera {
   /**
    *
    */
+  updateFieldOfView() {
+    this.scaledRight[0] = this.horizontalScaling * this.right[0];
+    this.scaledRight[1] = this.horizontalScaling * this.right[1];
+    this.scaledRight[2] = this.horizontalScaling * this.right[2];
+    this.scaledUp[0] = this.verticalScaling * this.up[0];
+    this.scaledUp[1] = this.verticalScaling * this.up[1];
+    this.scaledUp[2] = this.verticalScaling * this.up[2];
+  }
+
+  /**
+   *
+   */
   update() {
     super.update();
     this.move();
+    this.updateFieldOfView();
   }
 }

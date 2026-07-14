@@ -1,4 +1,4 @@
-import { mat4, vec3, vec4 } from "https://wgpu-matrix.org/dist/3.x/wgpu-matrix.module.js";
+import { vec4, mat4 } from "https://wgpu-matrix.org/dist/3.x/wgpu-matrix.module.js";
 
 /**
  * @file
@@ -7,15 +7,14 @@ import { mat4, vec3, vec4 } from "https://wgpu-matrix.org/dist/3.x/wgpu-matrix.m
 /**
  * @param {string} code
  * @param {Object} [options]
- * @param {number} [options.scale]
- * @param {vec3} [options.translate]
+ * @param {mat4} [options.transform]
  * @param {boolean} [options.useVertex]
  * @param {boolean} [options.useTexture]
  * @param {boolean} [options.useNormal]
  * @returns {number[]}
  */
 export function parseOBJCode(code, options = {}) {
-  const { scale = false, translate = undefined, useVertex = true, useTexture = true, useNormal = false } = options;
+  const { transform = undefined, useVertex = true, useTexture = true, useNormal = false } = options;
 
   const v = [];
   const vt = [];
@@ -24,11 +23,8 @@ export function parseOBJCode(code, options = {}) {
   const lines = code.split(/\r?\n/).filter((line) => line.trim() !== "");
 
   const matrix = mat4.identity();
-  if (translate) {
-    mat4.multiply(matrix, mat4.translation(translate), matrix);
-  }
-  if (scale) {
-    mat4.multiply(matrix, mat4.scaling([scale, scale, scale]), matrix);
+  if (transform) {
+    mat4.multiply(matrix, transform, matrix);
   }
 
   /**

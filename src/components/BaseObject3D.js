@@ -3,7 +3,12 @@ import { vec3 } from "https://wgpu-matrix.org/dist/3.x/wgpu-matrix.module.js";
 /**
  * @classdesc
  */
-export class Base3DObject {
+export class BaseObject3D {
+  /**
+   * @type {number[][]}
+   */
+  arrayData;
+
   /**
    * @type {string}
    */
@@ -39,6 +44,7 @@ export class Base3DObject {
   constructor(options = {}) {
     const { label = "Unnamed 3D object", position = [0, 0, 0], eulers = [0, 0, 0], debug = false } = options;
 
+    this.arrayData = [];
     this.label = label;
     this.position = position;
     this.eulers = eulers;
@@ -51,7 +57,9 @@ export class Base3DObject {
    * @param {number} [z]
    */
   setPosition(x = 0, y = 0, z = 0) {
-    this.position = [x, y, z];
+    this.position[0] = x;
+    this.position[1] = y;
+    this.position[2] = z;
   }
 
   /**
@@ -60,16 +68,16 @@ export class Base3DObject {
    * @param {number} [z] Roll
    */
   setEulers(x = 0, y = 0, z = 0) {
-    this.eulers = [x, y, z];
+    this.eulers[0] = x;
+    this.eulers[1] = y;
+    this.eulers[2] = z;
   }
 
   /**
    * @param {function(Base3DObject): void} callback
    */
   setUpdateCallback(callback) {
-    if (typeof callback === "function") {
-      this.updateCallback = callback;
-    }
+    this.updateCallback = callback;
   }
 
   /**
@@ -79,5 +87,12 @@ export class Base3DObject {
     if (typeof this.updateCallback === "function") {
       this.updateCallback(this);
     }
+  }
+
+  /**
+   * @type {number[]}
+   */
+  getFlatData() {
+    return this.arrayData.flat(Infinity);
   }
 }
