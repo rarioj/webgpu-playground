@@ -3,7 +3,7 @@ import { createCanvas } from "./src/helper/elements.js";
 import { loadAssets } from "./src/helper/utilities.js";
 import { FirstPersonCamera } from "./src/components/FirstPersonCamera.js";
 import { BaseModel } from "./src/components/BaseModel.js";
-import { SceneBuilder } from "./src/components/SceneBuilder.js";
+import { BaseScene } from "./src/components/BaseScene.js";
 import { assetArray, triangleVertices } from "./config.js";
 
 //// Initialisation
@@ -24,7 +24,7 @@ const { context, format } = await webgpu.init();
 const camera = new FirstPersonCamera({ canvas, debug: true });
 camera.setPosition(-7, -0.5, 0.5);
 
-const scene = new SceneBuilder(camera);
+const scene = new BaseScene();
 for (let i = -5; i < 5; i++) {
   const model = new BaseModel();
   model.setPosition(2, i, 0.5);
@@ -34,9 +34,8 @@ for (let i = -5; i < 5; i++) {
     eulers[2] = eulers[2] % 360;
     updateObject.setEulers(eulers[0], eulers[1], eulers[2]);
   });
-  scene.addModel(model);
+  scene.addObject(model);
 }
-scene.build();
 
 //// Assets
 
@@ -93,6 +92,8 @@ const { pipeline } = webgpu
 
 function render() {
   scene.update();
+  camera.update();
+  const sceneData = scene.getStorageFloat();
 
   /** @type {GPURenderPassDescriptor} */
   const renderPassDescriptor = {
@@ -107,7 +108,7 @@ function render() {
     depthStencilAttachment,
   };
 
-  webgpu.queueWriteBuffer(objectBuffer, 0, scene.data, 0, scene.data.length);
+  webgpu.queueWriteBuffer(objectBuffer, 0, sceneData, 0, sceneData.length);
   webgpu.queueWriteBuffer(uniformBuffer, 0, camera.view);
   webgpu.queueWriteBuffer(uniformBuffer, 64, camera.projection);
 
@@ -117,7 +118,7 @@ function render() {
     .setPipeline(pipeline)
     .setVertexBuffer(0, triangleBuffer)
     .setBindGroup(0, bindGroup)
-    .draw(3, scene.models.length)
+    .draw(3, scene.objects.length)
     .end()
     .queueSubmit();
 

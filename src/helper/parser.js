@@ -1,4 +1,4 @@
-import { vec4, mat4 } from "https://wgpu-matrix.org/dist/3.x/wgpu-matrix.module.js";
+import { vec4, mat4 } from "../external/wgpu-matrix.js";
 
 /**
  * @file

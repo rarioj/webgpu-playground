@@ -1,41 +1,26 @@
 import { BaseCamera } from "./BaseCamera.js";
 import { addDebugElement } from "../helper/elements.js";
 
-import { vec3 } from "https://wgpu-matrix.org/dist/3.x/wgpu-matrix.module.js";
+import { vec3 } from "../external/wgpu-matrix.js";
 
 /**
  * @classdesc
  */
 export class FirstPersonCamera extends BaseCamera {
   /**
-   * @type {number}
+   * @type {[number, number]} vertical, horizontal
    */
-  verticalScaling;
+  scaling;
 
   /**
-   * @type {number}
+   * @type {[boolean, boolean]} x, y
    */
-  horizontalScaling;
+  flip;
 
   /**
-   * @type {boolean}
+   * @type {[number, number]} move, orient
    */
-  flipX;
-
-  /**
-   * @type {boolean}
-   */
-  flipY;
-
-  /**
-   * @type {number}
-   */
-  moveSpeed;
-
-  /**
-   * @type {number}
-   */
-  orientSpeed;
+  speed;
 
   /**
    * @type {HTMLElement}
@@ -53,19 +38,9 @@ export class FirstPersonCamera extends BaseCamera {
   scaledUp;
 
   /**
-   * @type {{ forward: number, right: number, up: number }}
+   * @type {{ forward: number, right: number, up: number, drag: boolean }}
    */
   movements;
-
-  /**
-   * @type {boolean}
-   */
-  mouseIsDragging;
-
-  /**
-   * @type {{keypress: HTMLElement, mousemove: HTMLElement, keystacks: {Object.<string, string>}, timer: number}}
-   */
-  debugger;
 
   /**
    * @param {Object} [options]
@@ -90,27 +65,22 @@ export class FirstPersonCamera extends BaseCamera {
       pointerLockElement = this.canvas,
     } = options;
 
-    this.verticalScaling = verticalScaling;
-    this.horizontalScaling = horizontalScaling;
-    this.flipX = flipX;
-    this.flipY = flipY;
-    this.moveSpeed = moveSpeed;
-    this.orientSpeed = orientSpeed;
+    this.scaling = [verticalScaling, horizontalScaling];
+    this.flip = [flipX, flipY];
+    this.speed = [moveSpeed, orientSpeed];
     this.pointerLockElement = pointerLockElement;
     this.scaledRight = [0, 0, 0];
     this.scaledUp = [0, 0, 0];
-    this.movements = { forward: 0, right: 0, up: 0 };
-    this.mouseIsDragging = false;
+    this.movements = { forward: 0, right: 0, up: 0, drag: false };
+
+    if (this.attributes?.debug) {
+      this.attributes.keypress = addDebugElement({ label: "⌨" }).inner;
+      this.attributes.mousemove = addDebugElement({ label: "🖱" }).inner;
+      this.attributes.keystacks = {};
+      this.attributes.timer = 0;
+    }
 
     this.setupControl();
-
-    if (this.debug) {
-      this.debugger = {};
-      this.debugger.keypress = addDebugElement({ label: "⌨" }).inner;
-      this.debugger.mousemove = addDebugElement({ label: "🖱" }).inner;
-      this.debugger.keystacks = {};
-      this.debugger.timer = 0;
-    }
   }
 
   /**
@@ -157,21 +127,21 @@ export class FirstPersonCamera extends BaseCamera {
    */
   keydown(event) {
     if (event.code == "KeyW") {
-      this.movements.forward = this.moveSpeed;
+      this.movements.forward = this.speed[0];
     }
     if (event.code == "KeyS") {
-      this.movements.forward = -this.moveSpeed;
+      this.movements.forward = -this.speed[0];
     }
     if (event.code == "KeyA") {
-      this.movements.right = -this.moveSpeed;
+      this.movements.right = -this.speed[0];
     }
     if (event.code == "KeyD") {
-      this.movements.right = this.moveSpeed;
+      this.movements.right = this.speed[0];
     }
 
-    if (this.debug) {
-      this.debugger.keystacks[event.code] = event.code;
-      this.debugger.keypress.innerText = Object.values(this.debugger.keystacks).join("+");
+    if (this.attributes?.debug) {
+      this.attributes.keystacks[event.code] = event.code;
+      this.attributes.keypress.innerText = Object.values(this.attributes.keystacks).join("+");
     }
   }
 
@@ -192,9 +162,9 @@ export class FirstPersonCamera extends BaseCamera {
       this.movements.right = 0;
     }
 
-    if (this.debug) {
-      delete this.debugger.keystacks[event.code];
-      this.debugger.keypress.innerText = Object.values(this.debugger.keystacks).join("+");
+    if (this.attributes?.debug) {
+      delete this.attributes.keystacks[event.code];
+      this.attributes.keypress.innerText = Object.values(this.attributes.keystacks).join("+");
     }
   }
 
@@ -203,8 +173,8 @@ export class FirstPersonCamera extends BaseCamera {
    * @param {number} y
    */
   orient(x, y) {
-    this.eulers[1] = Math.min(89, Math.max(-89, this.eulers[1] - y * this.orientSpeed));
-    this.eulers[2] -= x * this.orientSpeed;
+    this.eulers[1] = Math.min(89, Math.max(-89, this.eulers[1] - y * this.speed[1]));
+    this.eulers[2] -= x * this.speed[1];
     this.eulers[2] %= 360;
   }
 
@@ -212,15 +182,15 @@ export class FirstPersonCamera extends BaseCamera {
    * @param {MouseEvent} event
    */
   mousemove(event) {
-    const moveX = this.flipX ? -event.movementX : event.movementX;
-    const moveY = this.flipY ? -event.movementY : event.movementY;
+    const moveX = this.flip[0] ? -event.movementX : event.movementX;
+    const moveY = this.flip[1] ? -event.movementY : event.movementY;
     this.orient(moveX / 5, moveY / 5);
 
-    if (this.debug) {
-      this.debugger.mousemove.innerText = `${moveX.toFixed(1)}x${moveY.toFixed(1)}`;
-      clearTimeout(this.debugger.timer);
-      this.debugger.timer = setTimeout(() => {
-        this.debugger.mousemove.innerText = "";
+    if (this.attributes?.debug) {
+      this.attributes.mousemove.innerText = `${moveX.toFixed(1)}x${moveY.toFixed(1)}`;
+      clearTimeout(this.attributes.timer);
+      this.attributes.timer = setTimeout(() => {
+        this.attributes.mousemove.innerText = "";
       }, 100);
     }
   }
@@ -232,20 +202,20 @@ export class FirstPersonCamera extends BaseCamera {
     switch (event.type) {
       case "pointerup":
       case "pointercancel":
-        if (!this.mouseIsDragging) {
+        if (!this.movements.drag) {
           return;
         }
-        this.mouseIsDragging = false;
+        this.movements.drag = false;
         this.movements.forward = 0;
         this.pointerLockElement.releasePointerCapture(event.pointerId);
         break;
       case "pointerdown":
-        this.mouseIsDragging = true;
-        this.movements.forward = this.moveSpeed;
+        this.movements.drag = true;
+        this.movements.forward = this.speed[0];
         this.pointerLockElement.setPointerCapture(event.pointerId);
         break;
       case "pointermove":
-        if (!this.mouseIsDragging) {
+        if (!this.movements.drag) {
           return;
         }
         this.mousemove(event);
@@ -258,13 +228,13 @@ export class FirstPersonCamera extends BaseCamera {
   /**
    *
    */
-  updateFieldOfView() {
-    this.scaledRight[0] = this.horizontalScaling * this.right[0];
-    this.scaledRight[1] = this.horizontalScaling * this.right[1];
-    this.scaledRight[2] = this.horizontalScaling * this.right[2];
-    this.scaledUp[0] = this.verticalScaling * this.up[0];
-    this.scaledUp[1] = this.verticalScaling * this.up[1];
-    this.scaledUp[2] = this.verticalScaling * this.up[2];
+  scaleHorizontalVertical() {
+    this.scaledRight[0] = this.scaling[1] * this.right[0];
+    this.scaledRight[1] = this.scaling[1] * this.right[1];
+    this.scaledRight[2] = this.scaling[1] * this.right[2];
+    this.scaledUp[0] = this.scaling[0] * this.up[0];
+    this.scaledUp[1] = this.scaling[0] * this.up[1];
+    this.scaledUp[2] = this.scaling[0] * this.up[2];
   }
 
   /**
@@ -273,6 +243,6 @@ export class FirstPersonCamera extends BaseCamera {
   update() {
     super.update();
     this.move();
-    this.updateFieldOfView();
+    this.scaleHorizontalVertical();
   }
 }

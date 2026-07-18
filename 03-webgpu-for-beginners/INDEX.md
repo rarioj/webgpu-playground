@@ -22,8 +22,8 @@ Learning series from [WebGPU for Beginners](https://www.youtube.com/playlist?lis
 
 ### Compute Shaders: Ray Tracing
 
-- [ ] Compute Shaders 101 + Getting Data In
-- [ ] Acceleration Structures
+- [X] [Compute Shaders 101 + Getting Data In](./12-compute-shaders-getting-data/index.html)
+- [X] [Acceleration Structures](./13-acceleration-structures/index.html)
 - [ ] Reflections + Image Based Lighting
 - [ ] Triangles
 - [ ] Tracing an OBJ Model + General Transforms

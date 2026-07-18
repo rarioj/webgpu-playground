@@ -1,19 +1,11 @@
-import { vec3 } from "https://wgpu-matrix.org/dist/3.x/wgpu-matrix.module.js";
+import { BaseObject } from "./BaseObject.js";
+
+import { vec3 } from "../external/wgpu-matrix.js";
 
 /**
  * @classdesc
  */
-export class BaseObject3D {
-  /**
-   * @type {number[][]}
-   */
-  arrayData;
-
-  /**
-   * @type {string}
-   */
-  label;
-
+export class BaseObject3D extends BaseObject {
   /**
    * @type {vec3}
    */
@@ -25,30 +17,17 @@ export class BaseObject3D {
   eulers;
 
   /**
-   * @type {boolean}
-   */
-  debug;
-
-  /**
-   * @type {function(Base3DObject): void}
-   */
-  updateCallback;
-
-  /**
    * @param {Object} [options]
-   * @param {string} [options.label]
    * @param {vec3} [options.position]
    * @param {vec3} [options.eulers]
-   * @param {boolean} [options.debug]
    */
   constructor(options = {}) {
-    const { label = "Unnamed 3D object", position = [0, 0, 0], eulers = [0, 0, 0], debug = false } = options;
+    super(options);
 
-    this.arrayData = [];
-    this.label = label;
+    const { position = [0, 0, 0], eulers = [0, 0, 0] } = options;
+
     this.position = position;
     this.eulers = eulers;
-    this.debug = debug;
   }
 
   /**
@@ -63,6 +42,13 @@ export class BaseObject3D {
   }
 
   /**
+   * @returns {vec3}
+   */
+  getPosition() {
+    return this.position;
+  }
+
+  /**
    * @param {number} [x] Pitch
    * @param {number} [y] Yaw
    * @param {number} [z] Roll
@@ -74,25 +60,9 @@ export class BaseObject3D {
   }
 
   /**
-   * @param {function(Base3DObject): void} callback
+   * @returns {vec3}
    */
-  setUpdateCallback(callback) {
-    this.updateCallback = callback;
-  }
-
-  /**
-   *
-   */
-  update() {
-    if (typeof this.updateCallback === "function") {
-      this.updateCallback(this);
-    }
-  }
-
-  /**
-   * @type {number[]}
-   */
-  getFlatData() {
-    return this.arrayData.flat(Infinity);
+  getEulers() {
+    return this.eulers;
   }
 }

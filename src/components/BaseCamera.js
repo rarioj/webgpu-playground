@@ -1,7 +1,7 @@
 import { BaseObject3D } from "./BaseObject3D.js";
 import { degreeToRadian } from "../helper/maths.js";
 
-import { vec3, mat4 } from "https://wgpu-matrix.org/dist/3.x/wgpu-matrix.module.js";
+import { vec3, mat4 } from "../external/wgpu-matrix.js";
 
 /**
  * @classdesc
@@ -13,24 +13,9 @@ export class BaseCamera extends BaseObject3D {
   canvas;
 
   /**
-   * @type {number}
+   * @type {[number, number, number, number]} fov, aspect, near, far
    */
-  fov;
-
-  /**
-   * @type {number}
-   */
-  aspect;
-
-  /**
-   * @type {number}
-   */
-  near;
-
-  /**
-   * @type {number}
-   */
-  far;
+  frustum;
 
   /**
    * @type {vec3}
@@ -71,13 +56,12 @@ export class BaseCamera extends BaseObject3D {
     const { canvas = document.querySelector("canvas"), fov = Math.PI / 4, aspect = canvas.width / canvas.height, near = 0.1, far = 100 } = options;
 
     this.canvas = canvas;
-    this.fov = fov;
-    this.aspect = aspect;
-    this.near = near;
-    this.far = far;
+    this.frustum = [fov, aspect, near, far];
     this.forward = [0, 0, 0];
     this.right = [0, 0, 0];
     this.up = [0, 0, 0];
+    this.view = mat4.identity();
+    this.projection = mat4.identity();
 
     this.updateView();
     this.updateProjection();
@@ -105,14 +89,21 @@ export class BaseCamera extends BaseObject3D {
     this.up[2] = up[2];
 
     const target = vec3.add(this.position, this.forward);
-    this.view = mat4.lookAt(this.position, target, this.up);
+    const view = mat4.lookAt(this.position, target, this.up);
+    this.view.set(view);
   }
 
   /**
    *
    */
   updateProjection() {
-    this.projection = mat4.perspective(this.fov, this.aspect, this.near, this.far);
+    const projection = mat4.perspective(
+      this.frustum[0], // fov
+      this.frustum[1], // aspect
+      this.frustum[2], // near
+      this.frustum[3], // far
+    );
+    this.projection.set(projection);
   }
 
   /**

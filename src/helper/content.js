@@ -1,6 +1,6 @@
 import { loadAssets, getCookie, setCookie } from "./utilities.js";
 
-import showdown from "https://cdn.jsdelivr.net/npm/showdown@2.1.0/+esm";
+import showdown from "../external/showdown.js";
 
 /**
  * @file

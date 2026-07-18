@@ -3,7 +3,7 @@ import { createCanvas } from "./src/helper/elements.js";
 import { loadAssets } from "./src/helper/utilities.js";
 import { FirstPersonCamera } from "./src/components/FirstPersonCamera.js";
 import { BaseModel } from "./src/components/BaseModel.js";
-import { SceneBuilder } from "./src/components/SceneBuilder.js";
+import { BaseScene } from "./src/components/BaseScene.js";
 import { config } from "./config.js";
 import { parseOBJCode } from "./src/helper/parser.js";
 
@@ -25,9 +25,9 @@ const { context, format } = await webgpu.init();
 const camera = new FirstPersonCamera({ canvas, debug: true });
 camera.setPosition(-7, -0.5, 0.5);
 // construct raw array data
-camera.arrayData = [camera.forward, 0, camera.scaledRight, 0, camera.scaledUp, 0];
+camera.storage.main = [camera.forward, 0, camera.scaledRight, 0, camera.scaledUp, 0];
 
-const scene = new SceneBuilder(camera);
+const scene = new BaseScene();
 for (let i = -5; i < 5; i++) {
   const model = new BaseModel();
   model.setPosition(2, i, 0.5);
@@ -37,13 +37,13 @@ for (let i = -5; i < 5; i++) {
     eulers[2] = eulers[2] % 360;
     updateObject.setEulers(eulers[0], eulers[1], eulers[2]);
   });
-  scene.addModel(model, "triangles");
+  scene.addObject(model, "triangles");
 }
 for (let i = -8; i < 8; i++) {
   for (let j = -8; j < 8; j++) {
     const model = new BaseModel();
     model.setPosition(i, j, 0);
-    scene.addModel(model, "tiles");
+    scene.addObject(model, "tiles");
   }
 }
 const statue = new BaseModel({ scale: [0.4, 0.4, 0.4] });
@@ -53,8 +53,7 @@ statue.setUpdateCallback((updateObject) => {
   eulers[2] = eulers[2] % 360;
   updateObject.setEulers(eulers[0], eulers[1], eulers[2]);
 });
-scene.addModel(statue, "statue");
-scene.build();
+scene.addObject(statue, "statue");
 
 //// Assets
 
@@ -118,7 +117,6 @@ const { buffer: timeBuffer } = webgpu
   .setupBuffer(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, 4) // 4-bytes integer
   .build();
 
-// const gunData = parseOBJCode(assets.gunObj, { scale: 0.25, translate: [0.8, -1.75, -1.0], useNormal: true });
 const gunData = parseOBJCode(assets.gunObj, { transform: new BaseModel({ position: [0.8, -1.75, -1.0], scale: [0.25, 0.25, 0.25] }).matrix, useNormal: true });
 const {
   buffer: gunBuffer,
@@ -246,6 +244,12 @@ function render() {
   const elapsedTime = (currentTime - startTime) / 1000;
 
   scene.update();
+  camera.update();
+  const sceneData = scene.getStorageFloat();
+  const cameraData = camera.getStorageFloat();
+  const timeData = new Float32Array([elapsedTime]);
+  const triangleCount = scene.getTypeCount("triangles");
+  const tileCount = scene.getTypeCount("tiles");
 
   /** @type {GPURenderPassDescriptor} */
   const strobeLightRenderPassDescriptor = {
@@ -285,12 +289,11 @@ function render() {
     ],
   };
 
-  console.log(scene.camera.getFlatData());
-  webgpu.queueWriteBuffer(objectBuffer, 0, scene.data, 0, scene.data.length);
-  webgpu.queueWriteBuffer(uniformBuffer, 0, scene.camera.view);
-  webgpu.queueWriteBuffer(uniformBuffer, 64, scene.camera.projection);
-  webgpu.queueWriteBuffer(cameraBuffer, 0, new Float32Array(scene.camera.getFlatData()), 0, 12);
-  webgpu.queueWriteBuffer(timeBuffer, 0, new Float32Array([elapsedTime]));
+  webgpu.queueWriteBuffer(objectBuffer, 0, sceneData, 0, sceneData.length);
+  webgpu.queueWriteBuffer(uniformBuffer, 0, camera.view);
+  webgpu.queueWriteBuffer(uniformBuffer, 64, camera.projection);
+  webgpu.queueWriteBuffer(cameraBuffer, 0, cameraData, 0, cameraData.length);
+  webgpu.queueWriteBuffer(timeBuffer, 0, timeData);
 
   webgpu
     .setupEncoder()
@@ -306,15 +309,15 @@ function render() {
     // triangles
     .setVertexBuffer(0, triangleBuffer)
     .setBindGroup(1, fragmentBindGroup)
-    .draw(3, scene.typeCount["triangles"], 0, 0)
+    .draw(3, triangleCount, 0, 0)
     // tiles
     .setVertexBuffer(0, tileBuffer)
     .setBindGroup(1, fragmentBindGroup)
-    .draw(6, scene.typeCount["tiles"], 0, scene.typeCount["triangles"])
+    .draw(6, tileCount, 0, triangleCount)
     // statue
     .setVertexBuffer(0, statueBuffer)
     .setBindGroup(1, fragmentBindGroup)
-    .draw(statueVertexCount, 1, 0, scene.typeCount["triangles"] + scene.typeCount["tiles"])
+    .draw(statueVertexCount, 1, 0, triangleCount + tileCount)
     .end()
 
     // switch render pass to render the gun
