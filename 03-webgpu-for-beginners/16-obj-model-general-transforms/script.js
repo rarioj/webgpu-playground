@@ -1,12 +1,13 @@
 import { WebGPUCore } from "./src/webgpu/WebGPUCore.js";
 import { createCanvas, addDebugElement } from "./src/helper/elements.js";
-import { getQueryValue, loadAssets } from "./src/helper/utilities.js";
+import { loadAssets } from "./src/helper/utilities.js";
+import { config } from "./config.js";
 import { FirstPersonCamera } from "./src/components/FirstPersonCamera.js";
-import { BoundingVolumeHierarchyScene } from "./src/components/BoundingVolumeHierarchyScene.js";
-import { createSphericalNode } from "./src/helper/components.js";
-import { getRandom } from "./src/helper/maths.js";
+import { OBJModel } from "./src/components/OBJModel.js";
+import { BaseScene } from "./src/components/BaseScene.js";
+import { BaseModel } from "./src/components/BaseModel.js";
 
-const NUM_SPHERES = Math.floor(parseInt(getQueryValue("spheres", 512)));
+const MAX_BOUNCES = 4;
 
 //// Initialisation
 
@@ -28,42 +29,9 @@ const { context, format } = await webgpu.init({
   },
 });
 
-const debugPerformance = addDebugElement({ label: "⏱️" }).inner;
-const debugFramePerSec = addDebugElement({ label: "🏃‍♂️" }).inner;
-const debugSphereCount = addDebugElement({ label: "🟣" }).inner;
-debugSphereCount.innerText = `${NUM_SPHERES} spheres`;
-
-//// Scene
-
-const camera = new FirstPersonCamera({ debug: true, moveSpeed: 0.4, flipY: true });
-camera.setPosition(-30, 0, 0);
-camera.storage.main = [camera.position, 0, camera.forward, 0, camera.scaledRight, 0, camera.scaledUp, NUM_SPHERES];
-
-const scene = new BoundingVolumeHierarchyScene();
-for (let i = 0; i < NUM_SPHERES; i++) {
-  const center = [getRandom(-50.0, 100.0), getRandom(-50.0, 100.0), getRandom(-50.0, 100.0)];
-  const radius = getRandom(0.1, 2.9);
-  const color = [getRandom(0.1, 0.9), getRandom(0.1, 0.9), getRandom(0.1, 0.9)];
-  const sphere = createSphericalNode(center, radius, color);
-  sphere.storage.main = [sphere.center, 0, sphere.color, sphere.radius];
-  scene.addObject(sphere, "spheres");
-}
-scene.buildBoundingVolumeHierarchy();
-
 //// Assets
 
-const assets = await loadAssets([
-  {
-    name: "shaderCode",
-    url: "./shaders/shader.wgsl",
-    type: "text",
-  },
-  {
-    name: "raytracerCode",
-    url: "./shaders/raytracer.wgsl",
-    type: "text",
-  },
-]);
+const assets = await loadAssets(config.resources);
 
 const {
   view: screenView,
@@ -79,12 +47,35 @@ const {
   },
 });
 
+const { view: cubemapView, sampler: cubemapSampler } = await webgpu.createTextureViewSampler(assets.skyImages, {
+  textureViewDescriptor: { dimension: "cube" },
+});
+
+//// Scene
+
+const scene = new BaseScene();
+const statue = new OBJModel(assets.statueObj, { eulers: [180, 0, 0], scale: config.statueScale, useTexture: false, applyBVH: true });
+statue.setUpdateCallback((updateObject) => {
+  updateObject.eulers[2] += 2;
+  updateObject.eulers[2] %= 360;
+});
+scene.addObject(statue);
+
+const camera = new FirstPersonCamera({ debug: true, moveSpeed: 0.4, flipY: true });
+camera.setPosition(-10.0, 0.0, -1.0);
+camera.storage.main = [camera.position, 0, camera.forward, 0, camera.scaledRight, MAX_BOUNCES, camera.scaledUp, statue.bvh.objects.length];
+
+const debugPerformance = addDebugElement({ label: "⏱️" }).inner;
+const debugFramePerSec = addDebugElement({ label: "🏃‍♂️" }).inner;
+const debugSphereCount = addDebugElement({ label: "🔺" }).inner;
+debugSphereCount.innerText = `${statue.bvh?.nodes?.length} triangles`;
+
 //// Buffers
 
-const { buffer: parameterBuffer } = webgpu.setupBuffer(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, 64).build();
-const { buffer: spheresBuffer } = webgpu.setupBuffer(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, 32 * NUM_SPHERES).build();
-const { buffer: nodeBuffer } = webgpu.setupBuffer(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, 32 * scene.assigned).build();
-const { buffer: sphereIndicesBuffer } = webgpu.setupBuffer(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, 4 * NUM_SPHERES).build();
+const { buffer: parameterBuffer } = webgpu.setupBuffer(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, 128).build();
+const { buffer: objectsBuffer } = webgpu.setupBuffer(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, 112 * statue.bvh.objects.length).build();
+const { buffer: nodeBuffer } = webgpu.setupBuffer(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, 32 * statue.bvh.assigned).build();
+const { buffer: objectIndicesBuffer } = webgpu.setupBuffer(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, 4 * statue.bvh.indices.length).build();
 
 //// Bind groups
 
@@ -100,7 +91,7 @@ const { bindGroup: raytracerBindGroup, bindGroupLayout: raytracerBindGroupLayout
   .addBuffer(parameterBuffer, GPUShaderStage.COMPUTE, {
     type: "uniform",
   })
-  .addBuffer(spheresBuffer, GPUShaderStage.COMPUTE, {
+  .addBuffer(objectsBuffer, GPUShaderStage.COMPUTE, {
     type: "read-only-storage",
     hasDynamicOffset: false,
   })
@@ -108,10 +99,14 @@ const { bindGroup: raytracerBindGroup, bindGroupLayout: raytracerBindGroupLayout
     type: "read-only-storage",
     hasDynamicOffset: false,
   })
-  .addBuffer(sphereIndicesBuffer, GPUShaderStage.COMPUTE, {
+  .addBuffer(objectIndicesBuffer, GPUShaderStage.COMPUTE, {
     type: "read-only-storage",
     hasDynamicOffset: false,
   })
+  .addTexture(cubemapView, GPUShaderStage.COMPUTE, {
+    viewDimension: "cube",
+  })
+  .addSampler(cubemapSampler, GPUShaderStage.COMPUTE)
   .build();
 
 //// Pipelines
@@ -160,9 +155,10 @@ function render() {
   };
 
   webgpu.queueWriteBuffer(parameterBuffer, 0, camera.getStorageFloat(), 0, 16);
-  webgpu.queueWriteBuffer(spheresBuffer, 0, scene.getStorageFloat(), 0, 8 * NUM_SPHERES);
-  webgpu.queueWriteBuffer(nodeBuffer, 0, scene.getStorageFloat("nodes", 8 * scene.assigned), 0, 8 * scene.assigned);
-  webgpu.queueWriteBuffer(sphereIndicesBuffer, 0, scene.indices, 0, NUM_SPHERES);
+  webgpu.queueWriteBuffer(parameterBuffer, 64, statue.invertedMatrix);
+  webgpu.queueWriteBuffer(objectsBuffer, 0, statue.bvh.getStorageFloat(), 0, 28 * statue.bvh.objects.length);
+  webgpu.queueWriteBuffer(nodeBuffer, 0, statue.bvh.getStorageFloat("nodes", 8 * statue.bvh.assigned), 0, 8 * statue.bvh.assigned);
+  webgpu.queueWriteBuffer(objectIndicesBuffer, 0, statue.bvh.indices, 0, statue.bvh.indices.length);
 
   webgpu
     .setupEncoder()

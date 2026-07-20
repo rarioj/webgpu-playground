@@ -5,6 +5,9 @@
 ---
 
 - Learning material: [WebGPU for Beginners: Screen Warping](https://www.youtube.com/watch?v=i8fhaEeBCN8) and [WebGPU for Beginners: Rendering a Gun](https://www.youtube.com/watch?v=q8-8lBrSDts)
+
+#### Credits
+
 - Triangle and tile images source: [Lorem Picsum](https://picsum.photos/)
 - Statue 3D model source: [Knight V1 3D Model](https://free3d.com/3d-model/knight-v1--729368.html)
 - Cubemap image source: [Bambanani Sunset](https://polyhaven.com/a/bambanani_sunset)

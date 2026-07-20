@@ -24,7 +24,7 @@ Learning series from [WebGPU for Beginners](https://www.youtube.com/playlist?lis
 
 - [X] [Compute Shaders 101 + Getting Data In](./12-compute-shaders-getting-data/index.html)
 - [X] [Acceleration Structures](./13-acceleration-structures/index.html)
-- [ ] Reflections + Image Based Lighting
-- [ ] Triangles
-- [ ] Tracing an OBJ Model + General Transforms
+- [X] [Reflections + Image Based Lighting](./14-reflections-image-based-lighting/index.html)
+- [X] [Triangles](./15-triangles/index.html)
+- [X] [Tracing an OBJ Model + General Transforms](./16-obj-model-general-transforms/index.html)
 - [ ] Multiple Models

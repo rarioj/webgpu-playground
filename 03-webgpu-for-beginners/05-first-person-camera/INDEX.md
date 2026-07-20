@@ -5,6 +5,9 @@
 ---
 
 - Learning material: [WebGPU for Beginners: First Person Camera](https://www.youtube.com/watch?v=mDamyLYKiVw)
+
+#### Credits
+
 - Triangle image source: [Lorem Picsum](https://picsum.photos/)
 
 #### Camera Controls

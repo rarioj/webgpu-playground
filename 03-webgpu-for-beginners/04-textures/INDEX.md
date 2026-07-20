@@ -5,4 +5,7 @@
 ---
 
 - Learning material: [WebGPU for Beginners 08: Textures](https://www.youtube.com/watch?v=QubvRWJHTCA)
+
+#### Credits
+
 - Triangle image source: [Lorem Picsum](https://picsum.photos/)

@@ -5,6 +5,9 @@
 ---
 
 - Learning material: [WebGPU for Beginners: Loading OBJ Models](https://www.youtube.com/watch?v=uUQfMGcdBbs)
+
+#### Credits
+
 - Triangle and tile images source: [Lorem Picsum](https://picsum.photos/)
 - Statue 3D model source: [Apollo V1 3D Model](https://free3d.com/3d-model/apollo-v1--289672.html)
 

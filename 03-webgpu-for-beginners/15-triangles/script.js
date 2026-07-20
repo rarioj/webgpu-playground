@@ -1,12 +1,16 @@
 import { WebGPUCore } from "./src/webgpu/WebGPUCore.js";
 import { createCanvas, addDebugElement } from "./src/helper/elements.js";
 import { getQueryValue, loadAssets } from "./src/helper/utilities.js";
+import { config } from "./config.js";
 import { FirstPersonCamera } from "./src/components/FirstPersonCamera.js";
 import { BoundingVolumeHierarchyScene } from "./src/components/BoundingVolumeHierarchyScene.js";
-import { createSphericalNode } from "./src/helper/components.js";
+import { createSphericalNode, createTriangularNode } from "./src/helper/components.js";
 import { getRandom } from "./src/helper/maths.js";
 
-const NUM_SPHERES = Math.floor(parseInt(getQueryValue("spheres", 512)));
+const NUM_OBJECTS = Math.floor(parseInt(getQueryValue("objects", 512)));
+const NUM_BUBBLES = Math.floor(NUM_OBJECTS / 2);
+const NUM_TRIANGLES = NUM_OBJECTS - NUM_BUBBLES;
+const MAX_BOUNCES = 4;
 
 //// Initialisation
 
@@ -30,40 +34,14 @@ const { context, format } = await webgpu.init({
 
 const debugPerformance = addDebugElement({ label: "⏱️" }).inner;
 const debugFramePerSec = addDebugElement({ label: "🏃‍♂️" }).inner;
-const debugSphereCount = addDebugElement({ label: "🟣" }).inner;
-debugSphereCount.innerText = `${NUM_SPHERES} spheres`;
-
-//// Scene
-
-const camera = new FirstPersonCamera({ debug: true, moveSpeed: 0.4, flipY: true });
-camera.setPosition(-30, 0, 0);
-camera.storage.main = [camera.position, 0, camera.forward, 0, camera.scaledRight, 0, camera.scaledUp, NUM_SPHERES];
-
-const scene = new BoundingVolumeHierarchyScene();
-for (let i = 0; i < NUM_SPHERES; i++) {
-  const center = [getRandom(-50.0, 100.0), getRandom(-50.0, 100.0), getRandom(-50.0, 100.0)];
-  const radius = getRandom(0.1, 2.9);
-  const color = [getRandom(0.1, 0.9), getRandom(0.1, 0.9), getRandom(0.1, 0.9)];
-  const sphere = createSphericalNode(center, radius, color);
-  sphere.storage.main = [sphere.center, 0, sphere.color, sphere.radius];
-  scene.addObject(sphere, "spheres");
-}
-scene.buildBoundingVolumeHierarchy();
+const debugBubbleCount = addDebugElement({ label: "🫧" }).inner;
+debugBubbleCount.innerText = `${NUM_BUBBLES} bubbles`;
+const debugTriangleCount = addDebugElement({ label: "🔺" }).inner;
+debugTriangleCount.innerText = `${NUM_TRIANGLES} triangles`;
 
 //// Assets
 
-const assets = await loadAssets([
-  {
-    name: "shaderCode",
-    url: "./shaders/shader.wgsl",
-    type: "text",
-  },
-  {
-    name: "raytracerCode",
-    url: "./shaders/raytracer.wgsl",
-    type: "text",
-  },
-]);
+const assets = await loadAssets(config.resources);
 
 const {
   view: screenView,
@@ -79,12 +57,45 @@ const {
   },
 });
 
+const { view: cubemapView, sampler: cubemapSampler } = await webgpu.createTextureViewSampler(assets.skyImages, {
+  textureViewDescriptor: { dimension: "cube" },
+});
+
+//// Scene
+
+const camera = new FirstPersonCamera({ debug: true, moveSpeed: 0.4, flipY: true });
+camera.setPosition(-30, 0, 0);
+camera.storage.main = [camera.position, MAX_BOUNCES, camera.forward, NUM_OBJECTS, camera.scaledRight, 0, camera.scaledUp, 0];
+
+const scene = new BoundingVolumeHierarchyScene();
+for (let i = 0; i < NUM_BUBBLES; i++) {
+  const center = [getRandom(-50.0, 100.0), getRandom(-50.0, 100.0), getRandom(-50.0, 100.0)];
+  const radius = getRandom(0.1, 2.9);
+  const color = [getRandom(0.75, 0.9), getRandom(0.75, 0.9), getRandom(0.75, 0.9)];
+  const sphere = createSphericalNode(center, radius, color);
+  sphere.storage.main = [sphere.center, 0, sphere.color, sphere.radius, 0, 0, 0, 0, 0, 0, 0, 0];
+  scene.addObject(sphere, "objects");
+}
+for (let i = 0; i < NUM_TRIANGLES; i++) {
+  const center = [getRandom(-50.0, 100.0), getRandom(-50.0, 100.0), getRandom(-50.0, 100.0)];
+  const offsets = [
+    [getRandom(-3, 6), getRandom(-3, 6), getRandom(-3, 6)],
+    [getRandom(-3, 6), getRandom(-3, 6), getRandom(-3, 6)],
+    [getRandom(-3, 6), getRandom(-3, 6), getRandom(-3, 6)],
+  ];
+  const color = [getRandom(0.75, 0.9), getRandom(0.75, 0.9), getRandom(0.75, 0.9)];
+  const triangle = createTriangularNode(center, offsets, color);
+  triangle.storage.main = [triangle.corners[0], 1, triangle.corners[1], 1, triangle.corners[2], 1, triangle.color, 1];
+  scene.addObject(triangle, "objects");
+}
+scene.buildBoundingVolumeHierarchy();
+
 //// Buffers
 
 const { buffer: parameterBuffer } = webgpu.setupBuffer(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, 64).build();
-const { buffer: spheresBuffer } = webgpu.setupBuffer(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, 32 * NUM_SPHERES).build();
+const { buffer: objectsBuffer } = webgpu.setupBuffer(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, 64 * NUM_OBJECTS).build();
 const { buffer: nodeBuffer } = webgpu.setupBuffer(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, 32 * scene.assigned).build();
-const { buffer: sphereIndicesBuffer } = webgpu.setupBuffer(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, 4 * NUM_SPHERES).build();
+const { buffer: objectIndicesBuffer } = webgpu.setupBuffer(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, 4 * NUM_OBJECTS).build();
 
 //// Bind groups
 
@@ -100,7 +111,7 @@ const { bindGroup: raytracerBindGroup, bindGroupLayout: raytracerBindGroupLayout
   .addBuffer(parameterBuffer, GPUShaderStage.COMPUTE, {
     type: "uniform",
   })
-  .addBuffer(spheresBuffer, GPUShaderStage.COMPUTE, {
+  .addBuffer(objectsBuffer, GPUShaderStage.COMPUTE, {
     type: "read-only-storage",
     hasDynamicOffset: false,
   })
@@ -108,10 +119,14 @@ const { bindGroup: raytracerBindGroup, bindGroupLayout: raytracerBindGroupLayout
     type: "read-only-storage",
     hasDynamicOffset: false,
   })
-  .addBuffer(sphereIndicesBuffer, GPUShaderStage.COMPUTE, {
+  .addBuffer(objectIndicesBuffer, GPUShaderStage.COMPUTE, {
     type: "read-only-storage",
     hasDynamicOffset: false,
   })
+  .addTexture(cubemapView, GPUShaderStage.COMPUTE, {
+    viewDimension: "cube",
+  })
+  .addSampler(cubemapSampler, GPUShaderStage.COMPUTE)
   .build();
 
 //// Pipelines
@@ -160,9 +175,9 @@ function render() {
   };
 
   webgpu.queueWriteBuffer(parameterBuffer, 0, camera.getStorageFloat(), 0, 16);
-  webgpu.queueWriteBuffer(spheresBuffer, 0, scene.getStorageFloat(), 0, 8 * NUM_SPHERES);
+  webgpu.queueWriteBuffer(objectsBuffer, 0, scene.getStorageFloat(), 0, 16 * NUM_OBJECTS);
   webgpu.queueWriteBuffer(nodeBuffer, 0, scene.getStorageFloat("nodes", 8 * scene.assigned), 0, 8 * scene.assigned);
-  webgpu.queueWriteBuffer(sphereIndicesBuffer, 0, scene.indices, 0, NUM_SPHERES);
+  webgpu.queueWriteBuffer(objectIndicesBuffer, 0, scene.indices, 0, NUM_OBJECTS);
 
   webgpu
     .setupEncoder()

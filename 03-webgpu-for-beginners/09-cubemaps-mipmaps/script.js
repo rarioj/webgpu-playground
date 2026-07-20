@@ -3,9 +3,9 @@ import { createCanvas } from "./src/helper/elements.js";
 import { loadAssets } from "./src/helper/utilities.js";
 import { FirstPersonCamera } from "./src/components/FirstPersonCamera.js";
 import { BaseModel } from "./src/components/BaseModel.js";
+import { OBJModel } from "./src/components/OBJModel.js";
 import { BaseScene } from "./src/components/BaseScene.js";
 import { assetArray, triangleVertices, tileVertices } from "./config.js";
-import { parseOBJCode } from "./src/helper/parser.js";
 
 //// Initialisation
 
@@ -19,6 +19,22 @@ const canvas = createCanvas({
 });
 const webgpu = new WebGPUCore(canvas);
 const { context, format } = await webgpu.init();
+
+//// Assets
+
+const assets = await loadAssets(assetArray);
+const { view: cubemapView, sampler: cubemapSampler } = await webgpu.createTextureViewSampler(
+  [assets.cubemap_px, assets.cubemap_nx, assets.cubemap_py, assets.cubemap_ny, assets.cubemap_pz, assets.cubemap_nz],
+  { textureViewDescriptor: { dimension: "cube" } },
+);
+const {
+  view: imageView,
+  sampler: imageSampler,
+  bindGroupBuilder: fragmentBindGroupBuilder,
+} = await webgpu.createTextureViewSampler(assets.image, {
+  enableMipmap: true,
+  samplerDescriptor: { maxAnisotropy: 4, minFilter: "linear", mipmapFilter: "linear" },
+});
 
 //// Scene
 
@@ -46,7 +62,7 @@ for (let i = -8; i < 8; i++) {
     scene.addObject(model, "tiles");
   }
 }
-const statue = new BaseModel({ scale: [0.5, 0.5, 0.5] });
+const statue = new OBJModel(assets.statue, { scale: [0.25, 0.25, 0.25] });
 statue.setUpdateCallback((updateObject) => {
   const eulers = updateObject.eulers;
   eulers[2]++;
@@ -54,22 +70,6 @@ statue.setUpdateCallback((updateObject) => {
   updateObject.setEulers(eulers[0], eulers[1], eulers[2]);
 });
 scene.addObject(statue, "statue");
-
-//// Assets
-
-const assets = await loadAssets(assetArray);
-const { view: cubemapView, sampler: cubemapSampler } = await webgpu.createTextureViewSampler(
-  [assets.cubemap_px, assets.cubemap_nx, assets.cubemap_py, assets.cubemap_ny, assets.cubemap_pz, assets.cubemap_nz],
-  { textureViewDescriptor: { dimension: "cube" } },
-);
-const {
-  view: imageView,
-  sampler: imageSampler,
-  bindGroupBuilder: fragmentBindGroupBuilder,
-} = await webgpu.createTextureViewSampler(assets.image, {
-  enableMipmap: true,
-  samplerDescriptor: { maxAnisotropy: 4, minFilter: "linear", mipmapFilter: "linear" },
-});
 
 //// Buffers
 
@@ -85,9 +85,9 @@ const { buffer: tileBuffer } = webgpu
   .addVertexAttribute(2) // u, v
   .build();
 
-const statueData = parseOBJCode(assets.statue, { transform: statue.matrix });
+const statueData = statue.getStorageFloat("object");
 const { buffer: statueBuffer } = webgpu
-  .setupBuffer(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST, new Float32Array(statueData))
+  .setupBuffer(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST, statueData)
   .addVertexAttribute(3) // x, y, z
   .addVertexAttribute(2) // u, v
   .build();

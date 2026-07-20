@@ -1,0 +1,1 @@
+[Hussar V1 3D Model](https://free3d.com/3d-model/hussar-v1--273763.html) from [Free3D](https://free3d.com/)

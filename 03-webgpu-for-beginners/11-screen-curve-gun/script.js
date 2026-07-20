@@ -3,9 +3,9 @@ import { createCanvas } from "./src/helper/elements.js";
 import { loadAssets } from "./src/helper/utilities.js";
 import { FirstPersonCamera } from "./src/components/FirstPersonCamera.js";
 import { BaseModel } from "./src/components/BaseModel.js";
+import { OBJModel } from "./src/components/OBJModel.js";
 import { BaseScene } from "./src/components/BaseScene.js";
 import { config } from "./config.js";
-import { parseOBJCode } from "./src/helper/parser.js";
 
 //// Initialisation
 
@@ -19,41 +19,6 @@ const canvas = createCanvas({
 });
 const webgpu = new WebGPUCore(canvas);
 const { context, format } = await webgpu.init();
-
-//// Scene
-
-const camera = new FirstPersonCamera({ canvas, debug: true });
-camera.setPosition(-7, -0.5, 0.5);
-// construct raw array data
-camera.storage.main = [camera.forward, 0, camera.scaledRight, 0, camera.scaledUp, 0];
-
-const scene = new BaseScene();
-for (let i = -5; i < 5; i++) {
-  const model = new BaseModel();
-  model.setPosition(2, i, 0.5);
-  model.setUpdateCallback((updateObject) => {
-    const eulers = updateObject.eulers;
-    eulers[2]++;
-    eulers[2] = eulers[2] % 360;
-    updateObject.setEulers(eulers[0], eulers[1], eulers[2]);
-  });
-  scene.addObject(model, "triangles");
-}
-for (let i = -8; i < 8; i++) {
-  for (let j = -8; j < 8; j++) {
-    const model = new BaseModel();
-    model.setPosition(i, j, 0);
-    scene.addObject(model, "tiles");
-  }
-}
-const statue = new BaseModel({ scale: [0.4, 0.4, 0.4] });
-statue.setUpdateCallback((updateObject) => {
-  const eulers = updateObject.eulers;
-  eulers[2]++;
-  eulers[2] = eulers[2] % 360;
-  updateObject.setEulers(eulers[0], eulers[1], eulers[2]);
-});
-scene.addObject(statue, "statue");
 
 //// Assets
 
@@ -82,6 +47,44 @@ const { bindGroupBuilder: gunSkinBindGroupBuilder } = await webgpu.createTexture
   },
 });
 
+//// Scene
+
+const camera = new FirstPersonCamera({ canvas, debug: true });
+camera.setPosition(-7, -0.5, 0.5);
+// construct raw array data
+camera.storage.main = [camera.forward, 0, camera.scaledRight, 0, camera.scaledUp, 0];
+
+const scene = new BaseScene();
+for (let i = -5; i < 5; i++) {
+  const model = new BaseModel();
+  model.setPosition(2, i, 0.5);
+  model.setUpdateCallback((updateObject) => {
+    const eulers = updateObject.eulers;
+    eulers[2]++;
+    eulers[2] = eulers[2] % 360;
+    updateObject.setEulers(eulers[0], eulers[1], eulers[2]);
+  });
+  scene.addObject(model, "triangles");
+}
+for (let i = -8; i < 8; i++) {
+  for (let j = -8; j < 8; j++) {
+    const model = new BaseModel();
+    model.setPosition(i, j, 0);
+    scene.addObject(model, "tiles");
+  }
+}
+const statue = new OBJModel(assets.statueObj, { scale: [0.25, 0.25, 0.25] });
+statue.setUpdateCallback((updateObject) => {
+  const eulers = updateObject.eulers;
+  eulers[2]++;
+  eulers[2] = eulers[2] % 360;
+  updateObject.setEulers(eulers[0], eulers[1], eulers[2]);
+});
+scene.addObject(statue, "statue");
+
+const gunTransform = new BaseModel({ position: [0.8, -1.75, -1.0], scale: [0.25, 0.25, 0.25] }).matrix;
+const gun = new OBJModel(assets.gunObj, { transform: gunTransform, useNormal: true });
+
 //// Buffers
 
 const { buffer: triangleBuffer, bufferLayout: triangleBufferLayout } = webgpu
@@ -96,9 +99,9 @@ const { buffer: tileBuffer } = webgpu
   .addVertexAttribute(2) // u, v (texture)
   .build();
 
-const statueData = parseOBJCode(assets.statueObj, { transform: statue.matrix });
+const statueData = statue.getStorageFloat("object");
 const { buffer: statueBuffer, vertexCount: statueVertexCount } = webgpu
-  .setupBuffer(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST, new Float32Array(statueData))
+  .setupBuffer(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST, statueData)
   .addVertexAttribute(3) // x, y, z (vertex)
   .addVertexAttribute(2) // u, v (texture)
   .build();
@@ -117,13 +120,13 @@ const { buffer: timeBuffer } = webgpu
   .setupBuffer(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, 4) // 4-bytes integer
   .build();
 
-const gunData = parseOBJCode(assets.gunObj, { transform: new BaseModel({ position: [0.8, -1.75, -1.0], scale: [0.25, 0.25, 0.25] }).matrix, useNormal: true });
+const gunData = gun.getStorageFloat("object");
 const {
   buffer: gunBuffer,
   bufferLayout: gunBufferLayout,
   vertexCount: gunVertexCount,
 } = webgpu
-  .setupBuffer(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST, new Float32Array(gunData))
+  .setupBuffer(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST, gunData)
   .addVertexAttribute(3) // x, y, z (vertex)
   .addVertexAttribute(2) // u, v (texture)
   .addVertexAttribute(3) // nx, ny, nz (normal)

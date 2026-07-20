@@ -5,6 +5,9 @@
 ---
 
 - Learning material: [WebGPU for Beginners: Multiple Triangles](https://www.youtube.com/watch?v=P2aWwaQv91o) and [WebGPU for Beginners: Depth Testing](https://www.youtube.com/watch?v=LpilBGSVRo0)
+
+#### Credits
+
 - Triangle images source: [Lorem Picsum](https://picsum.photos/)
 
 #### Camera Controls

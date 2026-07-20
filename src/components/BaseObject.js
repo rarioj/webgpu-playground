@@ -1,4 +1,9 @@
 /**
+ * @callback ObjectUpdateCallback
+ * @param {BaseObject} objectToUpdate
+ */
+
+/**
  * @classdesc
  */
 export class BaseObject {
@@ -13,7 +18,7 @@ export class BaseObject {
   attributes;
 
   /**
-   * @type {function(BaseObject): void}
+   * @type {ObjectUpdateCallback}
    */
   updateCallback;
 
@@ -29,7 +34,7 @@ export class BaseObject {
   }
 
   /**
-   * @param {function(BaseObject): void} callback
+   * @param {ObjectUpdateCallback} callback
    */
   setUpdateCallback(callback) {
     this.updateCallback = callback;
