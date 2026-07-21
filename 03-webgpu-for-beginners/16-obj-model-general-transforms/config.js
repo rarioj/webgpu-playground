@@ -1,4 +1,4 @@
-import { getQueryValue } from "./src/helper/utilities.js";
+import { getQueryValue } from "../../src/helper/utilities.js";
 
 let statueObjPath = "./assets/models/Apollo_V1/16771_Apollo_V1_NEW.obj";
 let statueObjScale = [0.25, 0.25, 0.25];
@@ -37,12 +37,12 @@ export const config = {};
 config.resources = [
   {
     name: "shaderCode",
-    url: "./shaders/shader.wgsl",
+    url: `./${getQueryValue("page")}/shaders/shader.wgsl`,
     type: "text",
   },
   {
     name: "raytracerCode",
-    url: "./shaders/raytracer.wgsl",
+    url: `./${getQueryValue("page")}/shaders/raytracer.wgsl`,
     type: "text",
   },
   {

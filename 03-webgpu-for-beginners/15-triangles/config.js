@@ -1,14 +1,16 @@
+import { getQueryValue } from "../../src/helper/utilities.js";
+
 export const config = {};
 
 config.resources = [
   {
     name: "shaderCode",
-    url: "./shaders/shader.wgsl",
+    url: `./${getQueryValue("page")}/shaders/shader.wgsl`,
     type: "text",
   },
   {
     name: "raytracerCode",
-    url: "./shaders/raytracer.wgsl",
+    url: `./${getQueryValue("page")}/shaders/raytracer.wgsl`,
     type: "text",
   },
   {

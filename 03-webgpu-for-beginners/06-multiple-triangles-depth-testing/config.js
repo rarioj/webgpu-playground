@@ -1,7 +1,9 @@
+import { getQueryValue } from "../../src/helper/utilities.js";
+
 export const assetArray = [
   {
     name: "shader",
-    url: "./shaders/shader.wgsl",
+    url: `./${getQueryValue("page")}/shaders/shader.wgsl`,
     type: "text",
   },
   {

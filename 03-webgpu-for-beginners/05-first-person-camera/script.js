@@ -1,8 +1,8 @@
-import { WebGPUCore } from "./src/webgpu/WebGPUCore.js";
-import { createCanvas } from "./src/helper/elements.js";
-import { loadAssets } from "./src/helper/utilities.js";
-import { FirstPersonCamera } from "./src/components/FirstPersonCamera.js";
-import { BaseModel } from "./src/components/BaseModel.js";
+import { WebGPUCore } from "../../src/webgpu/WebGPUCore.js";
+import { createCanvas } from "../../src/helper/elements.js";
+import { getQueryValue, loadAssets } from "../../src/helper/utilities.js";
+import { FirstPersonCamera } from "../../src/components/FirstPersonCamera.js";
+import { BaseModel } from "../../src/components/BaseModel.js";
 
 //// Initialisation
 
@@ -33,7 +33,7 @@ model.setUpdateCallback((updateObject) => {
 const assets = await loadAssets([
   {
     name: "shader",
-    url: "./shaders/shader.wgsl",
+    url: `./${getQueryValue("page")}/shaders/shader.wgsl`,
     type: "text",
   },
   {

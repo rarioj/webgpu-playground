@@ -1,7 +1,7 @@
-import { WebGPUCore } from "./src/webgpu/WebGPUCore.js";
-import { createCanvas } from "./src/helper/elements.js";
-import { getQueryValue, loadAssets } from "./src/helper/utilities.js";
-import { getRandom } from "./src/helper/maths.js";
+import { WebGPUCore } from "../src/webgpu/WebGPUCore.js";
+import { createCanvas } from "../src/helper/elements.js";
+import { getQueryValue, loadAssets } from "../src/helper/utilities.js";
+import { getRandom } from "../src/helper/maths.js";
 
 const NUM_BALLS = Math.floor(parseInt(getQueryValue("balls", 100)));
 const BUFFER_SIZE = NUM_BALLS * 6 * Float32Array.BYTES_PER_ELEMENT;
@@ -27,7 +27,7 @@ const context = canvas.getContext("2d");
 const assets = await loadAssets([
   {
     name: "compute",
-    url: "./shaders/compute.wgsl",
+    url: `./${getQueryValue("page")}/shaders/compute.wgsl`,
     type: "text",
   },
 ]);

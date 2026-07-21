@@ -1,6 +1,6 @@
-import { WebGPUCore } from "./src/webgpu/WebGPUCore.js";
-import { createCanvas } from "./src/helper/elements.js";
-import { getQueryValue, loadAssets } from "./src/helper/utilities.js";
+import { WebGPUCore } from "../src/webgpu/WebGPUCore.js";
+import { createCanvas } from "../src/helper/elements.js";
+import { getQueryValue, loadAssets } from "../src/helper/utilities.js";
 
 const GRID_SIZE = Math.floor(parseInt(getQueryValue("size", 64)));
 const UPDATE_INTERVAL = 100;
@@ -26,12 +26,12 @@ const { context, format } = await webgpu.init();
 const assets = await loadAssets([
   {
     name: "render",
-    url: "./shaders/render.wgsl",
+    url: `./${getQueryValue("page")}/shaders/render.wgsl`,
     type: "text",
   },
   {
     name: "simulation",
-    url: "./shaders/simulation.wgsl",
+    url: `./${getQueryValue("page")}/shaders/simulation.wgsl`,
     type: "text",
   },
 ]);

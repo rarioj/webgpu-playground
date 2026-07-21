@@ -4,12 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="./src/external/pico.css" />
-    <link rel="icon" type="image/x-icon" href="./assets/icons/favicon.ico" />
     <title>WebGPU Playground</title>
   </head>
   <body>
     <main>
       <section></section>
+      <article></article>
       <footer>
         <nav>
           <ul>
@@ -19,7 +19,12 @@
           </ul>
           <ul>
             <li
-              ><a href="https://webgpu.org/"><img src="./assets/icons/webgpu-horizontal.svg" style="width: auto; height: 36px; margin-top: 8px" /></a
+              ><a href="https://webgpu.org/"
+                ><img
+                  src="./assets/icons/webgpu-dark.svg"
+                  data-light-icon="./assets/icons/webgpu-light.svg"
+                  data-dark-icon="./assets/icons/webgpu-dark.svg"
+                  style="width: auto; height: 36px; margin-top: 8px" /></a
             ></li>
             <li
               ><a href="https://picocss.com/"
@@ -44,10 +49,6 @@
         </nav>
       </footer>
     </main>
-    <script type="module">
-      import { serveMarkdown, applyThemeCreateToggle } from "./src/helper/content.js";
-      await serveMarkdown("./INDEX.md", document.querySelector("section"));
-      applyThemeCreateToggle(document.getElementById("theme-toggle"));
-    </script>
+    <script type="module" src="./content.js"></script>
   </body>
 </html>

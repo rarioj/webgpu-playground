@@ -5,7 +5,7 @@
 ---
 
 - Learning material: [WebGPU Realtime Raytracing: Tracing an OBJ Model](https://www.youtube.com/watch?v=lSLtn6PFW8M) and [WebGPU Realtime Raytracing: General Transforms](https://www.youtube.com/watch?v=BoHA5hcKZa8)
-- Select statue model: [Apollo](./index.html?statue=apollo) (421k) • [Ballerina](./index.html?statue=ballerina) (173k) • [Horus](./index.html?statue=horus) (273k) • [Hussar](./index.html?statue=hussar) (290k) • [Knight](./index.html?statue=knight) (94k) • [Rock Singer](./index.html?statue=rocksinger) (469k)
+- Select statue model: [Apollo](./index.html?page=03-webgpu-for-beginners/16-obj-model-general-transforms&statue=apollo) (421k) • [Ballerina](./index.html?page=03-webgpu-for-beginners/16-obj-model-general-transforms&statue=ballerina) (173k) • [Horus](./index.html?page=03-webgpu-for-beginners/16-obj-model-general-transforms&statue=horus) (273k) • [Hussar](./index.html?page=03-webgpu-for-beginners/16-obj-model-general-transforms&statue=hussar) (290k) • [Knight](./index.html?page=03-webgpu-for-beginners/16-obj-model-general-transforms&statue=knight) (94k) • [Rock Singer](./index.html?page=03-webgpu-for-beginners/16-obj-model-general-transforms&statue=rocksinger) (469k)
 
 #### Credits
 

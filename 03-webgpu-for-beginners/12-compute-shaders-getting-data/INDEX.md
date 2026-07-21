@@ -5,4 +5,4 @@
 ---
 
 - Learning material: [WebGPU Realtime Ray Tracing: Compute Shaders 101](https://www.youtube.com/watch?v=Gv0EiQfDI7w) and [WebGPU Realtime Ray Tracing: Getting Data in](https://www.youtube.com/watch?v=DpvhlaaCwf0)
-- Number of spheres: [256](./index.html?spheres=256) • [512](./index.html?spheres=512) • [1024](./index.html?spheres=1024) • [2048](./index.html?spheres=2048) • [4096](./index.html?spheres=4096) • [8192](./index.html?spheres=8192)
+- Number of spheres: [256](./index.html?page=03-webgpu-for-beginners/12-compute-shaders-getting-data&spheres=256) • [512](./index.html?page=03-webgpu-for-beginners/12-compute-shaders-getting-data&spheres=512) • [1024](./index.html?page=03-webgpu-for-beginners/12-compute-shaders-getting-data&spheres=1024) • [2048](./index.html?page=03-webgpu-for-beginners/12-compute-shaders-getting-data&spheres=2048) • [4096](./index.html?page=03-webgpu-for-beginners/12-compute-shaders-getting-data&spheres=4096) • [8192](./index.html?page=03-webgpu-for-beginners/12-compute-shaders-getting-data&spheres=8192)

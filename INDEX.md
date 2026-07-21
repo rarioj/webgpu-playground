@@ -14,12 +14,12 @@ Any external libraries are loaded directly from within the HTML file, with no re
 
 ### Learned
 
-- [x] [Your first WebGPU app](https://codelabs.developers.google.com/your-first-webgpu-app) by Brandon Jones, François Beaufort → [Conway's Game of Life](./01-conways-game-of-life/index.html)
-- [x] [WebGPU — All of the cores, none of the canvas](https://surma.dev/things/webgpu/) by Surma → [Collision Simulation](./02-collision-simulation/index.html)
+- [x] [Your first WebGPU app](https://codelabs.developers.google.com/your-first-webgpu-app) by Brandon Jones, François Beaufort → [Conway's Game of Life](./index.html?page=01-conways-game-of-life)
+- [x] [WebGPU — All of the cores, none of the canvas](https://surma.dev/things/webgpu/) by Surma → [Collision Simulation](./index.html?page=02-collision-simulation)
 
 ### Learning
 
-- [ ] 🎥 [WebGPU for Beginners](https://www.youtube.com/playlist?list=PLn3eTxaOtL2Ns3wkxdyS3CiqkJuwQdZzn) by The Graphics Guy → [Learning Materials](./03-webgpu-for-beginners/index.html)
+- [ ] 🎥 [WebGPU for Beginners](https://www.youtube.com/playlist?list=PLn3eTxaOtL2Ns3wkxdyS3CiqkJuwQdZzn) by The Graphics Guy → [Learning Materials](./index.html?page=03-webgpu-for-beginners)
 
 ### To Learn
 
@@ -43,7 +43,7 @@ Not in any particular order.
 ### Documentation and Specification
 
 - [WebGPU API](https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API) - The MDN Web Docs site provides information about Open Web technologies including HTML, CSS, and APIs for both Web sites and progressive web apps.
-- [W3C GPU for the Web Community Group](https://github.com/gpuweb/gpuweb) - The repository for the W3C GPU for the Web Community Group WebGPU API and WebGPU Shading Language (WGSL) specifications. → [WebGPU (Published Version)](https://www.w3.org/TR/webgpu/) | [WebGPU (Editor's Draft)](https://gpuweb.github.io/gpuweb/) | [WGSL (Published Version)](https://www.w3.org/TR/WGSL/) | [WGSL (Editor's Draft)](https://gpuweb.github.io/gpuweb/wgsl/) | [WebGPU API Reference](https://gpuweb.github.io/types/index.html)
+- [W3C GPU for the Web Community Group](https://github.com/gpuweb/gpuweb) - The repository for the W3C GPU for the Web Community Group WebGPU API and WebGPU Shading Language (WGSL) specifications. → [WebGPU (Published Version)](https://www.w3.org/TR/webgpu/) • [WebGPU (Editor's Draft)](https://gpuweb.github.io/gpuweb/) • [WGSL (Published Version)](https://www.w3.org/TR/WGSL/) • [WGSL (Editor's Draft)](https://gpuweb.github.io/gpuweb/wgsl/) • [WebGPU API Reference](https://gpuweb.github.io/types/index.html)
 
 ### Tools and Libraries
 

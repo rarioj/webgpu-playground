@@ -1,24 +1,26 @@
+import { getQueryValue } from "../../src/helper/utilities.js";
+
 export const config = {};
 
 config.assetArray = [
   {
     name: "shaderCode",
-    url: "./shaders/shader.wgsl",
+    url: `./${getQueryValue("page")}/shaders/shader.wgsl`,
     type: "text",
   },
   {
     name: "cubemapCode",
-    url: "./shaders/cubemap.wgsl",
+    url: `./${getQueryValue("page")}/shaders/cubemap.wgsl`,
     type: "text",
   },
   {
     name: "strobeLightCode",
-    url: "./shaders/strobeLight.wgsl",
+    url: `./${getQueryValue("page")}/shaders/strobeLight.wgsl`,
     type: "text",
   },
   {
     name: "hudCode",
-    url: "./shaders/hud.wgsl",
+    url: `./${getQueryValue("page")}/shaders/hud.wgsl`,
     type: "text",
   },
   {

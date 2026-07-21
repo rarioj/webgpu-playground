@@ -1,10 +1,10 @@
-import { WebGPUCore } from "./src/webgpu/WebGPUCore.js";
-import { createCanvas, addDebugElement } from "./src/helper/elements.js";
-import { getQueryValue, loadAssets } from "./src/helper/utilities.js";
-import { FirstPersonCamera } from "./src/components/FirstPersonCamera.js";
-import { BoundingVolumeHierarchyScene } from "./src/components/BoundingVolumeHierarchyScene.js";
-import { createSphericalNode } from "./src/helper/components.js";
-import { getRandom } from "./src/helper/maths.js";
+import { WebGPUCore } from "../../src/webgpu/WebGPUCore.js";
+import { createCanvas, addDebugElement } from "../../src/helper/elements.js";
+import { getQueryValue, loadAssets } from "../../src/helper/utilities.js";
+import { FirstPersonCamera } from "../../src/components/FirstPersonCamera.js";
+import { BoundingVolumeHierarchyScene } from "../../src/components/BoundingVolumeHierarchyScene.js";
+import { createSphericalNode } from "../../src/helper/components.js";
+import { getRandom } from "../../src/helper/maths.js";
 
 const NUM_SPHERES = Math.floor(parseInt(getQueryValue("spheres", 512)));
 
@@ -55,12 +55,12 @@ scene.buildBoundingVolumeHierarchy();
 const assets = await loadAssets([
   {
     name: "shaderCode",
-    url: "./shaders/shader.wgsl",
+    url: `./${getQueryValue("page")}/shaders/shader.wgsl`,
     type: "text",
   },
   {
     name: "raytracerCode",
-    url: "./shaders/raytracer.wgsl",
+    url: `./${getQueryValue("page")}/shaders/raytracer.wgsl`,
     type: "text",
   },
 ]);

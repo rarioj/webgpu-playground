@@ -1,12 +1,14 @@
+import { getQueryValue } from "../../src/helper/utilities.js";
+
 export const assetArray = [
   {
     name: "shader",
-    url: "./shaders/shader.wgsl",
+    url: `./${getQueryValue("page")}/shaders/shader.wgsl`,
     type: "text",
   },
   {
     name: "cubemap",
-    url: "./shaders/cubemap.wgsl",
+    url: `./${getQueryValue("page")}/shaders/cubemap.wgsl`,
     type: "text",
   },
   {

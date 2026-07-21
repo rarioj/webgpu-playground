@@ -1,11 +1,11 @@
-import { WebGPUCore } from "./src/webgpu/WebGPUCore.js";
-import { createCanvas, addDebugElement } from "./src/helper/elements.js";
-import { loadAssets } from "./src/helper/utilities.js";
+import { WebGPUCore } from "../../src/webgpu/WebGPUCore.js";
+import { createCanvas, addDebugElement } from "../../src/helper/elements.js";
+import { loadAssets } from "../../src/helper/utilities.js";
 import { config } from "./config.js";
-import { FirstPersonCamera } from "./src/components/FirstPersonCamera.js";
-import { OBJModel } from "./src/components/OBJModel.js";
-import { BaseScene } from "./src/components/BaseScene.js";
-import { BaseModel } from "./src/components/BaseModel.js";
+import { FirstPersonCamera } from "../../src/components/FirstPersonCamera.js";
+import { OBJModel } from "../../src/components/OBJModel.js";
+import { BaseScene } from "../../src/components/BaseScene.js";
+import { BaseModel } from "../../src/components/BaseModel.js";
 
 const MAX_BOUNCES = 4;
 

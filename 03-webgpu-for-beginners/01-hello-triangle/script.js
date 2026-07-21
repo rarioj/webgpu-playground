@@ -1,6 +1,6 @@
-import { WebGPUCore } from "./src/webgpu/WebGPUCore.js";
-import { createCanvas } from "./src/helper/elements.js";
-import { loadAssets } from "./src/helper/utilities.js";
+import { WebGPUCore } from "../../src/webgpu/WebGPUCore.js";
+import { createCanvas } from "../../src/helper/elements.js";
+import { getQueryValue, loadAssets } from "../../src/helper/utilities.js";
 
 //// Initialisation
 
@@ -20,7 +20,7 @@ const { context, format } = await webgpu.init();
 const assets = await loadAssets([
   {
     name: "shader",
-    url: "./shaders/shader.wgsl",
+    url: `./${getQueryValue("page")}/shaders/shader.wgsl`,
     type: "text",
   },
 ]);

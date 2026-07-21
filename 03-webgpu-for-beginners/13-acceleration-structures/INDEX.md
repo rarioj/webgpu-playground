@@ -5,7 +5,7 @@
 ---
 
 - Learning material: [WebGPU Realtime Raytracing: Acceleration Structures](https://www.youtube.com/watch?v=HvU3-A_OT1k)
-- Number of spheres: [256](./index.html?spheres=256) • [512](./index.html?spheres=512) • [1024](./index.html?spheres=1024) • [2048](./index.html?spheres=2048) • [4096](./index.html?spheres=4096) • [8192](./index.html?spheres=8192)
+- Number of spheres: [256](./index.html?page=03-webgpu-for-beginners/13-acceleration-structures&spheres=256) • [512](./index.html?page=03-webgpu-for-beginners/13-acceleration-structures&spheres=512) • [1024](./index.html?page=03-webgpu-for-beginners/13-acceleration-structures&spheres=1024) • [2048](./index.html?page=03-webgpu-for-beginners/13-acceleration-structures&spheres=2048) • [4096](./index.html?page=03-webgpu-for-beginners/13-acceleration-structures&spheres=4096) • [8192](./index.html?page=03-webgpu-for-beginners/13-acceleration-structures&spheres=8192)
 
 #### Camera Controls
 

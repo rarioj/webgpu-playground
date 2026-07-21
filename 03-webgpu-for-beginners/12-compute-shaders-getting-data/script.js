@@ -1,10 +1,10 @@
-import { WebGPUCore } from "./src/webgpu/WebGPUCore.js";
-import { createCanvas, addDebugElement } from "./src/helper/elements.js";
-import { getQueryValue, loadAssets } from "./src/helper/utilities.js";
-import { BaseCamera } from "./src/components/BaseCamera.js";
-import { BaseScene } from "./src/components/BaseScene.js";
-import { BaseObject3D } from "./src/components/BaseObject3D.js";
-import { getRandom } from "./src/helper/maths.js";
+import { WebGPUCore } from "../../src/webgpu/WebGPUCore.js";
+import { createCanvas, addDebugElement } from "../../src/helper/elements.js";
+import { getQueryValue, loadAssets } from "../../src/helper/utilities.js";
+import { BaseCamera } from "../../src/components/BaseCamera.js";
+import { BaseScene } from "../../src/components/BaseScene.js";
+import { BaseObject3D } from "../../src/components/BaseObject3D.js";
+import { getRandom } from "../../src/helper/maths.js";
 
 const NUM_SPHERES = Math.floor(parseInt(getQueryValue("spheres", 512)));
 
@@ -54,12 +54,12 @@ for (let i = 0; i < NUM_SPHERES; i++) {
 const assets = await loadAssets([
   {
     name: "shaderCode",
-    url: "./shaders/shader.wgsl",
+    url: `./${getQueryValue("page")}/shaders/shader.wgsl`,
     type: "text",
   },
   {
     name: "raytracerCode",
-    url: "./shaders/raytracer.wgsl",
+    url: `./${getQueryValue("page")}/shaders/raytracer.wgsl`,
     type: "text",
   },
 ]);

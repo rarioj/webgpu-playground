@@ -1,9 +1,9 @@
-import { WebGPUCore } from "./src/webgpu/WebGPUCore.js";
-import { createCanvas } from "./src/helper/elements.js";
-import { loadAssets } from "./src/helper/utilities.js";
-import { FirstPersonCamera } from "./src/components/FirstPersonCamera.js";
-import { BaseModel } from "./src/components/BaseModel.js";
-import { BaseScene } from "./src/components/BaseScene.js";
+import { WebGPUCore } from "../../src/webgpu/WebGPUCore.js";
+import { createCanvas } from "../../src/helper/elements.js";
+import { loadAssets } from "../../src/helper/utilities.js";
+import { FirstPersonCamera } from "../../src/components/FirstPersonCamera.js";
+import { BaseModel } from "../../src/components/BaseModel.js";
+import { BaseScene } from "../../src/components/BaseScene.js";
 import { assetArray, triangleVertices } from "./config.js";
 
 //// Initialisation
