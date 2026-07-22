@@ -15,16 +15,13 @@ for (const icon of allIcons) {
 }
 
 const button = document.createElement("a");
-button.ariaLabel = "Toggle theme";
-button.innerText = currentTheme === "dark" ? "☀️" : "🌙";
-button.style.cursor = "pointer";
-button.style.textDecoration = "none";
-button.style.fontSize = "24px";
+button.title = "Theme toggle";
+button.innerText = currentTheme === "dark" ? "🌕" : "🌘";
 button.onclick = () => {
   const toggleTheme = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
   document.documentElement.setAttribute("data-theme", toggleTheme);
   setCookie("theme", toggleTheme);
-  button.innerText = toggleTheme === "dark" ? "☀️" : "🌙";
+  button.innerText = toggleTheme === "dark" ? "🌕" : "🌘";
   const allIcons = document.querySelectorAll("img.theme-toggle");
   for (const icon of allIcons) {
     icon.src = icon.dataset[`${toggleTheme}Icon`];
@@ -44,7 +41,21 @@ if (available && pages[page]) {
   script.src = `${path}/script.js`;
   script.type = "module";
   document.body.appendChild(script);
+} else {
+  const article = document.querySelector("article");
+  article.remove();
 }
 
-const breadcrumb = document.querySelector("h6");
-document.title = breadcrumb ? breadcrumb.innerText : "WebGPU Playground";
+const header = document.querySelector("header");
+const heading1 = document.querySelector("h1");
+const heading6 = document.querySelector("h6");
+
+if (header) {
+  if (heading1) {
+    header.appendChild(heading1);
+  }
+  if (heading6) {
+    header.appendChild(heading6);
+    document.title = heading6 ? heading6.innerText : "WebGPU Playground";
+  }
+}

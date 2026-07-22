@@ -2,8 +2,6 @@
 
 ###### WebGPU for Beginners • WebGPU Playground
 
----
-
 Learning series from [WebGPU for Beginners](https://www.youtube.com/playlist?list=PLn3eTxaOtL2Ns3wkxdyS3CiqkJuwQdZzn) by The Graphics Guy.
 
 ### Rasterized Graphics

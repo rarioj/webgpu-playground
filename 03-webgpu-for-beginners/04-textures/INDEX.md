@@ -2,10 +2,10 @@
 
 ###### Textures • WebGPU for Beginners • WebGPU Playground
 
----
+##### Learning
 
-- Learning material: [WebGPU for Beginners 08: Textures](https://www.youtube.com/watch?v=QubvRWJHTCA)
+- [WebGPU for Beginners 08: Textures](https://www.youtube.com/watch?v=QubvRWJHTCA)
 
-#### Credits
+##### Credits
 
 - Triangle image source: [Lorem Picsum](https://picsum.photos/)

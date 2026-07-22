@@ -5,50 +5,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="./src/external/pico.css" />
     <title>WebGPU Playground</title>
+    <style>
+      footer li a {
+        cursor: pointer;
+        font-size: 1em;
+        line-height: 1em;
+        text-decoration: none;
+        vertical-align: middle;
+      }
+      footer img {
+        height: 2ex;
+        width: auto;
+      }
+    </style>
   </head>
   <body>
+    <header></header>
+    <hr />
     <main>
-      <section></section>
       <article></article>
-      <footer>
-        <nav>
-          <ul>
-            <li
-              ><strong><a href="https://rarioj.github.io/webgpu-playground/">WebGPU Playground</a></strong></li
-            >
-          </ul>
-          <ul>
-            <li
-              ><a href="https://webgpu.org/"
-                ><img
-                  src="./assets/icons/webgpu-dark.svg"
-                  data-light-icon="./assets/icons/webgpu-light.svg"
-                  data-dark-icon="./assets/icons/webgpu-dark.svg"
-                  style="width: auto; height: 36px; margin-top: 8px" /></a
-            ></li>
-            <li
-              ><a href="https://picocss.com/"
-                ><img
-                  class="theme-toggle"
-                  src="./assets/icons/pico-dark.svg"
-                  data-light-icon="./assets/icons/pico-light.svg"
-                  data-dark-icon="./assets/icons/pico-dark.svg"
-                  style="width: auto; height: 32px" /></a
-            ></li>
-            <li
-              ><a href="https://github.com/rarioj/webgpu-playground"
-                ><img
-                  class="theme-toggle"
-                  src="./assets/icons/github-dark.svg"
-                  data-light-icon="./assets/icons/github-light.svg"
-                  data-dark-icon="./assets/icons/github-dark.svg"
-                  style="width: auto; height: 32px; margin-top: 4px" /></a
-            ></li>
-            <li id="theme-toggle"></li>
-          </ul>
-        </nav>
-      </footer>
+      <section></section>
     </main>
+    <hr />
+    <footer>
+      <nav>
+        <ul>
+          <li><strong>WebGPU Playground</strong></li>
+        </ul>
+        <ul>
+          <li><a href="./index.html" title="Home">🏠</a></li>
+          <li
+            ><a href="https://webgpu.org/" target="_blank" title="WebGPU"><img src="./assets/icons/webgpu.svg" /></a
+          ></li>
+          <li
+            ><a href="https://picocss.com/" target="_blank" title="Pico ✨"
+              ><img
+                class="theme-toggle"
+                src="./assets/icons/pico-dark.svg"
+                data-light-icon="./assets/icons/pico-light.svg"
+                data-dark-icon="./assets/icons/pico-dark.svg" /></a
+          ></li>
+          <li
+            ><a href="https://github.com/rarioj/webgpu-playground" target="_blank" title="GitHub"
+              ><img
+                class="theme-toggle"
+                src="./assets/icons/github-dark.svg"
+                data-light-icon="./assets/icons/github-light.svg"
+                data-dark-icon="./assets/icons/github-dark.svg" /></a
+          ></li>
+          <li id="theme-toggle"></li>
+        </ul>
+      </nav>
+    </footer>
     <script type="module" src="./content.js"></script>
   </body>
 </html>

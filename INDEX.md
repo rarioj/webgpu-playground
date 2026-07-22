@@ -1,7 +1,5 @@
 # WebGPU Playground
 
----
-
 ## Overview
 
 This repository documents my personal journey of learning WebGPU from scratch. Because I primarily develop, test, and render examples on mobile devices (phones, tablets, and similar hardware), all code is written using only HTML, CSS, JavaScript, and WGSL without build tools, package managers, or framework-specific tooling.

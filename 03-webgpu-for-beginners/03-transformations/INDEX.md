@@ -2,6 +2,6 @@
 
 ###### Transformations • WebGPU for Beginners • WebGPU Playground
 
----
+##### Learning
 
-- Learning material: [WebGPU for Beginners 07: Transformations](https://www.youtube.com/watch?v=Ny0EuH1dlrM)
+- [WebGPU for Beginners 07: Transformations](https://www.youtube.com/watch?v=Ny0EuH1dlrM)
