@@ -255,6 +255,8 @@ fn computeMain(@builtin(global_invocation_id) GlobalInvocationId: vec3<u32>) {
     let screenSize: vec2<i32> = vec2<i32>(textureDimensions(colorBuffer));
     let screenPosition: vec2<i32> = vec2<i32>(i32(GlobalInvocationId.x), i32(GlobalInvocationId.y));
 
+    if screenPosition.x >= screenSize.x || screenPosition.y >= screenSize.y { return; }
+
     let horizontalCoeff: f32 = (f32(screenPosition.x) - f32(screenSize.x) / 2.0) / f32(screenSize.x);
     let verticalCoeff: f32 = (f32(screenPosition.y) - f32(screenSize.y) / 2.0) / f32(screenSize.y);
 

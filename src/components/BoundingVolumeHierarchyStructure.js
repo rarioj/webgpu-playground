@@ -1,14 +1,14 @@
 import { BaseScene } from "./BaseScene.js";
-import { NodeObject } from "./NodeObject.js";
+import { BaseNode } from "./BaseNode.js";
 
 import { vec3 } from "../external/wgpu-matrix.js";
 
 /**
  * @classdesc
  */
-export class BoundingVolumeHierarchyScene extends BaseScene {
+export class BoundingVolumeHierarchyStructure extends BaseScene {
   /**
-   * @type {NodeObject[]}
+   * @type {BaseNode[]}
    */
   nodes;
 
@@ -45,7 +45,7 @@ export class BoundingVolumeHierarchyScene extends BaseScene {
     const nodeGeneratedCount = 2 * objectCount - 1;
     this.nodes = new Array(nodeGeneratedCount);
     for (let i = 0; i < nodeGeneratedCount; i++) {
-      this.nodes[i] = new NodeObject();
+      this.nodes[i] = new BaseNode();
       for (let j = 0; j < this.nodes[i].storage.main.length; j++) {
         this.storage.nodes.push(this.nodes[i].storage.main[j]);
       }

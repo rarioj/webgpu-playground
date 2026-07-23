@@ -54,7 +54,31 @@ const { view: cubemapView, sampler: cubemapSampler } = await webgpu.createTextur
 //// Scene
 
 const scene = new BaseScene();
-const statue = new OBJModel(assets.statueObj, { eulers: [180, 0, 0], scale: config.statueScale, useTexture: false, applyBVH: true });
+const statue = new OBJModel(assets.statueObj, {
+  eulers: [180, 0, 0],
+  scale: config.statueScale,
+  useTexture: false,
+  useNormal: true,
+  applyBVH: true,
+  nodePostCreationCallback: (node) => {
+    node.storage.main = [
+      node.vertices[0],
+      0,
+      node.normals[0],
+      0,
+      node.vertices[1],
+      0,
+      node.normals[1],
+      0,
+      node.vertices[2],
+      0,
+      node.normals[2],
+      0,
+      node.attributes.color,
+      0,
+    ];
+  },
+});
 statue.setUpdateCallback((updateObject) => {
   updateObject.eulers[2] += 2;
   updateObject.eulers[2] %= 360;
@@ -155,7 +179,7 @@ function render() {
   };
 
   webgpu.queueWriteBuffer(parameterBuffer, 0, camera.getStorageFloat(), 0, 16);
-  webgpu.queueWriteBuffer(parameterBuffer, 64, statue.invertedMatrix);
+  webgpu.queueWriteBuffer(parameterBuffer, 64, statue.inversedMatrix);
   webgpu.queueWriteBuffer(objectsBuffer, 0, statue.bvh.getStorageFloat(), 0, 28 * statue.bvh.objects.length);
   webgpu.queueWriteBuffer(nodeBuffer, 0, statue.bvh.getStorageFloat("nodes", 8 * statue.bvh.assigned), 0, 8 * statue.bvh.assigned);
   webgpu.queueWriteBuffer(objectIndicesBuffer, 0, statue.bvh.indices, 0, statue.bvh.indices.length);

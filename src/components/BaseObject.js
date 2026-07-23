@@ -20,7 +20,7 @@ export class BaseObject {
   /**
    * @type {ObjectUpdateCallback}
    */
-  updateCallback;
+  updateCallbacks;
 
   /**
    * @param {Object} [options]
@@ -31,21 +31,22 @@ export class BaseObject {
 
     this.storage = { main: [] };
     this.attributes = { debug };
+    this.updateCallbacks = [];
   }
 
   /**
    * @param {ObjectUpdateCallback} callback
    */
   setUpdateCallback(callback) {
-    this.updateCallback = callback;
+    this.updateCallbacks.push(callback);
   }
 
   /**
    *
    */
   update() {
-    if (typeof this.updateCallback === "function") {
-      this.updateCallback(this);
+    for (let i = 0; i < this.updateCallbacks.length; i++) {
+      this.updateCallbacks[i](this);
     }
   }
 

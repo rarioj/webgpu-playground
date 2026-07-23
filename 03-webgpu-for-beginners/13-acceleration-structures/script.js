@@ -2,8 +2,8 @@ import { WebGPUCore } from "../../src/webgpu/WebGPUCore.js";
 import { createCanvas, addDebugElement } from "../../src/helper/elements.js";
 import { getQueryValue, loadAssets } from "../../src/helper/utilities.js";
 import { FirstPersonCamera } from "../../src/components/FirstPersonCamera.js";
-import { BoundingVolumeHierarchyScene } from "../../src/components/BoundingVolumeHierarchyScene.js";
-import { createSphericalNode } from "../../src/helper/components.js";
+import { BoundingVolumeHierarchyStructure } from "../../src/components/BoundingVolumeHierarchyStructure.js";
+import { SphericalNode } from "../../src/components/SphericalNode.js";
 import { getRandom } from "../../src/helper/maths.js";
 
 const NUM_SPHERES = Math.floor(parseInt(getQueryValue("spheres", 512)));
@@ -39,13 +39,14 @@ const camera = new FirstPersonCamera({ debug: true, moveSpeed: 0.4, flipY: true 
 camera.setPosition(-30, 0, 0);
 camera.storage.main = [camera.position, 0, camera.forward, 0, camera.scaledRight, 0, camera.scaledUp, NUM_SPHERES];
 
-const scene = new BoundingVolumeHierarchyScene();
+const scene = new BoundingVolumeHierarchyStructure();
 for (let i = 0; i < NUM_SPHERES; i++) {
-  const center = [getRandom(-50.0, 100.0), getRandom(-50.0, 100.0), getRandom(-50.0, 100.0)];
-  const radius = getRandom(0.1, 2.9);
-  const color = [getRandom(0.1, 0.9), getRandom(0.1, 0.9), getRandom(0.1, 0.9)];
-  const sphere = createSphericalNode(center, radius, color);
-  sphere.storage.main = [sphere.center, 0, sphere.color, sphere.radius];
+  const sphere = new SphericalNode({
+    center: [getRandom(-50.0, 100.0), getRandom(-50.0, 100.0), getRandom(-50.0, 100.0)],
+    color: [getRandom(0.1, 0.9), getRandom(0.1, 0.9), getRandom(0.1, 0.9)],
+    radius: getRandom(0.1, 2.9),
+  });
+  sphere.storage.main = [sphere.center, 0, sphere.attributes.color, sphere.radius];
   scene.addObject(sphere, "spheres");
 }
 scene.buildBoundingVolumeHierarchy();

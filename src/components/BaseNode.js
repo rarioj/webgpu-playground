@@ -5,7 +5,7 @@ import { vec3 } from "../external/wgpu-matrix.js";
 /**
  * @classdesc
  */
-export class NodeObject extends BaseObject {
+export class BaseNode extends BaseObject {
   /**
    * @type {vec3}
    */
@@ -28,12 +28,16 @@ export class NodeObject extends BaseObject {
 
   /**
    * @param {Object} [options]
+   * @param {vec3} [options.minCorner]
+   * @param {vec3} [options.maxCorner]
    */
   constructor(options = {}) {
     super(options);
 
-    this.minCorner = [Infinity, Infinity, Infinity];
-    this.maxCorner = [-Infinity, -Infinity, -Infinity];
+    const { minCorner = [Infinity, Infinity, Infinity], maxCorner = [-Infinity, -Infinity, -Infinity] } = options;
+
+    this.minCorner = minCorner;
+    this.maxCorner = maxCorner;
     this.leftChild = [0];
     this.primitiveCount = [0];
     this.storage.main = [this.minCorner, this.leftChild, this.maxCorner, this.primitiveCount];
