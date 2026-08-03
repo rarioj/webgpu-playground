@@ -1,11 +1,8 @@
-import { getCookie, setCookie, loadAssets, getQueryValue } from "./src/helper/utilities.js";
+import { getCookie, setCookie, getQueryValue } from "./src/utilities/helpers.js";
+import { loadAssets } from "./src/utilities/assets.js";
 import { pages } from "./pages.js";
 
 import showdown from "./src/external/showdown.js";
-
-/**
- * @file
- */
 
 const currentTheme = getCookie("theme") || "dark";
 document.documentElement.setAttribute("data-theme", currentTheme);
@@ -32,9 +29,9 @@ document.getElementById("theme-toggle").appendChild(button);
 const page = getQueryValue("page", false);
 const available = Object.hasOwn(pages, page);
 const path = page && available ? `./${page}` : ".";
-const markdown = await loadAssets([{ name: "content", url: `${path}/INDEX.md`, type: "text" }]);
+const markdown = await loadAssets([{ name: "content", url: `${path}/INDEX.md`, type: "text" }], true);
 const converter = new showdown.Converter({ openLinksInNewWindow: false, tasklists: true, parseImgDimensions: true });
-document.querySelector("section").innerHTML = converter.makeHtml(markdown.content);
+document.querySelector("section").innerHTML = converter.makeHtml(markdown.content.data);
 
 if (available && pages[page]) {
   const script = document.createElement("script");

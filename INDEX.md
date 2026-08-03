@@ -14,10 +14,12 @@ Any external libraries are loaded directly from within the HTML file, with no re
 
 - [x] [Your first WebGPU app](https://codelabs.developers.google.com/your-first-webgpu-app) by Brandon Jones, François Beaufort → [Conway's Game of Life](./index.html?page=01-conways-game-of-life)
 - [x] [WebGPU — All of the cores, none of the canvas](https://surma.dev/things/webgpu/) by Surma → [Collision Simulation](./index.html?page=02-collision-simulation)
+- [x] 🎥 [Introduction to WebGPU - CIS 565 GPU Programming Fall 2023](https://www.youtube.com/watch?v=41pC1MLMVdA) by Brandon Jones (Toji)
 
 ### Learning
 
 - [ ] 🎥 [WebGPU for Beginners](https://www.youtube.com/playlist?list=PLn3eTxaOtL2Ns3wkxdyS3CiqkJuwQdZzn) by The Graphics Guy → [Learning Materials](./index.html?page=03-webgpu-for-beginners)
+- [ ] 🎥 [WebGPU Tutorial](https://www.youtube.com/playlist?list=PLVHfUzm5DIVCZxjmaZsBXEXoohzSqeCnV) by Orillusion → [Learning Materials](./index.html?page=04-webgpu-tutorial)
 
 ### To Learn
 
@@ -30,10 +32,8 @@ Not in any particular order.
 - #️⃣ [WebGPU Examples](https://github.com/tsherif/webgpu-examples) by Tarek Sherif
 - #️⃣ [WebGPU Samples](https://github.com/webgpu/webgpu-samples) by Austin Eng
 - #️⃣ [RedGPU](https://github.com/redcamel/RedGPU) by @RedCamel15
-- 🎥 [Introduction to WebGPU - CIS 565 GPU Programming Fall 2023](https://www.youtube.com/watch?v=41pC1MLMVdA) by Brandon Jones (Toji)
 - 🎥 [WebGPU Graphics Programming Step-by-Step](https://www.youtube.com/playlist?list=PL_UrKDEhALdKh0118flOjuAnVIGKFUJXN)
 - 🎥 [WebGPU](https://www.youtube.com/playlist?list=PLTEbuqk52pIDtLeBrv0GcuHT8fy5RpLPZ) by Visionary 3D
-- 🎥 [WebGPU Tutorial](https://www.youtube.com/playlist?list=PLVHfUzm5DIVCZxjmaZsBXEXoohzSqeCnV) by Orillusion
 - 🎥 [WebGPU Game Dev](https://www.youtube.com/playlist?list=PLCnmpqh8sKKynYSJqrrC0nWwPB3OVf5lt) by 3Angle
 
 ## Other Resources

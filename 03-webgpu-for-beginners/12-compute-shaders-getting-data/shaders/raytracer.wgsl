@@ -77,7 +77,7 @@ fn rayColor(ray: Ray) -> vec3<f32> {
     return color;
 }
 
-@compute @workgroup_size(8, 8, 1)
+@compute @workgroup_size(16, 16, 1)
 fn computeMain(@builtin(global_invocation_id) GlobalInvocationId: vec3<u32>) {
     let screenSize: vec2<i32> = vec2<i32>(textureDimensions(colorBuffer));
     let screenPosition: vec2<i32> = vec2<i32>(i32(GlobalInvocationId.x), i32(GlobalInvocationId.y));

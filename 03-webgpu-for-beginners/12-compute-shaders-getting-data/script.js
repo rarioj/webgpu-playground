@@ -1,16 +1,16 @@
-import { WebGPUCore } from "../../src/webgpu/WebGPUCore.js";
-import { createCanvas, addDebugElement } from "../../src/helper/elements.js";
-import { getQueryValue, loadAssets } from "../../src/helper/utilities.js";
-import { BaseCamera } from "../../src/components/BaseCamera.js";
-import { BaseScene } from "../../src/components/BaseScene.js";
-import { BaseObject3D } from "../../src/components/BaseObject3D.js";
-import { getRandom } from "../../src/helper/maths.js";
+import { WebGPU } from "../../src/system/WebGPU.js";
+import { createCanvasElement, createDebugElement } from "../../src/utilities/elements.js";
+import { getQueryValue } from "../../src/utilities/helpers.js";
+import { loadAssets } from "../../src/utilities/assets.js";
+import { BaseObject } from "../../src/objects/BaseObject.js";
+import { CameraObject } from "../../src/objects/CameraObject.js";
+import { getRandom } from "../../src/utilities/maths.js";
 
 const NUM_SPHERES = Math.floor(parseInt(getQueryValue("spheres", 512)));
 
 //// Initialisation
 
-const canvas = createCanvas({
+const canvas = createCanvasElement({
   container: document.querySelector("article"),
   width: 800,
   height: 600,
@@ -18,77 +18,89 @@ const canvas = createCanvas({
     outline: "1px solid black",
   },
 });
-const webgpu = new WebGPUCore(canvas);
-const { context, format } = await webgpu.init({
-  deviceDescriptor: {
-    requiredFeatures: ["core-features-and-limits", "bgra8unorm-storage"],
-  },
-  canvasConfiguration: {
-    format: "bgra8unorm",
-  },
-});
+const webgpu = await WebGPU.init({ deviceDescriptor: { requiredFeatures: ["core-features-and-limits", "bgra8unorm-storage"] } });
+const context = webgpu.createCanvasContext(canvas, { format: "bgra8unorm" });
 
-const debugPerformance = addDebugElement({ label: "⏱️" }).inner;
-const debugFramePerSec = addDebugElement({ label: "🏃‍♂️" }).inner;
-const debugSphereCount = addDebugElement({ label: "🏀" }).inner;
+const debugPerformance = createDebugElement({ label: "⏱️" }).content;
+const debugFramePerSec = createDebugElement({ label: "🏃‍♂️" }).content;
+const debugSphereCount = createDebugElement({ label: "🏀" }).content;
 debugSphereCount.innerText = `${NUM_SPHERES} spheres`;
-
-//// Scene
-
-const camera = new BaseCamera();
-camera.setPosition(-30, 0, 0);
-camera.storage.main = [camera.position, 0, camera.forward, 0, camera.right, 0, camera.up, NUM_SPHERES];
-
-const scene = new BaseScene();
-for (let i = 0; i < NUM_SPHERES; i++) {
-  const sphere = new BaseObject3D();
-  sphere.position = [getRandom(-50.0, 100.0), getRandom(-50.0, 100.0), getRandom(-50.0, 100.0)];
-  sphere.color = [getRandom(0.1, 0.9), getRandom(0.1, 0.9), getRandom(0.1, 0.9)];
-  sphere.radius = getRandom(0.1, 2.9);
-  sphere.storage.main = [sphere.position, 0, sphere.color, sphere.radius];
-  scene.addObject(sphere, "spheres");
-}
 
 //// Assets
 
-const assets = await loadAssets([
-  {
-    name: "shaderCode",
-    url: `./${getQueryValue("page")}/shaders/shader.wgsl`,
-    type: "text",
-  },
-  {
-    name: "raytracerCode",
-    url: `./${getQueryValue("page")}/shaders/raytracer.wgsl`,
-    type: "text",
-  },
-]);
+const assets = await loadAssets(
+  [
+    {
+      name: "shaderCode",
+      url: `./${getQueryValue("page")}/shaders/shader.wgsl`,
+      type: "text",
+    },
+    {
+      name: "raytracerCode",
+      url: `./${getQueryValue("page")}/shaders/raytracer.wgsl`,
+      type: "text",
+    },
+  ],
+  true,
+);
 
-const {
-  view: screenView,
-  sampler: screenSampler,
-  bindGroupBuilder: screenBindGroupBuilder,
-} = await webgpu.createTextureViewSampler(null, {
-  textureDescriptor: {
-    format: "rgba8unorm",
-    usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING,
-  },
-  textureViewDescriptor: {
-    format: "rgba8unorm",
-  },
-});
+const { textureView: screenView, sampler: screenSampler } = webgpu
+  .setupTextureView(context)
+  .setTextureFormat("rgba8unorm")
+  .setTextureUsage(GPUTextureUsage.COPY_DST | GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING)
+  .build();
 
 //// Buffers
 
-const { buffer: parameterBuffer } = webgpu.setupBuffer(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, 64).build();
-const { buffer: spheresBuffer } = webgpu.setupBuffer(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, 32 * NUM_SPHERES).build();
+const { builder: parameterBufferBuilder, buffer: parameterBuffer } = webgpu
+  .setupBuffer()
+  .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
+  .setData(new Float32Array(16))
+  .build();
+
+const { builder: spheresBufferBuilder, buffer: spheresBuffer } = webgpu
+  .setupBuffer()
+  .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
+  .setData(new Float32Array(8 * NUM_SPHERES))
+  .build();
+
+//// Scene
+
+const camera = new CameraObject(context);
+camera.position = parameterBufferBuilder.dataPointer(0, 3);
+camera.forward = parameterBufferBuilder.dataPointer(4, 7);
+camera.right = parameterBufferBuilder.dataPointer(8, 11);
+camera.up = parameterBufferBuilder.dataPointer(12, 15);
+parameterBufferBuilder.data[15] = NUM_SPHERES;
+camera.setPosition(-30, 0, 0);
+camera.updateOrthonormalVectors();
+camera.updateViewMatrix();
+camera.updateProjectionMatrix();
+
+for (let i = 0; i < NUM_SPHERES; i++) {
+  spheresBufferBuilder.data[i * 8 + 0] = getRandom(-50.0, 100.0);
+  spheresBufferBuilder.data[i * 8 + 1] = getRandom(-50.0, 100.0);
+  spheresBufferBuilder.data[i * 8 + 2] = getRandom(-50.0, 100.0);
+  spheresBufferBuilder.data[i * 8 + 3] = 0;
+  spheresBufferBuilder.data[i * 8 + 4] = getRandom(0.1, 0.9);
+  spheresBufferBuilder.data[i * 8 + 5] = getRandom(0.1, 0.9);
+  spheresBufferBuilder.data[i * 8 + 6] = getRandom(0.1, 0.9);
+  spheresBufferBuilder.data[i * 8 + 7] = getRandom(0.1, 2.9);
+}
+
+parameterBufferBuilder.writeDataToBuffer();
+spheresBufferBuilder.writeDataToBuffer();
 
 //// Bind groups
 
-const { bindGroup: screenBindGroup, bindGroupLayout: screenBindGroupLayout } = screenBindGroupBuilder.build();
+const { bindGroup: screenBindGroup, bindGroupLayout: screenBindGroupLayout } = webgpu
+  .setupBindGroup("Screen fragment")
+  .addTexture(screenView, GPUShaderStage.FRAGMENT)
+  .addSampler(screenSampler, GPUShaderStage.FRAGMENT)
+  .build();
 
 const { bindGroup: raytracerBindGroup, bindGroupLayout: raytracerBindGroupLayout } = webgpu
-  .setupBindGroup()
+  .setupBindGroup("Ray tracing")
   .addStorageTexture(screenView, GPUShaderStage.COMPUTE, {
     access: "write-only",
     format: "rgba8unorm",
@@ -105,23 +117,35 @@ const { bindGroup: raytracerBindGroup, bindGroupLayout: raytracerBindGroupLayout
 
 //// Pipelines
 
-const { pipeline: screenPipeline } = webgpu
+const { pipeline: screenPipeline } = await webgpu
   .setupPipeline()
   .addBindGroupLayout(screenBindGroupLayout)
-  .setShaderCode(assets.shaderCode)
-  .setVertexShader("vertexMain")
-  .setFragmentShader("fragmentMain", { targets: [{ format }] })
-  .setPrimitive({ topology: "triangle-list" })
-  .build();
+  .useShaderCode(assets.shaderCode.data)
+  .setVertexShader()
+  .setFragmentShader({ targets: [{ format: context.getConfiguration().format }] })
+  .setRenderPrimitive({ topology: "triangle-list" })
+  .buildAsync();
 
-const { pipeline: raytracerPipeline } = webgpu
+const { pipeline: raytracerPipeline } = await webgpu
   .setupPipeline()
   .addBindGroupLayout(raytracerBindGroupLayout)
-  .setShaderCode(assets.raytracerCode)
-  .setComputeShader("computeMain")
-  .build();
+  .useShaderCode(assets.raytracerCode.data)
+  .setComputeShader()
+  .buildAsync();
 
 //// Renderer
+
+/** @type {GPURenderPassDescriptor} */
+const renderPassDescriptor = {
+  colorAttachments: [
+    {
+      view: undefined,
+      loadOp: "clear",
+      storeOp: "store",
+      clearValue: { r: 0.1, g: 0.1, b: 0.1, a: 1.0 },
+    },
+  ],
+};
 
 let fpsStart = performance.now();
 let fpsCount = 0;
@@ -131,25 +155,9 @@ let fpsCurrent = 0;
  *
  */
 function render() {
-  scene.update();
-  camera.update();
+  renderPassDescriptor.colorAttachments[0].view = context.getCurrentTexture().createView();
 
   const startTime = performance.now();
-
-  /** @type {GPURenderPassDescriptor} */
-  const renderPassDescriptor = {
-    colorAttachments: [
-      {
-        view: context.getCurrentTexture().createView(),
-        loadOp: "clear",
-        storeOp: "store",
-        clearValue: { r: 0.1, g: 0.1, b: 0.1, a: 1.0 },
-      },
-    ],
-  };
-
-  webgpu.queueWriteBuffer(parameterBuffer, 0, camera.getStorageFloat(), 0, 16);
-  webgpu.queueWriteBuffer(spheresBuffer, 0, scene.getStorageFloat(), 0, 8 * NUM_SPHERES);
 
   webgpu
     .setupEncoder()
@@ -158,7 +166,7 @@ function render() {
     .beginComputePass()
     .setPipeline(raytracerPipeline)
     .setBindGroup(0, raytracerBindGroup)
-    .dispatchWorkgroups(Math.ceil(canvas.width / 8), Math.ceil(canvas.height / 8), 1)
+    .dispatchWorkgroups(Math.ceil(canvas.width / 16), Math.ceil(canvas.height / 16), 1)
     .end()
 
     // render pass
@@ -168,9 +176,7 @@ function render() {
     .draw(6, 1, 0, 0)
     .end()
 
-    .queueSubmit()
-    .onSubmittedWorkDone()
-    .then(() => {
+    .submitCommandBuffer(() => {
       const endTime = performance.now();
       debugPerformance.innerText = `${(endTime - startTime).toFixed(1)} ms`;
     });

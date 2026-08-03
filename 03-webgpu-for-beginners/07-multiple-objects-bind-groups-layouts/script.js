@@ -1,14 +1,15 @@
-import { WebGPUCore } from "../../src/webgpu/WebGPUCore.js";
-import { createCanvas } from "../../src/helper/elements.js";
-import { loadAssets } from "../../src/helper/utilities.js";
-import { FirstPersonCamera } from "../../src/components/FirstPersonCamera.js";
-import { BaseModel } from "../../src/components/BaseModel.js";
-import { BaseScene } from "../../src/components/BaseScene.js";
+import { WebGPU } from "../../src/system/WebGPU.js";
+import { createCanvasElement } from "../../src/utilities/elements.js";
+import { loadAssets } from "../../src/utilities/assets.js";
+import { Scene } from "../../src/modules/Scene.js";
+import { BaseObject } from "../../src/objects/BaseObject.js";
+import { CameraObject } from "../../src/objects/CameraObject.js";
+import { FirstPersonControl } from "../../src/modules/FirstPersonControl.js";
 import { assetArray, triangleVertices, tileVertices } from "./config.js";
 
 //// Initialisation
 
-const canvas = createCanvas({
+const canvas = createCanvasElement({
   container: document.querySelector("article"),
   width: 800,
   height: 600,
@@ -16,64 +17,104 @@ const canvas = createCanvas({
     outline: "1px solid black",
   },
 });
-const webgpu = new WebGPUCore(canvas);
-const { context, format } = await webgpu.init();
-
-//// Scene
-
-const camera = new FirstPersonCamera({ canvas, debug: true });
-camera.setPosition(-7, -0.5, 0.5);
-
-const scene = new BaseScene();
-for (let i = -5; i < 5; i++) {
-  const model = new BaseModel();
-  model.setPosition(2, i, 0.5);
-  model.setUpdateCallback((updateObject) => {
-    const eulers = updateObject.eulers;
-    eulers[2]++;
-    eulers[2] = eulers[2] % 360;
-    updateObject.setEulers(eulers[0], eulers[1], eulers[2]);
-  });
-  scene.addObject(model, "triangles");
-}
-for (let i = -8; i < 8; i++) {
-  for (let j = -8; j < 8; j++) {
-    const model = new BaseModel();
-    model.setPosition(i, j, 0);
-    scene.addObject(model, "tiles");
-  }
-}
+const webgpu = await WebGPU.init();
+const context = webgpu.createCanvasContext(canvas);
 
 //// Assets
 
-const assets = await loadAssets(assetArray);
-const { view, sampler, bindGroupBuilder: fragmentBindGroupBuilder } = await webgpu.createTextureViewSampler(assets.image);
+const assets = await loadAssets(assetArray, true);
+const { textureView, sampler } = webgpu
+  .setupTextureView(context)
+  .setTextureUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT)
+  .loadBitmaps(assets.image)
+  .build();
+const { depthStencilState, depthStencilAttachment } = webgpu.setupTextureView(context).buildDepthStencil();
 
 //// Buffers
 
-const { buffer: triangleBuffer, bufferLayout: triangleBufferLayout } = webgpu
-  .setupBuffer(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST, new Float32Array(triangleVertices))
-  .addVertexAttribute(3) // x, y, z
-  .addVertexAttribute(2) // u, v
+const { buffer: triangleBuffer, vertexBufferLayout: triangleBufferLayout } = webgpu
+  .setupBuffer()
+  .setUsage(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST)
+  .setData(new Float32Array(triangleVertices))
+  .addVertexAttribute("float32x3") // x, y, z
+  .addVertexAttribute("float32x2") // u, v
   .build();
 
 const { buffer: tileBuffer } = webgpu
-  .setupBuffer(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST, new Float32Array(tileVertices))
-  .addVertexAttribute(3) // x, y, z
-  .addVertexAttribute(2) // u, v
+  .setupBuffer()
+  .setUsage(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST)
+  .setData(new Float32Array(tileVertices))
+  .addVertexAttribute("float32x3") // x, y, z
+  .addVertexAttribute("float32x2") // u, v
   .build();
 
-const { buffer: uniformBuffer } = webgpu
-  .setupBuffer(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, 64 * 2) // 4x4 matrix * 2 types (view, projection)
+const { builder: uniformBufferBuilder, buffer: uniformBuffer } = webgpu
+  .setupBuffer()
+  .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
+  .setData(new Float32Array(16 * 2)) // 4x4 matrix * 2 types (view, projection)
   .build();
 
-const { buffer: objectBuffer } = webgpu
-  .setupBuffer(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, 64 * 1024) // 4x4 matrix * 2^10
+const triangleCount = 10;
+const tileCount = 256;
+const { builder: objectBufferBuilder, buffer: objectBuffer } = webgpu
+  .setupBuffer()
+  .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
+  .setData(new Float32Array(16 * (triangleCount + tileCount))) // 4x4 matrix * (10 triangles + 256 tiles)
   .build();
+
+//// Scene and event
+
+const scene = new Scene();
+
+const camera = new CameraObject(context);
+camera.setPosition(-7, -0.5, 0.5);
+camera.viewMatrix = uniformBufferBuilder.dataPointer(0, 16);
+camera.projectionMatrix = uniformBufferBuilder.dataPointer(16, 32);
+camera.updateProjectionMatrix();
+camera.addUpdateCallback(() => {
+  camera.updateOrthonormalVectors();
+  camera.updateViewMatrix();
+  camera.move();
+});
+scene.addObject(camera, "camera");
+
+let pointerIndex = 0;
+for (let i = -5; i < 5; i++) {
+  const model = new BaseObject();
+  model.setPosition(2, i, 0.5);
+  model.modelMatrix = objectBufferBuilder.dataPointer(pointerIndex * 16, pointerIndex * 16 + 16);
+  model.addUpdateCallback(() => {
+    model.updateModelMatrix();
+    model.eulers[2]++;
+    model.eulers[2] = model.eulers[2] % 360;
+  });
+  scene.addObject(model, "triangles");
+  pointerIndex++;
+}
+for (let i = -8; i < 8; i++) {
+  for (let j = -8; j < 8; j++) {
+    const model = new BaseObject();
+    model.setPosition(i, j, 0);
+    model.modelMatrix = objectBufferBuilder.dataPointer(pointerIndex * 16, pointerIndex * 16 + 16);
+    model.updateModelMatrix();
+    pointerIndex++;
+  }
+}
+
+const firstPersonControl = new FirstPersonControl(camera, context.canvas, { debug: true, moveSpeed: 0.02, orientSpeed: 0.2 });
+
+scene.addEvent(() => {
+  uniformBufferBuilder.writeDataToBuffer();
+  objectBufferBuilder.writeDataToBuffer();
+});
 
 //// Bind groups
 
-const { bindGroup: fragmentBindGroup, bindGroupLayout: fragmentBindGroupLayout } = fragmentBindGroupBuilder.build();
+const { bindGroup: fragmentBindGroup, bindGroupLayout: fragmentBindGroupLayout } = webgpu
+  .setupBindGroup()
+  .addTexture(textureView, GPUShaderStage.FRAGMENT, { viewDimension: "2d-array" })
+  .addSampler(sampler, GPUShaderStage.FRAGMENT)
+  .build();
 
 const { bindGroup: vertexBindGroup, bindGroupLayout: vertexBindGroupLayout } = webgpu
   .setupBindGroup()
@@ -86,42 +127,36 @@ const { bindGroup: vertexBindGroup, bindGroupLayout: vertexBindGroupLayout } = w
 
 //// Pipelines
 
-const { state: depthStencilState, attachment: depthStencilAttachment } = webgpu.configureDepthStencil();
-
-const { pipeline } = webgpu
+const { pipeline } = await webgpu
   .setupPipeline()
   .addBindGroupLayout(vertexBindGroupLayout)
   .addBindGroupLayout(fragmentBindGroupLayout)
-  .setShaderCode(assets.shader)
-  .setVertexShader("vertexMain", { buffers: [triangleBufferLayout] })
-  .setFragmentShader("fragmentMain", { targets: [{ format }] })
-  .setPrimitive({ topology: "triangle-list" })
-  .setDepthStencil(depthStencilState)
-  .build();
+  .useShaderCode(assets.shader.data)
+  .setVertexShader({ buffers: [triangleBufferLayout] })
+  .setFragmentShader({ targets: [{ format: context.getConfiguration().format }] })
+  .setRenderPrimitive({ topology: "triangle-list" })
+  .setRenderDepthStencil(depthStencilState)
+  .buildAsync();
 
 //// Renderer
 
+/** @type {GPURenderPassDescriptor} */
+const renderPassDescriptor = {
+  colorAttachments: [
+    {
+      view: undefined,
+      loadOp: "clear",
+      storeOp: "store",
+      clearValue: { r: 0.25, g: 0.25, b: 0.25, a: 1.0 },
+    },
+  ],
+  depthStencilAttachment,
+};
+
 function render() {
-  scene.update();
-  camera.update();
-  const sceneData = scene.getStorageFloat();
+  renderPassDescriptor.colorAttachments[0].view = context.getCurrentTexture().createView();
 
-  /** @type {GPURenderPassDescriptor} */
-  const renderPassDescriptor = {
-    colorAttachments: [
-      {
-        view: context.getCurrentTexture().createView(),
-        loadOp: "clear",
-        storeOp: "store",
-        clearValue: { r: 0.25, g: 0.25, b: 0.25, a: 1.0 },
-      },
-    ],
-    depthStencilAttachment,
-  };
-
-  webgpu.queueWriteBuffer(objectBuffer, 0, sceneData, 0, sceneData.length);
-  webgpu.queueWriteBuffer(uniformBuffer, 0, camera.view);
-  webgpu.queueWriteBuffer(uniformBuffer, 64, camera.projection);
+  scene.play();
 
   webgpu
     .setupEncoder()
@@ -132,15 +167,15 @@ function render() {
     // triangles
     .setVertexBuffer(0, triangleBuffer)
     .setBindGroup(1, fragmentBindGroup)
-    .draw(3, scene.typeCount["triangles"], 0, 0)
+    .draw(3, triangleCount, 0, 0)
 
     // tiles
     .setVertexBuffer(0, tileBuffer)
     .setBindGroup(1, fragmentBindGroup)
-    .draw(6, scene.typeCount["tiles"], 0, scene.typeCount["triangles"])
+    .draw(6, tileCount, 0, triangleCount)
 
     .end()
-    .queueSubmit();
+    .submitCommandBuffer();
 
   requestAnimationFrame(render);
 }

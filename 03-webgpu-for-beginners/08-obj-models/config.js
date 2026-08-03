@@ -1,4 +1,4 @@
-import { getQueryValue } from "../../src/helper/utilities.js";
+import { getQueryValue } from "../../src/utilities/helpers.js";
 
 export const assetArray = [
   {
@@ -9,68 +9,68 @@ export const assetArray = [
   {
     name: "image",
     url: "./assets/images/50-1024.webp",
-    type: "blob",
+    type: "bitmap",
     group: true,
   },
   {
     name: "image",
     url: "./assets/images/55-1024.webp",
-    type: "blob",
+    type: "bitmap",
     group: true,
   },
   {
     name: "image",
     url: "./assets/images/60-1024.webp",
-    type: "blob",
+    type: "bitmap",
     group: true,
   },
   {
     name: "image",
     url: "./assets/images/65-1024.webp",
-    type: "blob",
+    type: "bitmap",
     group: true,
   },
   {
     name: "image",
     url: "./assets/images/70-1024.webp",
-    type: "blob",
+    type: "bitmap",
     group: true,
   },
   {
     name: "image",
     url: "./assets/images/75-1024.webp",
-    type: "blob",
+    type: "bitmap",
     group: true,
   },
   {
     name: "image",
     url: "./assets/images/80-1024.webp",
-    type: "blob",
+    type: "bitmap",
     group: true,
   },
   {
     name: "image",
     url: "./assets/images/85-1024.webp",
-    type: "blob",
+    type: "bitmap",
     group: true,
   },
   {
     name: "image",
     url: "./assets/images/90-1024.webp",
-    type: "blob",
+    type: "bitmap",
     group: true,
   },
   {
     name: "image",
     url: "./assets/images/95-1024.webp",
-    type: "blob",
+    type: "bitmap",
     group: true,
   },
   {
     // tile
     name: "image",
     url: `./assets/images/210-1024.webp`,
-    type: "blob",
+    type: "bitmap",
     group: true,
   },
   {

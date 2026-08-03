@@ -1,4 +1,4 @@
-import { getQueryValue } from "../../src/helper/utilities.js";
+import { getQueryValue } from "../../src/utilities/helpers.js";
 
 export const assetArray = [
   {
@@ -20,37 +20,37 @@ export const assetArray = [
     // +x (right)
     name: "cubemap_px",
     url: `./assets/cubemaps/belfast_sunset_puresky/face_px_right.webp`,
-    type: "blob",
+    type: "bitmap",
   },
   {
     // -x (left)
     name: "cubemap_nx",
     url: `./assets/cubemaps/belfast_sunset_puresky/face_nx_left.webp`,
-    type: "blob",
+    type: "bitmap",
   },
   {
     // +y (top)
     name: "cubemap_py",
     url: `./assets/cubemaps/belfast_sunset_puresky/face_py_top.webp`,
-    type: "blob",
+    type: "bitmap",
   },
   {
     // -y (bottom)
     name: "cubemap_ny",
     url: `./assets/cubemaps/belfast_sunset_puresky/face_ny_bottom.webp`,
-    type: "blob",
+    type: "bitmap",
   },
   {
     // +z (front)
     name: "cubemap_pz",
     url: `./assets/cubemaps/belfast_sunset_puresky/face_pz_front.webp`,
-    type: "blob",
+    type: "bitmap",
   },
   {
     // -z (back)
     name: "cubemap_nz",
     url: `./assets/cubemaps/belfast_sunset_puresky/face_nz_back.webp`,
-    type: "blob",
+    type: "bitmap",
   },
 ];
 
@@ -59,7 +59,7 @@ export const assetArray = [
     assetArray.push({
       name: "image",
       url: `./assets/images/${value1}-${value2}.webp`,
-      type: "blob",
+      type: "bitmap",
       group: `${value1}`,
     });
   });

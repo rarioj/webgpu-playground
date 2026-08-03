@@ -1,15 +1,16 @@
-import { WebGPUCore } from "../../src/webgpu/WebGPUCore.js";
-import { createCanvas } from "../../src/helper/elements.js";
-import { loadAssets } from "../../src/helper/utilities.js";
-import { FirstPersonCamera } from "../../src/components/FirstPersonCamera.js";
-import { BaseModel } from "../../src/components/BaseModel.js";
-import { OBJModel } from "../../src/components/OBJModel.js";
-import { BaseScene } from "../../src/components/BaseScene.js";
+import { WebGPU } from "../../src/system/WebGPU.js";
+import { createCanvasElement } from "../../src/utilities/elements.js";
+import { loadAssets } from "../../src/utilities/assets.js";
+import { Scene } from "../../src/modules/Scene.js";
+import { BaseObject } from "../../src/objects/BaseObject.js";
+import { CameraObject } from "../../src/objects/CameraObject.js";
+import { OBJModelObject } from "../../src/objects/OBJModelObject.js";
+import { FirstPersonControl } from "../../src/modules/FirstPersonControl.js";
 import { assetArray, triangleVertices, tileVertices } from "./config.js";
 
 //// Initialisation
 
-const canvas = createCanvas({
+const canvas = createCanvasElement({
   container: document.querySelector("article"),
   width: 800,
   height: 600,
@@ -17,94 +18,141 @@ const canvas = createCanvas({
     outline: "1px solid black",
   },
 });
-const webgpu = new WebGPUCore(canvas);
-const { context, format } = await webgpu.init();
+const webgpu = await WebGPU.init();
+const context = webgpu.createCanvasContext(canvas);
 
-//// Assets
+//// Assets and textures
 
-const assets = await loadAssets(assetArray);
-const { view: cubemapView, sampler: cubemapSampler } = await webgpu.createTextureViewSampler(
-  [assets.cubemap_px, assets.cubemap_nx, assets.cubemap_py, assets.cubemap_ny, assets.cubemap_pz, assets.cubemap_nz],
-  { textureViewDescriptor: { dimension: "cube" } },
-);
-const {
-  view: imageView,
-  sampler: imageSampler,
-  bindGroupBuilder: fragmentBindGroupBuilder,
-} = await webgpu.createTextureViewSampler(assets.image, {
-  enableMipmap: true,
-  samplerDescriptor: { maxAnisotropy: 4, minFilter: "linear", mipmapFilter: "linear" },
-});
+const assets = await loadAssets(assetArray, true);
 
-//// Scene
+const { textureView: cubemapView, sampler: cubemapSampler } = webgpu
+  .setupTextureView(context, "Cubemap")
+  .setTextureUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT)
+  .loadBitmaps([assets.cubemap_px, assets.cubemap_nx, assets.cubemap_py, assets.cubemap_ny, assets.cubemap_pz, assets.cubemap_nz])
+  .build({ createSampler: true, overrideTextureViewDescriptor: { dimension: "cube" } });
 
-const camera = new FirstPersonCamera({ canvas, debug: true });
-camera.setPosition(-7, -0.5, 0.5);
-// construct raw array data
-camera.storage.main = [camera.forward, 0, camera.scaledRight, 0, camera.scaledUp, 0];
+const { textureView: imageView, sampler: imageSampler } = webgpu
+  .setupTextureView(context, "Images")
+  .setTextureUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT)
+  .loadBitmaps(assets.image)
+  .build({ enableMipmap: true, overrideSamplerDescriptor: { maxAnisotropy: 4 } });
 
-const scene = new BaseScene();
-for (let i = -5; i < 5; i++) {
-  const model = new BaseModel();
-  model.setPosition(2, i, 0.5);
-  model.setUpdateCallback((updateObject) => {
-    const eulers = updateObject.eulers;
-    eulers[2]++;
-    eulers[2] = eulers[2] % 360;
-    updateObject.setEulers(eulers[0], eulers[1], eulers[2]);
-  });
-  scene.addObject(model, "triangles");
-}
-for (let i = -8; i < 8; i++) {
-  for (let j = -8; j < 8; j++) {
-    const model = new BaseModel();
-    model.setPosition(i, j, 0);
-    scene.addObject(model, "tiles");
-  }
-}
-const statue = new OBJModel(assets.statue, { scale: [0.25, 0.25, 0.25] });
-statue.setUpdateCallback((updateObject) => {
-  const eulers = updateObject.eulers;
-  eulers[2]++;
-  eulers[2] = eulers[2] % 360;
-  updateObject.setEulers(eulers[0], eulers[1], eulers[2]);
-});
-scene.addObject(statue, "statue");
+const { depthStencilState, depthStencilAttachment } = webgpu.setupTextureView(context).buildDepthStencil();
 
 //// Buffers
 
-const { buffer: triangleBuffer, bufferLayout: triangleBufferLayout } = webgpu
-  .setupBuffer(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST, new Float32Array(triangleVertices))
-  .addVertexAttribute(3) // x, y, z
-  .addVertexAttribute(2) // u, v
+const { buffer: triangleBuffer, vertexBufferLayout: triangleBufferLayout } = webgpu
+  .setupBuffer()
+  .setUsage(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST)
+  .setData(new Float32Array(triangleVertices))
+  .addVertexAttribute("float32x3") // x, y, z
+  .addVertexAttribute("float32x2") // u, v
   .build();
 
 const { buffer: tileBuffer } = webgpu
-  .setupBuffer(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST, new Float32Array(tileVertices))
-  .addVertexAttribute(3) // x, y, z
-  .addVertexAttribute(2) // u, v
+  .setupBuffer()
+  .setUsage(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST)
+  .setData(new Float32Array(tileVertices))
+  .addVertexAttribute("float32x3") // x, y, z
+  .addVertexAttribute("float32x2") // u, v
   .build();
 
-const statueData = statue.getStorageFloat("object");
+const statue = new OBJModelObject(assets.statue.data);
+statue.setScale(0.25, 0.25, 0.25);
 const { buffer: statueBuffer } = webgpu
-  .setupBuffer(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST, statueData)
-  .addVertexAttribute(3) // x, y, z
-  .addVertexAttribute(2) // u, v
+  .setupBuffer()
+  .setUsage(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST)
+  .setData(new Float32Array(statue.vertexData))
+  .addVertexAttribute("float32x3") // x, y, z
+  .addVertexAttribute("float32x2") // u, v
   .build();
 
-const { buffer: cameraBuffer } = webgpu.setupBuffer(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, 16 * 3).build(); // 4 bytes * 3 types (forward, right, up)
-
-const { buffer: uniformBuffer } = webgpu
-  .setupBuffer(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, 64 * 2) // 4x4 matrix * 2 types (view, projection)
+const { builder: cameraBufferBuilder, buffer: cameraBuffer } = webgpu
+  .setupBuffer()
+  .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
+  .setData(new Float32Array(4 * 3)) // 4 bytes * 3 types (forward, right, up)
   .build();
 
-const { buffer: objectBuffer } = webgpu
-  .setupBuffer(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, 64 * 1024) // 4x4 matrix * 2^10
+const { builder: uniformBufferBuilder, buffer: uniformBuffer } = webgpu
+  .setupBuffer()
+  .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
+  .setData(new Float32Array(16 * 2)) // 4x4 matrix * 2 types (view, projection)
   .build();
+
+const triangleCount = 10;
+const tileCount = 256;
+const statueCount = 1;
+const { builder: objectBufferBuilder, buffer: objectBuffer } = webgpu
+  .setupBuffer()
+  .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
+  .setData(new Float32Array(16 * (triangleCount + tileCount + statueCount))) // 4x4 matrix * (10 triangles + 256 tiles + 1 statue)
+  .build();
+
+//// Scene and event
+
+const scene = new Scene();
+
+const camera = new CameraObject(context);
+camera.setPosition(-7, -0.5, 0.5);
+camera.viewMatrix = uniformBufferBuilder.dataPointer(0, 16);
+camera.projectionMatrix = uniformBufferBuilder.dataPointer(16, 32);
+camera.forward = cameraBufferBuilder.dataPointer(0, 3);
+camera.scaledRight = cameraBufferBuilder.dataPointer(4, 7);
+camera.scaledUp = cameraBufferBuilder.dataPointer(8, 11);
+camera.updateProjectionMatrix();
+camera.addUpdateCallback(() => {
+  camera.updateOrthonormalVectors();
+  camera.updateViewMatrix();
+  camera.move();
+});
+scene.addObject(camera, "camera");
+
+let pointerIndex = 0;
+for (let i = -5; i < 5; i++) {
+  const model = new BaseObject();
+  model.setPosition(2, i, 0.5);
+  model.modelMatrix = objectBufferBuilder.dataPointer(pointerIndex * 16, pointerIndex * 16 + 16);
+  model.addUpdateCallback(() => {
+    model.updateModelMatrix();
+    model.eulers[2]++;
+    model.eulers[2] = model.eulers[2] % 360;
+  });
+  scene.addObject(model, "triangles");
+  pointerIndex++;
+}
+for (let i = -8; i < 8; i++) {
+  for (let j = -8; j < 8; j++) {
+    const model = new BaseObject();
+    model.setPosition(i, j, 0);
+    model.modelMatrix = objectBufferBuilder.dataPointer(pointerIndex * 16, pointerIndex * 16 + 16);
+    model.updateModelMatrix();
+    pointerIndex++;
+  }
+}
+statue.modelMatrix = objectBufferBuilder.dataPointer(pointerIndex * 16, pointerIndex * 16 + 16);
+statue.addUpdateCallback(() => {
+  statue.updateModelMatrix();
+  statue.eulers[2]++;
+  statue.eulers[2] = statue.eulers[2] % 360;
+});
+scene.addObject(statue, "statue");
+pointerIndex++;
+
+const firstPersonControl = new FirstPersonControl(camera, context.canvas, { debug: true, moveSpeed: 0.02, orientSpeed: 0.2 });
+
+scene.addEvent(() => {
+  cameraBufferBuilder.writeDataToBuffer();
+  uniformBufferBuilder.writeDataToBuffer();
+  objectBufferBuilder.writeDataToBuffer();
+});
 
 //// Bind groups
 
-const { bindGroup: fragmentBindGroup, bindGroupLayout: fragmentBindGroupLayout } = fragmentBindGroupBuilder.build();
+const { bindGroup: fragmentBindGroup, bindGroupLayout: fragmentBindGroupLayout } = webgpu
+  .setupBindGroup()
+  .addTexture(imageView, GPUShaderStage.FRAGMENT, { viewDimension: "2d-array" })
+  .addSampler(imageSampler, GPUShaderStage.FRAGMENT)
+  .build();
 
 const { bindGroup: cubemapBindGroup, bindGroupLayout: cubemapBindGroupLayout } = webgpu
   .setupBindGroup()
@@ -124,56 +172,46 @@ const { bindGroup: vertexBindGroup, bindGroupLayout: vertexBindGroupLayout } = w
 
 //// Pipelines
 
-const { state: depthStencilState, attachment: depthStencilAttachment } = webgpu.configureDepthStencil();
-
-const { pipeline: cubemapPipeline } = webgpu
+const { pipeline: cubemapPipeline } = await webgpu
   .setupPipeline()
   .addBindGroupLayout(cubemapBindGroupLayout)
-  .setShaderCode(assets.cubemap)
-  .setVertexShader("skyVertexMain")
-  .setFragmentShader("skyFragmentMain", { targets: [{ format }] })
-  .setPrimitive({ topology: "triangle-list" })
-  .setDepthStencil(depthStencilState)
-  .build();
+  .useShaderCode(assets.cubemap.data)
+  .setVertexShader({ entryPoint: "skyVertexMain" })
+  .setFragmentShader({ entryPoint: "skyFragmentMain", targets: [{ format: context.getConfiguration().format }] })
+  .setRenderPrimitive({ topology: "triangle-list" })
+  .setRenderDepthStencil(depthStencilState)
+  .buildAsync();
 
-const { pipeline: standardPipeline } = webgpu
+const { pipeline: standardPipeline } = await webgpu
   .setupPipeline()
   .addBindGroupLayout(vertexBindGroupLayout)
   .addBindGroupLayout(fragmentBindGroupLayout)
-  .setShaderCode(assets.shader)
-  .setVertexShader("vertexMain", { buffers: [triangleBufferLayout] })
-  .setFragmentShader("fragmentMain", { targets: [{ format }] })
-  .setPrimitive({ topology: "triangle-list" })
-  .setDepthStencil(depthStencilState)
-  .build();
+  .useShaderCode(assets.shader.data)
+  .setVertexShader({ buffers: [triangleBufferLayout] })
+  .setFragmentShader({ targets: [{ format: context.getConfiguration().format }] })
+  .setRenderPrimitive({ topology: "triangle-list" })
+  .setRenderDepthStencil(depthStencilState)
+  .buildAsync();
 
 //// Renderer
 
+/** @type {GPURenderPassDescriptor} */
+const renderPassDescriptor = {
+  colorAttachments: [
+    {
+      view: undefined,
+      loadOp: "clear",
+      storeOp: "store",
+      clearValue: { r: 0.25, g: 0.25, b: 0.25, a: 1.0 },
+    },
+  ],
+  depthStencilAttachment,
+};
+
 function render() {
-  scene.update();
-  camera.update();
-  const sceneData = scene.getStorageFloat();
-  const cameraData = camera.getStorageFloat();
-  const triangleCount = scene.getTypeCount("triangles");
-  const tileCount = scene.getTypeCount("tiles");
+  renderPassDescriptor.colorAttachments[0].view = context.getCurrentTexture().createView();
 
-  /** @type {GPURenderPassDescriptor} */
-  const renderPassDescriptor = {
-    colorAttachments: [
-      {
-        view: context.getCurrentTexture().createView(),
-        loadOp: "clear",
-        storeOp: "store",
-        clearValue: { r: 0.25, g: 0.25, b: 0.25, a: 1.0 },
-      },
-    ],
-    depthStencilAttachment,
-  };
-
-  webgpu.queueWriteBuffer(objectBuffer, 0, sceneData, 0, sceneData.length);
-  webgpu.queueWriteBuffer(uniformBuffer, 0, camera.view);
-  webgpu.queueWriteBuffer(uniformBuffer, 64, camera.projection);
-  webgpu.queueWriteBuffer(cameraBuffer, 0, cameraData, 0, cameraData.length);
+  scene.play();
 
   webgpu
     .setupEncoder()
@@ -183,24 +221,28 @@ function render() {
     .setPipeline(cubemapPipeline)
     .setBindGroup(0, cubemapBindGroup)
     .draw(6, 1)
+
     // fragments
     .setPipeline(standardPipeline)
     .setBindGroup(0, vertexBindGroup)
+
     // triangles
     .setVertexBuffer(0, triangleBuffer)
     .setBindGroup(1, fragmentBindGroup)
     .draw(3, triangleCount, 0, 0)
+
     // tiles
     .setVertexBuffer(0, tileBuffer)
     .setBindGroup(1, fragmentBindGroup)
     .draw(6, tileCount, 0, triangleCount)
+
     // statue
     .setVertexBuffer(0, statueBuffer)
     .setBindGroup(1, fragmentBindGroup)
-    .draw(statueData.length / 5, 1, 0, triangleCount + tileCount)
+    .draw(statue.vertexData.length / 5, statueCount, 0, triangleCount + tileCount)
     .end()
 
-    .queueSubmit();
+    .submitCommandBuffer();
 
   requestAnimationFrame(render);
 }

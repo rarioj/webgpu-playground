@@ -28,3 +28,7 @@ pages["03-webgpu-for-beginners/13-acceleration-structures"] = true;
 pages["03-webgpu-for-beginners/14-reflections-image-based-lighting"] = true;
 pages["03-webgpu-for-beginners/15-triangles"] = true;
 pages["03-webgpu-for-beginners/16-obj-model-general-transforms"] = true;
+
+pages["04-webgpu-tutorial"] = false;
+pages["04-webgpu-tutorial/01-intro-getting-started"] = true;
+pages["04-webgpu-tutorial/02-3d-transform"] = true;

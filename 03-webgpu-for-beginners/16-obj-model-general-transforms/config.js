@@ -1,4 +1,4 @@
-import { getQueryValue } from "../../src/helper/utilities.js";
+import { getQueryValue } from "../../src/utilities/helpers.js";
 
 let statueObjPath = "./assets/models/Apollo_V1/16771_Apollo_V1_NEW.obj";
 let statueObjScale = [0.25, 0.25, 0.25];
@@ -54,42 +54,42 @@ config.resources = [
     // +x (right)
     name: "skyImages",
     url: `./assets/cubemaps/lakeside_sunrise/face_px_right.webp`,
-    type: "blob",
+    type: "bitmap",
     group: true,
   },
   {
     // -x (left)
     name: "skyImages",
     url: `./assets/cubemaps/lakeside_sunrise/face_nx_left.webp`,
-    type: "blob",
+    type: "bitmap",
     group: true,
   },
   {
     // +y (top)
     name: "skyImages",
     url: `./assets/cubemaps/lakeside_sunrise/face_py_top.webp`,
-    type: "blob",
+    type: "bitmap",
     group: true,
   },
   {
     // -y (bottom)
     name: "skyImages",
     url: `./assets/cubemaps/lakeside_sunrise/face_ny_bottom.webp`,
-    type: "blob",
+    type: "bitmap",
     group: true,
   },
   {
     // +z (front)
     name: "skyImages",
     url: `./assets/cubemaps/lakeside_sunrise/face_pz_front.webp`,
-    type: "blob",
+    type: "bitmap",
     group: true,
   },
   {
     // -z (back)
     name: "skyImages",
     url: `./assets/cubemaps/lakeside_sunrise/face_nz_back.webp`,
-    type: "blob",
+    type: "bitmap",
     group: true,
   },
 ];

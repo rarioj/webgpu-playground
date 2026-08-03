@@ -4,6 +4,8 @@
 
 Learning series from [WebGPU for Beginners](https://www.youtube.com/playlist?list=PLn3eTxaOtL2Ns3wkxdyS3CiqkJuwQdZzn) by The Graphics Guy.
 
+GitHub: [webgpu-for-beginners](https://github.com/amengede/webgpu-for-beginners/tree/main)
+
 ### Rasterized Graphics
 
 - [x] [Hello Triangle!](./index.html?page=03-webgpu-for-beginners/01-hello-triangle)
@@ -25,4 +27,4 @@ Learning series from [WebGPU for Beginners](https://www.youtube.com/playlist?lis
 - [X] [Reflections + Image Based Lighting](./index.html?page=03-webgpu-for-beginners/14-reflections-image-based-lighting)
 - [X] [Triangles](./index.html?page=03-webgpu-for-beginners/15-triangles)
 - [X] [Tracing an OBJ Model + General Transforms](./index.html?page=03-webgpu-for-beginners/16-obj-model-general-transforms)
-- [ ] Multiple Models
+- [ ] Multiple Models - *experienced performance issue on older devices, will revisit later*

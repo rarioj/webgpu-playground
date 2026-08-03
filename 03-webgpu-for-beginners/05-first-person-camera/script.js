@@ -1,12 +1,14 @@
-import { WebGPUCore } from "../../src/webgpu/WebGPUCore.js";
-import { createCanvas } from "../../src/helper/elements.js";
-import { getQueryValue, loadAssets } from "../../src/helper/utilities.js";
-import { FirstPersonCamera } from "../../src/components/FirstPersonCamera.js";
-import { BaseModel } from "../../src/components/BaseModel.js";
+import { WebGPU } from "../../src/system/WebGPU.js";
+import { createCanvasElement } from "../../src/utilities/elements.js";
+import { getQueryValue } from "../../src/utilities/helpers.js";
+import { loadAssets } from "../../src/utilities/assets.js";
+import { BaseObject } from "../../src/objects/BaseObject.js";
+import { CameraObject } from "../../src/objects/CameraObject.js";
+import { FirstPersonControl } from "../../src/modules/FirstPersonControl.js";
 
 //// Initialisation
 
-const canvas = createCanvas({
+const canvas = createCanvasElement({
   container: document.querySelector("article"),
   width: 800,
   height: 600,
@@ -14,42 +16,39 @@ const canvas = createCanvas({
     outline: "1px solid black",
   },
 });
-const webgpu = new WebGPUCore(canvas);
-const { context, format } = await webgpu.init();
-
-const camera = new FirstPersonCamera({ canvas, debug: true });
-camera.setPosition(-2.5, 0, 0);
-
-const model = new BaseModel();
-model.setUpdateCallback((updateObject) => {
-  const eulers = updateObject.eulers;
-  eulers[2]++;
-  eulers[2] = eulers[2] % 360;
-  updateObject.setEulers(eulers[0], eulers[1], eulers[2]);
-});
+const webgpu = await WebGPU.init();
+const context = webgpu.createCanvasContext(canvas);
 
 //// Assets
 
-const assets = await loadAssets([
-  {
-    name: "shader",
-    url: `./${getQueryValue("page")}/shaders/shader.wgsl`,
-    type: "text",
-  },
-  {
-    name: "image",
-    url: `./assets/images/95-1024.webp`,
-    type: "blob",
-  },
-]);
+const assets = await loadAssets(
+  [
+    {
+      name: "shader",
+      url: `./${getQueryValue("page")}/shaders/shader.wgsl`,
+      type: "text",
+    },
+    {
+      name: "image",
+      url: `./assets/images/80-1024.webp`,
+      type: "bitmap",
+    },
+  ],
+  true,
+);
 
-const { view, sampler } = await webgpu.createTextureViewSampler([assets.image]);
+const { textureView, sampler } = webgpu
+  .setupTextureView(context)
+  .setTextureUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT)
+  .loadBitmaps([assets.image])
+  .build();
 
 //// Buffers
 
-const { buffer: triangleBuffer, bufferLayout: triangleBufferLayout } = webgpu
-  .setupBuffer(
-    GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+const { buffer: triangleBuffer, vertexBufferLayout: triangleBufferLayout } = webgpu
+  .setupBuffer()
+  .setUsage(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST)
+  .setData(
     new Float32Array([
       //x, y, z, u, v
       // top corner
@@ -60,20 +59,45 @@ const { buffer: triangleBuffer, bufferLayout: triangleBufferLayout } = webgpu
       0.0, 0.5, -0.5, 1.0, 1.0,
     ]),
   )
-  .addVertexAttribute(3) // x, y, z
-  .addVertexAttribute(2) // u, v
+  .addVertexAttribute("float32x3") // x, y, z
+  .addVertexAttribute("float32x2") // u, v
   .build();
 
-const { buffer: uniformBuffer } = webgpu
-  .setupBuffer(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, 64 * 3) // 4x4 matrix * 3 types (model, view, projection)
+const { builder: uniformBuilder, buffer: uniformBuffer } = webgpu
+  .setupBuffer()
+  .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
+  .setData(new Float32Array(16 * 3)) // 4x4 matrix * 3 types (model, view, projection)
   .build();
+
+//// Scene and events
+
+const model = new BaseObject();
+model.modelMatrix = uniformBuilder.dataPointer(0, 16);
+model.addUpdateCallback(() => {
+  model.updateModelMatrix();
+  model.eulers[2]++;
+  model.eulers[2] = model.eulers[2] % 360;
+});
+
+const camera = new CameraObject(context);
+camera.setPosition(-2.5, 0, 0);
+camera.viewMatrix = uniformBuilder.dataPointer(16, 32);
+camera.projectionMatrix = uniformBuilder.dataPointer(32, 48);
+camera.updateProjectionMatrix();
+camera.addUpdateCallback(() => {
+  camera.updateOrthonormalVectors();
+  camera.updateViewMatrix();
+  camera.move();
+});
+
+const firstPersonControl = new FirstPersonControl(camera, context.canvas, { debug: true, moveSpeed: 0.02, orientSpeed: 0.2 });
 
 //// Bind groups
 
 const { bindGroup, bindGroupLayout } = webgpu
   .setupBindGroup()
   .addBuffer(uniformBuffer, GPUShaderStage.VERTEX)
-  .addTexture(view, GPUShaderStage.FRAGMENT)
+  .addTexture(textureView, GPUShaderStage.FRAGMENT)
   .addSampler(sampler, GPUShaderStage.FRAGMENT)
   .build();
 
@@ -82,33 +106,32 @@ const { bindGroup, bindGroupLayout } = webgpu
 const { pipeline } = webgpu
   .setupPipeline()
   .addBindGroupLayout(bindGroupLayout)
-  .setShaderCode(assets.shader)
-  .setVertexShader("vertexMain", { buffers: [triangleBufferLayout] })
-  .setFragmentShader("fragmentMain", { targets: [{ format }] })
-  .setPrimitive({ topology: "triangle-list" })
+  .useShaderCode(assets.shader.data)
+  .setVertexShader({ buffers: [triangleBufferLayout] })
+  .setFragmentShader({ targets: [{ format: context.getConfiguration().format }] })
+  .setRenderPrimitive({ topology: "triangle-list" })
   .build();
 
 //// Renderer
 
+/** @type {GPURenderPassDescriptor} */
+const renderPassDescriptor = {
+  colorAttachments: [
+    {
+      view: undefined,
+      loadOp: "clear",
+      storeOp: "store",
+      clearValue: { r: 0.25, g: 0.25, b: 0.25, a: 1.0 },
+    },
+  ],
+};
+
 function render() {
-  camera.update();
+  renderPassDescriptor.colorAttachments[0].view = context.getCurrentTexture().createView();
+
   model.update();
-
-  /** @type {GPURenderPassDescriptor} */
-  const renderPassDescriptor = {
-    colorAttachments: [
-      {
-        view: context.getCurrentTexture().createView(),
-        loadOp: "clear",
-        storeOp: "store",
-        clearValue: { r: 0.25, g: 0.25, b: 0.25, a: 1.0 },
-      },
-    ],
-  };
-
-  webgpu.queueWriteBuffer(uniformBuffer, 0, model.matrix);
-  webgpu.queueWriteBuffer(uniformBuffer, 64, camera.view);
-  webgpu.queueWriteBuffer(uniformBuffer, 128, camera.projection);
+  camera.update();
+  uniformBuilder.writeDataToBuffer();
 
   webgpu
     .setupEncoder()
@@ -118,7 +141,7 @@ function render() {
     .setBindGroup(0, bindGroup)
     .draw(3, 1)
     .end()
-    .queueSubmit();
+    .submitCommandBuffer();
 
   requestAnimationFrame(render);
 }

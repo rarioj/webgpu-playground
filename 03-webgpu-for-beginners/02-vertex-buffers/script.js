@@ -1,10 +1,11 @@
-import { WebGPUCore } from "../../src/webgpu/WebGPUCore.js";
-import { createCanvas } from "../../src/helper/elements.js";
-import { getQueryValue, loadAssets } from "../../src/helper/utilities.js";
+import { WebGPU } from "../../src/system/WebGPU.js";
+import { createCanvasElement } from "../../src/utilities/elements.js";
+import { getQueryValue } from "../../src/utilities/helpers.js";
+import { loadAssets } from "../../src/utilities/assets.js";
 
 //// Initialisation
 
-const canvas = createCanvas({
+const canvas = createCanvasElement({
   container: document.querySelector("article"),
   width: 512,
   height: 512,
@@ -12,24 +13,28 @@ const canvas = createCanvas({
     outline: "1px solid black",
   },
 });
-const webgpu = new WebGPUCore(canvas);
-const { context, format } = await webgpu.init();
+const webgpu = await WebGPU.init();
+const context = webgpu.createCanvasContext(canvas);
 
 //// Assets
 
-const assets = await loadAssets([
-  {
-    name: "shader",
-    url: `./${getQueryValue("page")}/shaders/shader.wgsl`,
-    type: "text",
-  },
-]);
+const assets = await loadAssets(
+  [
+    {
+      name: "shader",
+      url: `./${getQueryValue("page")}/shaders/shader.wgsl`,
+      type: "text",
+    },
+  ],
+  true,
+);
 
 //// Buffers
 
-const { buffer, bufferLayout } = webgpu
-  .setupBuffer(
-    GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+const { buffer, vertexBufferLayout } = webgpu
+  .setupBuffer()
+  .setUsage(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST)
+  .setData(
     new Float32Array([
       //x, y, r, g, b
       // top corner (red)
@@ -40,8 +45,8 @@ const { buffer, bufferLayout } = webgpu
       0.5, -0.5, 0.0, 0.0, 1.0,
     ]),
   )
-  .addVertexAttribute(2) // x, y
-  .addVertexAttribute(3) // r, g, b
+  .addVertexAttribute("float32x2") // x, y
+  .addVertexAttribute("float32x3") // r, g, b
   .build();
 
 //// Bind groups
@@ -50,14 +55,14 @@ const { bindGroup, bindGroupLayout } = webgpu.setupBindGroup().build();
 
 //// Pipelines
 
-const { pipeline } = webgpu
+const { pipeline } = await webgpu
   .setupPipeline()
   .addBindGroupLayout(bindGroupLayout)
-  .setShaderCode(assets.shader)
-  .setVertexShader("vertexMain", { buffers: [bufferLayout] })
-  .setFragmentShader("fragmentMain", { targets: [{ format }] })
-  .setPrimitive({ topology: "triangle-list" })
-  .build();
+  .useShaderCode(assets.shader.data)
+  .setVertexShader({ buffers: [vertexBufferLayout] })
+  .setFragmentShader({ targets: [{ format: context.getConfiguration().format }] })
+  .setRenderPrimitive({ topology: "triangle-list" })
+  .buildAsync();
 
 //// Renderer
 
@@ -81,4 +86,4 @@ webgpu
   .setBindGroup(0, bindGroup)
   .draw(3, 1)
   .end()
-  .queueSubmit();
+  .submitCommandBuffer();

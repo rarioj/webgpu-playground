@@ -1,10 +1,11 @@
-import { WebGPUCore } from "../../src/webgpu/WebGPUCore.js";
-import { createCanvas } from "../../src/helper/elements.js";
-import { getQueryValue, loadAssets } from "../../src/helper/utilities.js";
+import { WebGPU } from "../../src/system/WebGPU.js";
+import { createCanvasElement } from "../../src/utilities/elements.js";
+import { getQueryValue } from "../../src/utilities/helpers.js";
+import { loadAssets } from "../../src/utilities/assets.js";
 
 //// Initialisation
 
-const canvas = createCanvas({
+const canvas = createCanvasElement({
   container: document.querySelector("article"),
   width: 512,
   height: 512,
@@ -12,18 +13,21 @@ const canvas = createCanvas({
     outline: "1px solid black",
   },
 });
-const webgpu = new WebGPUCore(canvas);
-const { context, format } = await webgpu.init();
+const webgpu = await WebGPU.init();
+const context = webgpu.createCanvasContext(canvas);
 
 //// Assets
 
-const assets = await loadAssets([
-  {
-    name: "shader",
-    url: `./${getQueryValue("page")}/shaders/shader.wgsl`,
-    type: "text",
-  },
-]);
+const assets = await loadAssets(
+  [
+    {
+      name: "shader",
+      url: `./${getQueryValue("page")}/shaders/shader.wgsl`,
+      type: "text",
+    },
+  ],
+  true,
+);
 
 //// Bind groups
 
@@ -31,14 +35,14 @@ const { bindGroup, bindGroupLayout } = webgpu.setupBindGroup().build();
 
 //// Pipelines
 
-const { pipeline } = webgpu
+const { pipeline } = await webgpu
   .setupPipeline()
   .addBindGroupLayout(bindGroupLayout)
-  .setShaderCode(assets.shader)
-  .setVertexShader("vertexMain")
-  .setFragmentShader("fragmentMain", { targets: [{ format }] })
-  .setPrimitive({ topology: "triangle-list" })
-  .build();
+  .useShaderCode(assets.shader.data)
+  .setVertexShader()
+  .setFragmentShader({ targets: [{ format: context.getConfiguration().format }] })
+  .setRenderPrimitive({ topology: "triangle-list" })
+  .buildAsync();
 
 //// Renderer
 
@@ -54,4 +58,4 @@ const renderPassDescriptor = {
   ],
 };
 
-webgpu.setupEncoder().beginRenderPass(renderPassDescriptor).setPipeline(pipeline).setBindGroup(0, bindGroup).draw(3, 1).end().queueSubmit();
+webgpu.setupEncoder().beginRenderPass(renderPassDescriptor).setPipeline(pipeline).setBindGroup(0, bindGroup).draw(3, 1).end().submitCommandBuffer();
