@@ -109,9 +109,11 @@ export class MouseTouchControl {
   }
 
   /**
-   * @param {TouchEvent} event
+   * @param {PointerEvent} event
    */
   touchdrag(event) {
+    event.preventDefault();
+
     switch (event.type) {
       case "pointerup":
       case "pointercancel":

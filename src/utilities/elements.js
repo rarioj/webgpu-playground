@@ -205,3 +205,49 @@ export function createDebugElement(options = {}) {
 
   return { wrapper: createDebugElement.wrapperElement, caption, content };
 }
+
+/**
+ * @param {string} src
+ * @param {Object} [options]
+ * @param {HTMLElement} [options.container]
+ * @param {string} [options.id]
+ * @param {string} [options.classname]
+ * @param {number} [options.width]
+ * @param {number} [options.height]
+ * @param {boolean} [options.autoplay]
+ * @param {boolean} [options.loop]
+ * @param {boolean} [options.muted]
+ * @param {CSSStyleDeclaration} [options.style]
+ * @returns {HTMLVideoElement}
+ */
+export function createVideoElement(src, options = {}) {
+  createVideoElement.id = createVideoElement.id || 0;
+
+  const {
+    container = document.body,
+    id = `default-video-${createVideoElement.id++}`,
+    classname = "default-video",
+    width = 400,
+    height = 300,
+    autoplay = true,
+    muted = true,
+    loop = true,
+    style = {},
+  } = options;
+
+  const video = document.createElement("video");
+  video.id = id;
+  video.classList.add(classname);
+  video.width = width;
+  video.height = height;
+  video.autoplay = autoplay;
+  video.muted = muted;
+  video.loop = loop;
+  Object.assign(video.style, style);
+  if (container instanceof HTMLElement) {
+    container.appendChild(video);
+  }
+
+  video.src = src;
+  return video;
+}

@@ -134,7 +134,7 @@ export class WebGPUTexture {
    * @param {GPUSamplerDescriptor} [samplerDescriptor]
    * @returns {GPUSampler}
    */
-  #createSampler(samplerDescriptor = {}) {
+  createSampler(samplerDescriptor = {}) {
     const defaultSamplerDescriptor = {
       addressModeU: "repeat",
       addressModeV: "repeat",
@@ -233,7 +233,7 @@ export class WebGPUTexture {
     this.textureView = this.texture.createView(finalTextureViewDescriptor);
 
     if (createSampler) {
-      this.sampler = this.#createSampler(overrideSamplerDescriptor);
+      this.sampler = this.createSampler(overrideSamplerDescriptor);
       return { builder: this, texture: this.texture, textureView: this.textureView, sampler: this.sampler };
     }
     return { builder: this, texture: this.texture, textureView: this.textureView };

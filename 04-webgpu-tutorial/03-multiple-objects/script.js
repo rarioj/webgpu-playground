@@ -1,11 +1,15 @@
 import { WebGPU } from "../../src/system/WebGPU.js";
-import { createCanvasElement, createModalElement } from "../../src/utilities/elements.js";
-import { getModelViewProjectionMatrix } from "../../src/utilities/maths.js";
+import { getQueryValue } from "../../src/utilities/helpers.js";
+import { createCanvasElement, createModalElement, createDebugElement } from "../../src/utilities/elements.js";
+import { getRandom, getModelViewProjectionMatrix } from "../../src/utilities/maths.js";
 import { loadAssets } from "../../src/utilities/assets.js";
 import { Scene } from "../../src/modules/Scene.js";
 import { BaseObject } from "../../src/objects/BaseObject.js";
 import { CameraObject } from "../../src/objects/CameraObject.js";
+import { FirstPersonControl } from "../../src/modules/FirstPersonControl.js";
 import { config } from "./config.js";
+
+const CUBE_COUNT = Math.floor(parseInt(getQueryValue("cubes", 256)));
 
 try {
   //// Initialisation
@@ -20,6 +24,9 @@ try {
   const webgpu = await WebGPU.init();
   const context = webgpu.createCanvasContext(canvas);
   const format = context.getConfiguration().format;
+
+  const debugCubeCount = createDebugElement({ label: "🧊" }).content;
+  debugCubeCount.innerText = `${CUBE_COUNT} cubes`;
 
   //// Assets
 
@@ -39,29 +46,40 @@ try {
 
   const { builder: mvpBufferBuilder, buffer: mvpBuffer } = webgpu
     .setupBuffer("MVP matrices")
-    .setData(new Float32Array(4 * 4 * 4)) // 4x4 matrix of 4-bytes float
+    .setData(new Float32Array(4 * 4 * 4 * CUBE_COUNT)) // 4x4 matrix of 4-bytes float * number of cubes
     .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
     .build();
 
   const scene = new Scene();
-  const camera = new CameraObject(context);
-  camera.setPosition(-5, 0, 0);
-  camera.updateOrthonormalVectors();
+  const camera = new CameraObject(context, { far: 1000 });
+  camera.setPosition(-25, 0, 0);
   camera.updateProjectionMatrix();
-  camera.updateViewMatrix();
+  camera.addUpdateCallback(() => {
+    camera.updateOrthonormalVectors();
+    camera.updateViewMatrix();
+    camera.move();
+  });
   scene.addObject(camera);
 
-  const cube = new BaseObject();
-  cube.addUpdateCallback(() => {
-    cube.updateModelMatrix();
-    cube.eulers[1]++;
-    cube.eulers[1] = cube.eulers[1] % 360;
-    cube.eulers[2]++;
-    cube.eulers[2] = cube.eulers[2] % 360;
-    const mvpMatrix = getModelViewProjectionMatrix(cube.modelMatrix, camera.viewMatrix, camera.projectionMatrix);
-    mvpBufferBuilder.data.set(mvpMatrix);
-  });
-  scene.addObject(cube);
+  const fps = new FirstPersonControl(camera, context.canvas, { debug: true, moveSpeed: 0.3, orientSpeed: 0.3 });
+
+  for (let i = 0; i < CUBE_COUNT; i++) {
+    const scale = getRandom(0.25, 1.25);
+    const cube = new BaseObject();
+    cube.setPosition(getRandom(-50, 50), getRandom(-50, 50), getRandom(-50, 50));
+    cube.setEulers(getRandom(-90, 90), getRandom(-90, 90), getRandom(-90, 90));
+    cube.setScale(scale, scale, scale);
+    cube.addUpdateCallback(() => {
+      cube.updateModelMatrix();
+      cube.eulers[1]++;
+      cube.eulers[1] = cube.eulers[1] % 360;
+      cube.eulers[2]++;
+      cube.eulers[2] = cube.eulers[2] % 360;
+      const mvpMatrix = getModelViewProjectionMatrix(cube.modelMatrix, camera.viewMatrix, camera.projectionMatrix);
+      mvpBufferBuilder.data.set(mvpMatrix, i * 16);
+    });
+    scene.addObject(cube);
+  }
 
   scene.addEvent(() => {
     mvpBufferBuilder.writeDataToBuffer();
@@ -112,7 +130,7 @@ try {
       .setPipeline(pipeline)
       .setVertexBuffer(0, vertexBuffer)
       .setBindGroup(0, bindGroup)
-      .draw(config.cubeVertexCount, 1)
+      .draw(config.cubeVertexCount, CUBE_COUNT)
       .end()
       .submitCommandBuffer();
 
