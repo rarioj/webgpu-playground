@@ -1,18 +1,21 @@
 import { WebGPU } from "../../src/system/WebGPU.js";
 import { getQueryValue } from "../../src/utilities/helpers.js";
 import { createCanvasElement, createModalElement, createDebugElement } from "../../src/utilities/elements.js";
-import { getRandom, getModelViewProjectionMatrix } from "../../src/utilities/maths.js";
+import { getRandom } from "../../src/utilities/maths.js";
+import { getModelViewProjectionMatrix } from "../../src/utilities/matrices.js";
+import { createCubeGeometry, createSphereGeometry } from "../../src/utilities/geometries.js";
 import { loadAssets } from "../../src/utilities/assets.js";
 import { Scene } from "../../src/modules/Scene.js";
 import { BaseObject } from "../../src/objects/BaseObject.js";
 import { CameraObject } from "../../src/objects/CameraObject.js";
 import { FirstPersonControl } from "../../src/modules/FirstPersonControl.js";
-import { config } from "./config.js";
 
-const CUBE_COUNT = Math.floor(parseInt(getQueryValue("cubes", 256)));
+const OBJECT_COUNT = Math.floor(parseInt(getQueryValue("count", 1024)));
+const GEOMETRY = getQueryValue("geometry", "cube");
 
 try {
   //// Initialisation
+
   const canvas = createCanvasElement({
     container: document.querySelector("article"),
     width: 800,
@@ -25,20 +28,33 @@ try {
   const context = webgpu.createCanvasContext(canvas);
   const format = context.getConfiguration().format;
 
-  const debugCubeCount = createDebugElement({ label: "🧊" }).content;
-  debugCubeCount.innerText = `${CUBE_COUNT} cubes`;
+  const debugCubeCount = createDebugElement({ label: GEOMETRY === "sphere" ? "⚽" : "📦" }).content;
+  debugCubeCount.innerText = `${OBJECT_COUNT} ${GEOMETRY}s`;
 
   //// Assets
 
-  const assets = await loadAssets(config.resources, true);
+  const assets = await loadAssets(
+    [
+      {
+        name: "shaderCode",
+        url: `./${getQueryValue("page")}/shaders/shader.wgsl`,
+        type: "text",
+      },
+    ],
+    true,
+  );
 
   const { depthStencilState, depthStencilAttachment } = webgpu.setupTextureView(context).buildDepthStencil();
 
   //// Buffers and scene
 
+  const geometryVertexData =
+    GEOMETRY === "sphere"
+      ? createSphereGeometry({ radius: 1.5, latitudes: 8, longitudes: 8, useNormal: false, indexed: false })
+      : createCubeGeometry({ size: 2.0, useNormal: false, indexed: false });
   const { buffer: vertexBuffer, vertexBufferLayout } = webgpu
     .setupBuffer("Cube vertices")
-    .setData(new Float32Array(config.cubeVertexArray))
+    .setData(geometryVertexData.vertices)
     .setUsage(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST)
     .addVertexAttribute("float32x3") // x, y, z
     .addVertexAttribute("float32x2") // u, v
@@ -46,7 +62,7 @@ try {
 
   const { builder: mvpBufferBuilder, buffer: mvpBuffer } = webgpu
     .setupBuffer("MVP matrices")
-    .setData(new Float32Array(4 * 4 * 4 * CUBE_COUNT)) // 4x4 matrix of 4-bytes float * number of cubes
+    .setData(new Float32Array(4 * 4 * 4 * OBJECT_COUNT)) // 4x4 matrix of 4-bytes float * number of cubes
     .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
     .build();
 
@@ -63,7 +79,7 @@ try {
 
   const fps = new FirstPersonControl(camera, context.canvas, { debug: true, moveSpeed: 0.3, orientSpeed: 0.3 });
 
-  for (let i = 0; i < CUBE_COUNT; i++) {
+  for (let i = 0; i < OBJECT_COUNT; i++) {
     const scale = getRandom(0.25, 1.25);
     const cube = new BaseObject();
     cube.setPosition(getRandom(-50, 50), getRandom(-50, 50), getRandom(-50, 50));
@@ -130,7 +146,7 @@ try {
       .setPipeline(pipeline)
       .setVertexBuffer(0, vertexBuffer)
       .setBindGroup(0, bindGroup)
-      .draw(config.cubeVertexCount, CUBE_COUNT)
+      .draw(geometryVertexData.vertices.length / 5, OBJECT_COUNT)
       .end()
       .submitCommandBuffer();
 

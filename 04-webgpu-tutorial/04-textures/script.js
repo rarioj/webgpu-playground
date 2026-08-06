@@ -1,7 +1,9 @@
 import { WebGPU } from "../../src/system/WebGPU.js";
 import { getQueryValue } from "../../src/utilities/helpers.js";
 import { createCanvasElement, createVideoElement, createModalElement } from "../../src/utilities/elements.js";
-import { getModelViewProjectionMatrix, getRandom } from "../../src/utilities/maths.js";
+import { getRandom } from "../../src/utilities/maths.js";
+import { getModelViewProjectionMatrix } from "../../src/utilities/matrices.js";
+import { createCubeGeometry } from "../../src/utilities/geometries.js";
 import { loadAssets } from "../../src/utilities/assets.js";
 import { Scene } from "../../src/modules/Scene.js";
 import { BaseObject } from "../../src/objects/BaseObject.js";
@@ -12,6 +14,7 @@ const textureType = getQueryValue("texture", "image");
 
 try {
   //// Initialisation
+
   const canvas = createCanvasElement({
     container: document.querySelector("article"),
     width: 512,
@@ -32,9 +35,10 @@ try {
 
   //// Buffers and scene
 
+  const cubeVertexData = createCubeGeometry({ size: 2.0, useNormal: false, indexed: false });
   const { buffer: vertexBuffer, vertexBufferLayout } = webgpu
     .setupBuffer("Cube vertices")
-    .setData(new Float32Array(config.cubeVertexArray))
+    .setData(cubeVertexData.vertices)
     .setUsage(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST)
     .addVertexAttribute("float32x3") // x, y, z
     .addVertexAttribute("float32x2") // u, v
@@ -178,7 +182,7 @@ try {
     context.scale(1, -1);
     context.translate(0, -context.canvas.height);
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-    context.fillStyle = "#aaaaff";
+    context.fillStyle = "#ffcccc";
     context.fillRect(0, 0, context.canvas.width, context.canvas.height);
     context.fillStyle = "red";
 
@@ -278,7 +282,7 @@ try {
 
   if (textureType === "canvasGPU") {
     const canvasHelp = document.createElement("footer");
-    canvasHelp.innerHTML = 'The smaller canvas loads the <a href="./index.html?page=02-collision-simulation">Collision Simulation</a> lesson.';
+    canvasHelp.innerHTML = 'The smaller canvas runs the <a href="./index.html?page=02-collision-simulation">Collision Simulation</a> lesson.';
     document.querySelector("article").appendChild(canvasHelp);
   }
 
@@ -371,7 +375,7 @@ try {
         .setVertexBuffer(0, vertexBuffer)
         .setBindGroup(0, bindGroup)
         .setBindGroup(1, bindGroupTexture)
-        .draw(config.cubeVertexCount, 1)
+        .draw(cubeVertexData.vertices.length / 5, 1)
         .end()
         .submitCommandBuffer();
 
@@ -389,7 +393,7 @@ try {
         .setVertexBuffer(0, vertexBuffer)
         .setBindGroup(0, bindGroup)
         .setBindGroup(1, bindGroupTexture)
-        .draw(config.cubeVertexCount, 1)
+        .draw(cubeVertexData.vertices.length / 5, 1)
         .end()
         .submitCommandBuffer();
     }

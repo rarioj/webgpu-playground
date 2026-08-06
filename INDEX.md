@@ -58,4 +58,4 @@ Not in any particular order.
 - [PNGWing](https://www.pngwing.com/) - Transparent background images for designers.
 - [Free3D](https://free3d.com/) - Free 3D Models, TF3DM is the go to place where you can share your free 3d assets and download instantly any you like.
 - [Poly Haven](https://polyhaven.com/) - The public 3D asset library.
-- [Pixabay](https://pixabay.com/) - Stunning free stock video footage & clips.
+- [Pixabay](https://pixabay.com/) - Stunning royalty-free images & royalty-free stock.

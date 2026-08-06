@@ -123,7 +123,7 @@ export class WebGPU {
    * @param {string} [label]
    * @returns {WebGPUTexture}
    */
-  setupTextureView(context = this.contexts[0], label = "Unlabelled") {
+  setupTextureView(context = undefined, label = "Unlabelled") {
     const builder = new WebGPUTexture(this.device, context, label);
     builder.debug = this.debug;
     return builder;

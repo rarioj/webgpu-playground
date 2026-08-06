@@ -1,14 +1,19 @@
 import { WebGPU } from "../../src/system/WebGPU.js";
 import { createCanvasElement, createModalElement } from "../../src/utilities/elements.js";
-import { getModelViewProjectionMatrix } from "../../src/utilities/maths.js";
+import { getQueryValue } from "../../src/utilities/helpers.js";
+import { getModelViewProjectionMatrix } from "../../src/utilities/matrices.js";
+import { createCubeGeometry, createSphereGeometry } from "../../src/utilities/geometries.js";
 import { loadAssets } from "../../src/utilities/assets.js";
 import { Scene } from "../../src/modules/Scene.js";
 import { BaseObject } from "../../src/objects/BaseObject.js";
 import { CameraObject } from "../../src/objects/CameraObject.js";
-import { config } from "./config.js";
+
+const GEOMETRY = getQueryValue("geometry", "cube");
+const SMOOTHNESS = Math.floor(parseInt(getQueryValue("smoothness", "8")));
 
 try {
   //// Initialisation
+
   const canvas = createCanvasElement({
     container: document.querySelector("article"),
     width: 800,
@@ -23,15 +28,28 @@ try {
 
   //// Assets
 
-  const assets = await loadAssets(config.resources, true);
+  const assets = await loadAssets(
+    [
+      {
+        name: "shaderCode",
+        url: `./${getQueryValue("page")}/shaders/shader.wgsl`,
+        type: "text",
+      },
+    ],
+    true,
+  );
 
   const { depthStencilState, depthStencilAttachment } = webgpu.setupTextureView(context).buildDepthStencil();
 
   //// Buffers and scene
 
+  const geometryVertexData =
+    GEOMETRY === "sphere"
+      ? createSphereGeometry({ radius: 1.5, latitudes: SMOOTHNESS, longitudes: SMOOTHNESS, useNormal: false, indexed: false })
+      : createCubeGeometry({ size: 2.0, useNormal: false, indexed: false });
   const { buffer: vertexBuffer, vertexBufferLayout } = webgpu
-    .setupBuffer("Cube vertices")
-    .setData(new Float32Array(config.cubeVertexArray))
+    .setupBuffer("Geometry vertices")
+    .setData(geometryVertexData.vertices)
     .setUsage(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST)
     .addVertexAttribute("float32x3") // x, y, z
     .addVertexAttribute("float32x2") // u, v
@@ -112,7 +130,7 @@ try {
       .setPipeline(pipeline)
       .setVertexBuffer(0, vertexBuffer)
       .setBindGroup(0, bindGroup)
-      .draw(config.cubeVertexCount, 1)
+      .draw(geometryVertexData.vertices.length / 5, 1)
       .end()
       .submitCommandBuffer();
 

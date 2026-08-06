@@ -19,6 +19,6 @@ fn vertexMain(@builtin(instance_index) index: u32, @location(0) position: vec4<f
 
 @fragment
 fn fragmentMain(@location(0) fragmentUV: vec2<f32>, @location(1) fragmentPosition: vec4<f32>) -> @location(0) vec4<f32> {
-// return textureSample(TextureView, Sampler, fragmentUV) * fragmentPosition;
+    // return textureSample(TextureView, Sampler, fragmentUV) * fragmentPosition;
     return textureSample(TextureView, Sampler, fragmentUV);
 }

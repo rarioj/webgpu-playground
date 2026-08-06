@@ -33,7 +33,7 @@ const SUPPORTED_ASSET_TYPES = {
 export async function loadAssets(assets, unpackOneItem = false) {
   let downloaded = 0;
 
-  const { wrapper, status, progress } = createProgressBarElement();
+  const { wrapper, label, progress } = createProgressBarElement();
 
   /** @type {Object.<string, AssetResource|AssetResource[]>} */
   const resources = {};
@@ -43,8 +43,8 @@ export async function loadAssets(assets, unpackOneItem = false) {
       const group = assets[i].group || "__default__";
       const data = await fetch(assets[i].url)
         .then((response) => {
-          status.ariaBusy = true;
-          status.innerText = assets[i].url.split("/").pop();
+          label.ariaBusy = true;
+          label.innerText = assets[i].url.split("/").pop();
           if (!response.ok) {
             throw new Error(`Invalid asset URL: ${assets[i].url}`);
           }
@@ -74,8 +74,8 @@ export async function loadAssets(assets, unpackOneItem = false) {
   }
 
   progress.value = 100;
-  status.ariaBusy = false;
-  status.innerText = "";
+  label.ariaBusy = false;
+  label.innerText = "";
   setTimeout(() => {
     wrapper.remove();
   }, 100);

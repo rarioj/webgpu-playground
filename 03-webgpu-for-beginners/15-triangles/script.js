@@ -6,7 +6,8 @@ import { BaseObject } from "../../src/objects/BaseObject.js";
 import { CameraObject } from "../../src/objects/CameraObject.js";
 import { FirstPersonControl } from "../../src/modules/FirstPersonControl.js";
 import { BoundingVolumeHierarchy } from "../../src/modules/BoundingVolumeHierarchy.js";
-import { getRandom, getSphereCorners, getTriangleVertices } from "../../src/utilities/maths.js";
+import { getRandom } from "../../src/utilities/maths.js";
+import { getSphereCorners, getTriangleVertices } from "../../src/utilities/matrices.js";
 import { config } from "./config.js";
 
 const NUM_OBJECTS = Math.floor(parseInt(getQueryValue("objects", 512)));

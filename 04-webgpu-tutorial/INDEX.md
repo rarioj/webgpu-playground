@@ -10,3 +10,4 @@ GitHub: [orillusion-webgpu-samples](https://github.com/Orillusion/orillusion-web
 - [x] [3D Transform](./index.html?page=04-webgpu-tutorial/02-3d-transform)
 - [x] [BindGroup with Multi-Objects](./index.html?page=04-webgpu-tutorial/03-multiple-objects)
 - [x] [Textures](./index.html?page=04-webgpu-tutorial/04-textures)
+- [x] [Lighting](./index.html?page=04-webgpu-tutorial/05-lighting)

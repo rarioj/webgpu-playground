@@ -49,19 +49,19 @@ export class WebGPUTexture {
 
   /**
    * @param {GPUDevice} device
-   * @param {GPUCanvasContext} context
+   * @param {GPUCanvasContext} [context]
    * @param {string} [label]
    */
-  constructor(device, context, label = "Unlabelled") {
+  constructor(device, context = undefined, label = "Unlabelled") {
     this.debug = false;
     this.device = device;
     this.context = context;
     this.textureDescriptor = {
       label: `${label} (GPUTexture)`,
-      format: this.context.getConfiguration().format,
+      format: context ? context.getConfiguration().format : "bgra8unorm",
       size: {
-        width: this.context.canvas.width,
-        height: this.context.canvas.height,
+        width: context ? context.canvas.width : 0,
+        height: context ? context.canvas.height : 0,
         depthOrArrayLayers: 1,
       },
       usage: GPUTextureUsage.RENDER_ATTACHMENT,
@@ -249,7 +249,7 @@ export class WebGPUTexture {
     const { overrideTextureDescriptor = {}, overrideTextureViewDescriptor = {} } = options;
 
     this.setTextureFormat("depth24plus-stencil8")
-      .setTextureSize(this.context.canvas.width, this.context.canvas.height)
+      .setTextureSize(this.textureDescriptor.size.width, this.textureDescriptor.size.height)
       .setTextureUsage(GPUTextureUsage.RENDER_ATTACHMENT)
       .build({ createSampler: false, overrideTextureDescriptor, overrideTextureViewDescriptor });
 

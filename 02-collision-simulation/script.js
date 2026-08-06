@@ -105,6 +105,8 @@ function updateCanvas(data) {
   context.scale(1, -1);
   context.translate(0, -canvas.height);
   context.clearRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = "#ffcccc";
+  context.fillRect(0, 0, context.canvas.width, context.canvas.height);
   context.fillStyle = "red";
 
   for (let j = 0; j < data.length; j += 6) {

@@ -34,3 +34,4 @@ pages["04-webgpu-tutorial/01-intro-getting-started"] = true;
 pages["04-webgpu-tutorial/02-3d-transform"] = true;
 pages["04-webgpu-tutorial/03-multiple-objects"] = true;
 pages["04-webgpu-tutorial/04-textures"] = true;
+pages["04-webgpu-tutorial/05-lighting"] = true;
