@@ -11,7 +11,7 @@ const WORKGROUP_COUNT = Math.ceil(GRID_SIZE / WORKGROUP_SIZE);
 
 //// Initialisation
 
-const canvas = createCanvasElement({
+const { canvas } = createCanvasElement({
   container: document.querySelector("article"),
   width: 512,
   height: 512,

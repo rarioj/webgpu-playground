@@ -10,7 +10,7 @@ import { config } from "./config.js";
 
 //// Initialisation
 
-const canvas = createCanvasElement({
+const { canvas } = createCanvasElement({
   container: document.querySelector("article"),
   width: 800,
   height: 450,
@@ -182,7 +182,7 @@ pointerIndex++;
 
 const firstPersonControl = new FirstPersonControl(camera, context.canvas, { debug: true, moveSpeed: 0.02, orientSpeed: 0.2 });
 
-scene.addEvent(() => {
+scene.addUpdateEvent(() => {
   cameraBufferBuilder.writeDataToBuffer();
   uniformBufferBuilder.writeDataToBuffer();
   objectBufferBuilder.writeDataToBuffer();

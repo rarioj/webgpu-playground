@@ -16,7 +16,7 @@ const GEOMETRY = getQueryValue("geometry", "cube");
 try {
   //// Initialisation
 
-  const canvas = createCanvasElement({
+  const { canvas } = createCanvasElement({
     container: document.querySelector("article"),
     width: 800,
     height: 600,
@@ -97,7 +97,7 @@ try {
     scene.addObject(cube);
   }
 
-  scene.addEvent(() => {
+  scene.addUpdateEvent(() => {
     mvpBufferBuilder.writeDataToBuffer();
   });
 

@@ -32,3 +32,4 @@ pages["04-webgpu-tutorial/03-multiple-objects"] = true;
 pages["04-webgpu-tutorial/04-textures"] = true;
 pages["04-webgpu-tutorial/05-lighting"] = true;
 pages["04-webgpu-tutorial/06-shadowmap"] = true;
+pages["04-webgpu-tutorial/07-compute-pipeline"] = true;

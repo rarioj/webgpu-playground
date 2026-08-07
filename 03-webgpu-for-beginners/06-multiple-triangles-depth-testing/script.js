@@ -9,7 +9,7 @@ import { assetArray, triangleVertices } from "./config.js";
 
 //// Initialisation
 
-const canvas = createCanvasElement({
+const { canvas } = createCanvasElement({
   container: document.querySelector("article"),
   width: 800,
   height: 600,
@@ -83,7 +83,7 @@ for (let i = -5; i < 5; i++) {
 
 const firstPersonControl = new FirstPersonControl(camera, context.canvas, { debug: true, moveSpeed: 0.02, orientSpeed: 0.2 });
 
-scene.addEvent(() => {
+scene.addUpdateEvent(() => {
   uniformBufferBuilder.writeDataToBuffer();
   objectBufferBuilder.writeDataToBuffer();
 });

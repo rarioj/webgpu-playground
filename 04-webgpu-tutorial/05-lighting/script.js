@@ -13,7 +13,7 @@ import { FirstPersonControl } from "../../src/modules/FirstPersonControl.js";
 const OBJECT_COUNT = Math.floor(parseInt(getQueryValue("count", 512)));
 const CUBE_COUNT = Math.floor(OBJECT_COUNT / 2);
 const SPHERE_COUNT = OBJECT_COUNT - CUBE_COUNT;
-const AMBIENT_LIGHT_INTENSITY = 0.1;
+const AMBIENT_LIGHT_INTENSITY = 0.5;
 const POINT_LIGHT_INTENSITY = 0;
 const POINT_LIGHT_RADIUS = 10;
 const DIRECTIONAL_LIGHT_INTENSITY = 0;
@@ -21,7 +21,7 @@ const DIRECTIONAL_LIGHT_INTENSITY = 0;
 try {
   //// Initialisation
 
-  const canvas = createCanvasElement({
+  const { canvas } = createCanvasElement({
     container: document.querySelector("article"),
     width: 800,
     height: 600,
@@ -151,7 +151,7 @@ try {
   modelViewBufferBuilder.writeDataToBuffer();
   colorBufferBuilder.writeDataToBuffer();
 
-  scene.addEvent(() => {
+  scene.addUpdateEvent(() => {
     const now = performance.now();
     directionalLightBufferBuilder.data[0] = Math.sin(now / 1500);
     directionalLightBufferBuilder.data[2] = Math.cos(now / 1500);

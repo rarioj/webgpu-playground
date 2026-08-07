@@ -7,7 +7,7 @@ import { CameraObject } from "../../src/objects/CameraObject.js";
 
 //// Initialisation
 
-const canvas = createCanvasElement({
+const { canvas } = createCanvasElement({
   container: document.querySelector("article"),
   width: 512,
   height: 512,

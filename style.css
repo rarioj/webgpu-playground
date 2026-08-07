@@ -19,3 +19,7 @@ article canvas {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
 }
+
+article .default-canvas-wrapper {
+  display: inline-flex;
+}

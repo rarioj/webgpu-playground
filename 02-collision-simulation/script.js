@@ -11,7 +11,7 @@ const MAX_RADIUS = Math.floor(parseInt(getQueryValue("max_radius", 10)));
 
 //// Initialisation
 
-const canvas = createCanvasElement({
+const { canvas } = createCanvasElement({
   container: document.querySelector("article"),
   width: Math.floor(parseInt(getQueryValue("width", 512))),
   height: Math.floor(parseInt(getQueryValue("height", 512))),

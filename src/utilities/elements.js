@@ -9,8 +9,10 @@
  * @param {string} [options.classname]
  * @param {number} [options.width]
  * @param {number} [options.height]
+ * @param {number} [options.devicePixelRatio]
+ * @param {CSSStyleDeclaration} [options.wrapperStyle]
  * @param {CSSStyleDeclaration} [options.style]
- * @returns {HTMLCanvasElement}
+ * @returns {{wrapper: HTMLElement, canvas: HTMLCanvasElement}}
  */
 export function createCanvasElement(options = {}) {
   createCanvasElement.id = createCanvasElement.id || 0;
@@ -21,21 +23,33 @@ export function createCanvasElement(options = {}) {
     classname = "default-canvas",
     width = window.innerWidth,
     height = window.innerHeight,
+    devicePixelRatio = window.devicePixelRatio || 1,
+    wrapperStyle = {},
     style = {},
   } = options;
+
+  const wrapper = document.createElement("div");
+  wrapper.classList.add(`${classname}-wrapper`);
+  wrapper.style.width = "100%";
+  wrapper.style.height = "100%";
+  wrapper.style.maxWidth = `${width}px`;
+  wrapper.style.maxHeight = `${height}px`;
+  Object.assign(wrapper.style, wrapperStyle);
 
   const canvas = document.createElement("canvas");
   canvas.id = id;
   canvas.classList.add(classname);
-  canvas.width = width;
-  canvas.height = height;
+  canvas.width = width * devicePixelRatio;
+  canvas.height = height * devicePixelRatio;
+  canvas.style.width = "100%";
+  canvas.style.height = "100%";
   Object.assign(canvas.style, style);
 
+  wrapper.appendChild(canvas);
   if (container instanceof HTMLElement) {
-    container.appendChild(canvas);
+    container.appendChild(wrapper);
   }
-
-  return canvas;
+  return { wrapper, canvas };
 }
 
 /**
@@ -148,8 +162,7 @@ export function createProgressBarElement(options = {}) {
   } = options;
 
   const wrapper = document.createElement("article");
-  wrapper.id = id;
-  wrapper.classList.add(classname);
+  wrapper.classList.add(`${classname}-wrapper`);
   wrapper.style.position = "fixed";
   wrapper.style.top = "0";
   wrapper.style.width = "100%";
@@ -159,6 +172,8 @@ export function createProgressBarElement(options = {}) {
   Object.assign(label.style, labelStyle);
 
   const progress = document.createElement("progress");
+  progress.id = id;
+  progress.classList.add(classname);
   progress.max = 100;
   Object.assign(progress.style, style);
 
@@ -198,8 +213,6 @@ export function createDebugElement(options = {}) {
 
   if (!(createDebugElement.wrapperElement instanceof HTMLElement)) {
     const wrapper = document.createElement("section");
-    wrapper.id = id;
-    wrapper.classList.add(classname);
     wrapper.style.display = "flex";
     wrapper.style.fontSize = "small";
     wrapper.style.position = "fixed";
@@ -214,6 +227,8 @@ export function createDebugElement(options = {}) {
   }
 
   const labelElement = document.createElement("label");
+  labelElement.id = id;
+  labelElement.classList.add(classname);
   labelElement.innerText = label + " ";
   labelElement.style.margin = "0 0.5em";
   Object.assign(labelElement.style, labelStyle);
@@ -238,8 +253,9 @@ export function createDebugElement(options = {}) {
  * @param {boolean} [options.autoplay]
  * @param {boolean} [options.loop]
  * @param {boolean} [options.muted]
+ * @param {CSSStyleDeclaration} [options.wrapperStyle]
  * @param {CSSStyleDeclaration} [options.style]
- * @returns {HTMLVideoElement}
+ * @returns {{wrapper: HTMLElement, video: HTMLVideoElement}}
  */
 export function createVideoElement(src, options = {}) {
   createVideoElement.id = createVideoElement.id || 0;
@@ -253,8 +269,13 @@ export function createVideoElement(src, options = {}) {
     autoplay = true,
     muted = true,
     loop = true,
+    wrapperStyle = {},
     style = {},
   } = options;
+
+  const wrapper = document.createElement("div");
+  wrapper.classList.add(`${classname}-wrapper`);
+  Object.assign(wrapper.style, wrapperStyle);
 
   const video = document.createElement("video");
   video.id = id;
@@ -264,13 +285,15 @@ export function createVideoElement(src, options = {}) {
   video.autoplay = autoplay;
   video.muted = muted;
   video.loop = loop;
+  video.src = src;
   Object.assign(video.style, style);
+
+  wrapper.appendChild(video);
   if (container instanceof HTMLElement) {
     container.appendChild(video);
   }
 
-  video.src = src;
-  return video;
+  return { wrapper, video };
 }
 
 /**
@@ -307,8 +330,7 @@ export function createInputRangeElement(options = {}) {
   } = options;
 
   const wrapper = document.createElement("label");
-  wrapper.id = id;
-  wrapper.classList.add(classname);
+  wrapper.classList.add(`${classname}-wrapper`);
   wrapper.innerText = label + " • ";
   Object.assign(wrapper.style, wrapperStyle);
 
@@ -318,6 +340,8 @@ export function createInputRangeElement(options = {}) {
   Object.assign(span.style, valueStyle);
 
   const input = document.createElement("input");
+  input.id = id;
+  input.classList.add(classname);
   input.type = "range";
   input.min = min;
   input.max = max;

@@ -15,7 +15,7 @@ const textureType = getQueryValue("texture", "image");
 try {
   //// Initialisation
 
-  const canvas = createCanvasElement({
+  const { canvas } = createCanvasElement({
     container: document.querySelector("article"),
     width: 512,
     height: 512,
@@ -70,7 +70,7 @@ try {
   });
   scene.addObject(cube);
 
-  scene.addEvent(() => {
+  scene.addUpdateEvent(() => {
     mvpBufferBuilder.writeDataToBuffer();
   });
 
@@ -93,7 +93,7 @@ try {
   //// Texture variants
 
   // Video texture
-  const video = textureType === "video" ? createVideoElement(config.videoURL, { container: null }) : undefined;
+  const { video } = textureType === "video" ? createVideoElement(config.videoURL, { container: null }) : { undefined };
   if (video instanceof HTMLVideoElement) {
     await video.play();
   }
@@ -140,18 +140,19 @@ try {
     }
   }
 
-  const canvasDraw =
+  const { canvas: canvasDraw } =
     textureType === "canvasDraw"
       ? createCanvasElement({
           container: document.querySelector("article"),
           width: 150,
           height: 150,
+          devicePixelRatio: 1,
           style: {
             outline: "1px solid black",
             verticalAlign: "top",
           },
         })
-      : undefined;
+      : { undefined };
 
   const contextDraw = textureType === "canvasDraw" ? canvasDraw.getContext("2d") : undefined;
 
@@ -264,18 +265,19 @@ try {
     return { BUFFER_SIZE, inputBufferBuilder, inputBuffer, outputBuffer, stagingBuffer, sceneBuffer, bindGroup, bindGroupLayout, pipeline };
   }
 
-  const canvasGPU =
+  const { canvas: canvasGPU } =
     textureType === "canvasGPU"
       ? createCanvasElement({
           container: document.querySelector("article"),
           width: 150,
           height: 150,
+          devicePixelRatio: 1,
           style: {
             outline: "1px solid black",
             verticalAlign: "top",
           },
         })
-      : undefined;
+      : { undefined };
 
   const contextGPU = textureType === "canvasGPU" ? canvasGPU.getContext("2d") : undefined;
   const objectsGPU = textureType === "canvasGPU" ? await initCanvasGPU(canvasGPU) : undefined;

@@ -13,7 +13,7 @@ const NUM_SPHERES = Math.floor(parseInt(getQueryValue("spheres", 512)));
 
 //// Initialisation
 
-const canvas = createCanvasElement({
+const { canvas } = createCanvasElement({
   container: document.querySelector("article"),
   width: 800,
   height: 600,

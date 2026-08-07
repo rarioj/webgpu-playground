@@ -42,14 +42,19 @@ export class BaseObject {
   up;
 
   /**
+   * @type {mat4}
+   */
+  modelMatrix;
+
+  /**
    * @type {Array.<function(): void>}
    */
   updateCallbacks;
 
   /**
-   * @type {mat4}
+   * @type {Array.<function(number, number): void>}
    */
-  modelMatrix;
+  resizeCallbacks;
 
   /**
    *
@@ -62,8 +67,9 @@ export class BaseObject {
     this.forward = vec3.create();
     this.right = vec3.create();
     this.up = vec3.create(0, 1, 0);
-    this.updateCallbacks = [];
     this.modelMatrix = mat4.create();
+    this.updateCallbacks = [];
+    this.resizeCallbacks = [];
   }
 
   /**
@@ -155,25 +161,6 @@ export class BaseObject {
   }
 
   /**
-   * @param {function(): void} callback
-   * @returns {BaseObject}
-   */
-  addUpdateCallback(callback) {
-    this.updateCallbacks.push(callback);
-    return this;
-  }
-
-  /**
-   * @returns {BaseObject}
-   */
-  update() {
-    for (let i = 0; i < this.updateCallbacks.length; i++) {
-      this.updateCallbacks[i]();
-    }
-    return this;
-  }
-
-  /**
    * @returns {BaseObject}
    */
   move() {
@@ -196,6 +183,46 @@ export class BaseObject {
     this.eulers[1] = Math.min(89, Math.max(-89, this.eulers[1] - y));
     this.eulers[2] -= x;
     this.eulers[2] %= 360;
+    return this;
+  }
+
+  /**
+   * @param {function(): void} callback
+   * @returns {BaseObject}
+   */
+  addUpdateCallback(callback) {
+    this.updateCallbacks.push(callback);
+    return this;
+  }
+
+  /**
+   * @returns {BaseObject}
+   */
+  update() {
+    for (let i = 0; i < this.updateCallbacks.length; i++) {
+      this.updateCallbacks[i]();
+    }
+    return this;
+  }
+
+  /**
+   * @param {function(number, number): void} callback
+   * @returns {BaseObject}
+   */
+  addResizeCallback(callback) {
+    this.resizeCallbacks.push(callback);
+    return this;
+  }
+
+  /**
+   * @param {number} width
+   * @param {number} height
+   * @returns {BaseObject}
+   */
+  resize(width, height) {
+    for (let i = 0; i < this.resizeCallbacks.length; i++) {
+      this.resizeCallbacks[i](width, height);
+    }
     return this;
   }
 }

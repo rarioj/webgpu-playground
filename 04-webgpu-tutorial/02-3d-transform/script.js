@@ -14,7 +14,7 @@ const SMOOTHNESS = Math.floor(parseInt(getQueryValue("smoothness", "8")));
 try {
   //// Initialisation
 
-  const canvas = createCanvasElement({
+  const { canvas } = createCanvasElement({
     container: document.querySelector("article"),
     width: 800,
     height: 600,
@@ -81,7 +81,7 @@ try {
   });
   scene.addObject(cube);
 
-  scene.addEvent(() => {
+  scene.addUpdateEvent(() => {
     mvpBufferBuilder.writeDataToBuffer();
   });
 

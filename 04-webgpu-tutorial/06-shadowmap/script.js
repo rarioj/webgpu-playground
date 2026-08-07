@@ -15,7 +15,7 @@ const OBJECT_COUNT = Math.floor(parseInt(getQueryValue("count", 64)));
 try {
   //// Initialisation
 
-  const canvas = createCanvasElement({
+  const { canvas } = createCanvasElement({
     container: document.querySelector("article"),
     width: 800,
     height: 600,
@@ -211,7 +211,7 @@ try {
   }
   colorBufferBuilder.writeDataToBuffer();
 
-  scene.addEvent(() => {
+  scene.addUpdateEvent(() => {
     modelViewBufferBuilder.writeDataToBuffer();
     cameraProjectionBufferBuilder.writeDataToBuffer();
     lightProjectionBufferBuilder.writeDataToBuffer();

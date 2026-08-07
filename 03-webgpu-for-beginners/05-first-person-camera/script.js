@@ -8,7 +8,7 @@ import { FirstPersonControl } from "../../src/modules/FirstPersonControl.js";
 
 //// Initialisation
 
-const canvas = createCanvasElement({
+const { canvas } = createCanvasElement({
   container: document.querySelector("article"),
   width: 800,
   height: 600,
