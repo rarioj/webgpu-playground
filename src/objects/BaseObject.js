@@ -61,7 +61,7 @@ export class BaseObject {
     this.movements = [0, 0, 0];
     this.forward = vec3.create();
     this.right = vec3.create();
-    this.up = vec3.create();
+    this.up = vec3.create(0, 1, 0);
     this.updateCallbacks = [];
     this.modelMatrix = mat4.create();
   }

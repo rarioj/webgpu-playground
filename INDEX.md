@@ -29,6 +29,7 @@ Not in any particular order.
 - [From 0 to glTF with WebGPU: The First Triangle](https://www.willusher.io/graphics/2023/04/10/0-to-gltf-triangle/)
 - [Efficiently rendering glTF models](https://toji.dev/webgpu-gltf-case-study/)
 - [WebGPU Engine from Scratch](https://dev.to/ndesmic/webgpu-engine-from-scratch-1-basic-rendering-51cl) by ndesmic
+- [WebGPU game series](https://blog.batteson.com/2023/06/04/webgpu-game-1-boilerplate) by battesonb
 - #️⃣ [WebGPU Examples](https://github.com/tsherif/webgpu-examples) by Tarek Sherif
 - #️⃣ [WebGPU Samples](https://github.com/webgpu/webgpu-samples) by Austin Eng
 - #️⃣ [RedGPU](https://github.com/redcamel/RedGPU) by @RedCamel15

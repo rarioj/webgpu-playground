@@ -1,3 +1,3 @@
-- [Pico ✨](https://picocss.com/) version 2.1.1 (classless)
+- [Pico ✨](https://picocss.com/) version 2.1.1 (fluid classless)
 - [Showdown](https://github.com/showdownjs/showdown) version 2.1.0
 - [wgpu-matrix](https://wgpu-matrix.org/) version 3.4.2

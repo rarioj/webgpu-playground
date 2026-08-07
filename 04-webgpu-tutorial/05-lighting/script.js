@@ -89,7 +89,7 @@ try {
     .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
     .build();
   const { builder: projectionBufferBuilder, buffer: projectionBuffer } = webgpu
-    .setupBuffer("Projection matrices")
+    .setupBuffer("Projection matrix")
     .setData(new Float32Array(4 * 4)) // 4x4 matrix
     .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
     .build();

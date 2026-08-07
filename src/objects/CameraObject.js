@@ -12,7 +12,7 @@ export class CameraObject extends BaseObject {
   context;
 
   /**
-   * @type {[number, number, number, number]}
+   * @type {{fov: number, aspect: number, left: number, right: number, bottom: number, top: number, near: number, far: number, orthographic: boolean}}
    */
   frustum;
 
@@ -46,8 +46,13 @@ export class CameraObject extends BaseObject {
    * @param {Object} [options]
    * @param {number} [options.fov]
    * @param {number} [options.aspect]
+   * @param {number} [options.left]
+   * @param {number} [options.right]
+   * @param {number} [options.bottom]
+   * @param {number} [options.top]
    * @param {number} [options.near]
    * @param {number} [options.far]
+   * @param {number} [options.orthographic]
    * @param {number} [options.verticalScale]
    * @param {number} [options.horizontalScale]
    */
@@ -57,14 +62,19 @@ export class CameraObject extends BaseObject {
     const {
       fov = Math.PI / 4,
       aspect = context.canvas.width / context.canvas.height,
+      left = context.canvas.width * -0.1,
+      right = context.canvas.width * 0.1,
+      bottom = context.canvas.height * -0.1,
+      top = context.canvas.height * 0.1,
       near = 0.01,
       far = 100,
+      orthographic = false,
       verticalScale = Math.tan(Math.PI / 8),
       horizontalScale = (verticalScale * context.canvas.width) / context.canvas.height,
     } = options;
 
     this.context = context;
-    this.frustum = [fov, aspect, near, far];
+    this.frustum = { fov, aspect, left, right, bottom, top, near, far, orthographic };
     this.scaling = [verticalScale, horizontalScale];
     this.scaledRight = vec3.create();
     this.scaledUp = vec3.create();
@@ -74,25 +84,19 @@ export class CameraObject extends BaseObject {
 
   /**
    * @param {Object} [frustum]
-   * @param {number} [frustum.fov]
-   * @param {number} [frustum.aspect]
-   * @param {number} [frustum.near]
-   * @param {number} [frustum.far]
+   * @param {number} [options.fov]
+   * @param {number} [options.aspect]
+   * @param {number} [options.left]
+   * @param {number} [options.right]
+   * @param {number} [options.bottom]
+   * @param {number} [options.top]
+   * @param {number} [options.near]
+   * @param {number} [options.far]
+   * @param {number} [options.orthographic]
    * @returns {BaseCamera}
    */
   setFrustum(frustum = {}) {
-    if (frustum.fov !== undefined) {
-      this.frustum[0] = frustum.fov;
-    }
-    if (frustum.aspect !== undefined) {
-      this.frustum[1] = frustum.aspect;
-    }
-    if (frustum.near !== undefined) {
-      this.frustum[2] = frustum.near;
-    }
-    if (frustum.far !== undefined) {
-      this.frustum[3] = frustum.far;
-    }
+    this.frustum = { ...this.frustum, ...frustum };
     return this;
   }
 
@@ -140,12 +144,9 @@ export class CameraObject extends BaseObject {
    * @returns {BaseCamera}
    */
   updateProjectionMatrix() {
-    const projection = mat4.perspective(
-      this.frustum[0], // fov
-      this.frustum[1], // aspect
-      this.frustum[2], // near
-      this.frustum[3], // far
-    );
+    const projection = this.frustum.orthographic
+      ? mat4.ortho(this.frustum.left, this.frustum.right, this.frustum.bottom, this.frustum.top, this.frustum.near, this.frustum.far)
+      : mat4.perspective(this.frustum.fov, this.frustum.aspect, this.frustum.near, this.frustum.far);
     this.projectionMatrix.set(projection);
     return this;
   }
