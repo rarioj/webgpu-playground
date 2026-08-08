@@ -99,25 +99,19 @@ try {
       ? createVideoElement([{ src: config.videoURL, type: "video/mp4" }], {
           container: document.querySelector("article"),
           autoplay: true,
-          // wrapperStyle: {
-          //   position: "absolute",
-          //   top: "0",
-          //   left: "0",
-          //   width: "1px",
-          //   height: "1px",
-          //   overflow: "hidden",
-          // },
-          // style: {
-          //   width: "1px",
-          //   height: "1px",
-          //   opacity: 0.01,
-          //   pointerEvents: "none",
-          // },
+          wrapperStyle: {
+            position: "absolute",
+            top: "0",
+            left: "0",
+            width: "1px",
+            height: "1px",
+            overflow: "hidden",
+          },
         })
       : { undefined };
   if (video instanceof HTMLVideoElement) {
     const canvasHelp = document.createElement("footer");
-    canvasHelp.innerHTML = "Click on the canvas to play the video texture.";
+    canvasHelp.innerHTML = `Click on the canvas to start the video texture. See: <a href="https://webkit.org/blog/6784/new-video-policies-for-ios/">New &lt;video&gt; Policies for iOS</a>`;
     document.querySelector("article").appendChild(canvasHelp);
 
     canvas.addEventListener("click", async () => {
