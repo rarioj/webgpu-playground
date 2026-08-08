@@ -93,9 +93,38 @@ try {
   //// Texture variants
 
   // Video texture
-  const { video } = textureType === "video" ? createVideoElement(config.videoURL, { container: null }) : { undefined };
+  let videoIsPlaying = false;
+  const { video } =
+    textureType === "video"
+      ? createVideoElement([{ src: config.videoURL, type: "video/mp4" }], {
+          container: document.querySelector("article"),
+          autoplay: true,
+          // wrapperStyle: {
+          //   position: "absolute",
+          //   top: "0",
+          //   left: "0",
+          //   width: "1px",
+          //   height: "1px",
+          //   overflow: "hidden",
+          // },
+          // style: {
+          //   width: "1px",
+          //   height: "1px",
+          //   opacity: 0.01,
+          //   pointerEvents: "none",
+          // },
+        })
+      : { undefined };
   if (video instanceof HTMLVideoElement) {
-    await video.play();
+    const canvasHelp = document.createElement("footer");
+    canvasHelp.innerHTML = "Click on the canvas to play the video texture.";
+    document.querySelector("article").appendChild(canvasHelp);
+
+    canvas.addEventListener("click", async () => {
+      await video.play().then(() => {
+        videoIsPlaying = true;
+      });
+    });
   }
 
   // Canvas draw texture
@@ -349,7 +378,7 @@ try {
 
     scene.play();
 
-    if (textureType === "video") {
+    if (textureType === "video" && videoIsPlaying) {
       textureView = webgpu.device.importExternalTexture({ source: video });
       ({ bindGroup: bindGroupTexture } = webgpu
         .setupBindGroup("Video texture bind group")
@@ -387,6 +416,19 @@ try {
       objectsGPU.stagingBuffer.unmap();
       updateCanvasGPU(contextGPU, updatedStates);
       objectsGPU.inputBufferBuilder.setData(updatedStates).writeDataToBuffer();
+    } else if (textureType === "video") {
+      if (videoIsPlaying) {
+        webgpu
+          .setupEncoder()
+          .beginRenderPass(renderPassDescriptor)
+          .setPipeline(pipeline)
+          .setVertexBuffer(0, vertexBuffer)
+          .setBindGroup(0, bindGroup)
+          .setBindGroup(1, bindGroupTexture)
+          .draw(cubeVertexData.vertices.length / 5, 1)
+          .end()
+          .submitCommandBuffer();
+      }
     } else {
       webgpu
         .setupEncoder()

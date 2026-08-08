@@ -38,5 +38,5 @@ if (textureType === "image") {
 }
 
 if (textureType === "video") {
-  config.videoURL = "./assets/videos/Circles, Vibrant, Trance.mp4";
+  config.videoURL = "./assets/videos/circles-vibrant-trance-sample.mp4";
 }

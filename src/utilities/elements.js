@@ -243,7 +243,7 @@ export function createDebugElement(options = {}) {
 }
 
 /**
- * @param {string} src
+ * @param {{src: string, type: string}[]} sources
  * @param {Object} [options]
  * @param {HTMLElement} [options.container]
  * @param {string} [options.id]
@@ -253,11 +253,13 @@ export function createDebugElement(options = {}) {
  * @param {boolean} [options.autoplay]
  * @param {boolean} [options.loop]
  * @param {boolean} [options.muted]
+ * @param {boolean} [options.playsInline]
+ * @param {boolean} [options.controls]
  * @param {CSSStyleDeclaration} [options.wrapperStyle]
  * @param {CSSStyleDeclaration} [options.style]
  * @returns {{wrapper: HTMLElement, video: HTMLVideoElement}}
  */
-export function createVideoElement(src, options = {}) {
+export function createVideoElement(sources, options = {}) {
   createVideoElement.id = createVideoElement.id || 0;
 
   const {
@@ -266,9 +268,11 @@ export function createVideoElement(src, options = {}) {
     classname = "default-video",
     width = 400,
     height = 300,
-    autoplay = true,
-    muted = true,
+    autoplay = false,
     loop = true,
+    muted = true,
+    playsInline = true,
+    controls = true,
     wrapperStyle = {},
     style = {},
   } = options;
@@ -283,14 +287,40 @@ export function createVideoElement(src, options = {}) {
   video.width = width;
   video.height = height;
   video.autoplay = autoplay;
+  if (autoplay) {
+    video.toggleAttribute("autoplay", autoplay);
+  }
   video.muted = muted;
+  if (muted) {
+    video.toggleAttribute("muted", muted);
+  }
   video.loop = loop;
-  video.src = src;
+  if (loop) {
+    video.toggleAttribute("loop", loop);
+  }
+  video.playsInline = playsInline;
+  if (playsInline) {
+    video.toggleAttribute("playsinline", playsInline);
+    video.toggleAttribute("webkit-playsinline", playsInline);
+  }
+  video.controls = controls;
+  if (controls) {
+    video.toggleAttribute("controls", controls);
+  }
+  video.preload = "auto";
+  video.setAttribute("preload", "auto");
   Object.assign(video.style, style);
+
+  for (let i = 0; i < sources.length; i++) {
+    const source = document.createElement("source");
+    source.type = sources[i].type;
+    source.src = sources[i].src;
+    video.appendChild(source);
+  }
 
   wrapper.appendChild(video);
   if (container instanceof HTMLElement) {
-    container.appendChild(video);
+    container.appendChild(wrapper);
   }
 
   return { wrapper, video };

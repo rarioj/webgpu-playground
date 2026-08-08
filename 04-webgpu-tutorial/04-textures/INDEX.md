@@ -18,4 +18,4 @@
 ##### Credits
 
 - Texture image source: [Lorem Picsum](https://picsum.photos/)
-- Texture video source: [Circles, Vibrant, Trance](https://pixabay.com/videos/circles-vibrant-trance-sample-124234/) Video by [Las H.](https://pixabay.com/users/lifeacademygames-18896420/?utm_source=link-attribution&utm_medium=referral&utm_campaign=video&utm_content=124234) from [Pixabay](https://pixabay.com/)
+- Texture video source: [circles-vibrant-trance-sample](https://pixabay.com/videos/circles-vibrant-trance-sample-124234/) Video by [Las H.](https://pixabay.com/users/lifeacademygames-18896420/?utm_source=link-attribution&utm_medium=referral&utm_campaign=video&utm_content=124234) from [Pixabay](https://pixabay.com/)

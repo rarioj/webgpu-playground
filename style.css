@@ -20,6 +20,7 @@ article canvas {
   -webkit-user-select: none;
 }
 
-article .default-canvas-wrapper {
+article .default-canvas-wrapper,
+article .default-video-wrapper {
   display: inline-flex;
 }
