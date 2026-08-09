@@ -2,7 +2,7 @@
 
 ###### WebGPU Fundamentals • WebGPU Playground
 
-Learning series from [WebGPU Fundamentals](https://webgpufundamentals.org/) by Orillusion
+Learning series from [WebGPU Fundamentals](https://webgpufundamentals.org/) by greggman
 
 GitHub: [webgpufundamentals](https://github.com/webgpu/webgpufundamentals)
 

@@ -21,7 +21,7 @@ Any external libraries are loaded directly from within the HTML file, with no re
 ### Learning
 
 - [ ] 𓉘[Learning Materials](./index.html?page=03-webgpu-for-beginners)𓉝 • 🎥 [WebGPU for Beginners](https://www.youtube.com/playlist?list=PLn3eTxaOtL2Ns3wkxdyS3CiqkJuwQdZzn) by The Graphics Guy
-- [ ] 𓉘[Learning Materials](./index.html?page=05-webgpu-fundamentals)𓉝 • [WebGPU Fundamentals](https://webgpufundamentals.org/)
+- [ ] 𓉘[Learning Materials](./index.html?page=05-webgpu-fundamentals)𓉝 • [WebGPU Fundamentals](https://webgpufundamentals.org/) by greggman
 
 ### To Learn
 
