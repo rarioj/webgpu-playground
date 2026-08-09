@@ -46,7 +46,8 @@ Not in any particular order.
 
 ### Tools and Libraries
 
-- [Can I use WebGPU?](https://caniuse.com/webgpu)
+- [Can I use WebGPU?](https://caniuse.com/webgpu) - Provides up-to-date browser support tables for support of front-end web technologies on desktop and mobile web browsers.
+- [WebGPU Report](https://webgpureport.org/) - Info on your browser's implementation of WebGPU.
 - [Showdown](https://github.com/showdownjs/showdown) - A JavaScript Markdown to HTML converter, based on the original works by John Gruber.
 - [Pico ✨](https://picocss.com/) - A minimalist and lightweight starter kit that prioritizes semantic syntax, making every HTML element responsive and elegant by default.
 - [wgpu-matrix](https://wgpu-matrix.org/) - Fast 3D math library for WebGPU.

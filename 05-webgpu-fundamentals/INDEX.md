@@ -6,5 +6,14 @@ Learning series from [WebGPU Fundamentals](https://webgpufundamentals.org/) by g
 
 GitHub: [webgpufundamentals](https://github.com/webgpu/webgpufundamentals)
 
+### Basics
+
+#### Fundamentals
+
 - [x] [Drawing triangles to textures](./index.html?page=05-webgpu-fundamentals/01-fundamentals-drawing-triangles)
 - [x] [Run computations on the GPU](./index.html?page=05-webgpu-fundamentals/02-fundamentals-run-computations)
+
+#### Data for Shaders
+
+- [x] [Inter-stage Variables](./index.html?page=05-webgpu-fundamentals/03-interstage-variables)
+- [x] [Uniforms + Storage Buffers](./index.html?page=05-webgpu-fundamentals/04-uniforms-storage-buffers)

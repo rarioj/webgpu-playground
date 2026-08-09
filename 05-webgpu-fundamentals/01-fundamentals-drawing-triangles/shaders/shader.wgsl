@@ -1,6 +1,6 @@
 @vertex
 fn vertexMain(@builtin(vertex_index) vertexIndex: u32) -> @builtin(position) vec4<f32> {
-    let pos: array<vec2<f32>, 3> = array(
+    var pos: array<vec2<f32>, 3> = array<vec2<f32>, 3>(
         vec2<f32>(0.0, 0.5), // top center vertex
         vec2<f32>(-0.5, -0.5), // bottom left vertex
         vec2<f32>(0.5, -0.5), // bottom right vertex

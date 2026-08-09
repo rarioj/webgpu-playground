@@ -31,6 +31,9 @@ try {
     true,
   );
 
+  const color = getQueryValue("color", "gradient");
+  const entryPoint = color === "checker" ? "fragmentChecker" : "fragmentGradient";
+
   //// Pipelines
 
   const { pipeline } = await webgpu
@@ -38,7 +41,7 @@ try {
     .setLayout("auto")
     .useShaderCode(assets.shaderCode.data)
     .setVertexShader()
-    .setFragmentShader({ targets: [{ format }] })
+    .setFragmentShader({ entryPoint, targets: [{ format }] })
     .buildAsync();
 
   //// Renderer

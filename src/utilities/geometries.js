@@ -5,6 +5,132 @@
 /**
  * @param {Object} [options]
  * @param {number} [options.size]
+ * @param {boolean} [options.in3d]
+ * @param {boolean} [options.useTexture]
+ * @param {boolean} [options.useNormal]
+ * @param {boolean} [options.indexed]
+ * @returns {{vertices: Float32Array, indices?: Uint16Array}}
+ */
+export function createTriangleGeometry(options = {}) {
+  const { size = 1.0, in3d = true, useTexture = true, useNormal = true, indexed = true } = options;
+
+  const half = size / 2;
+  const rawPoints = [
+    { vertex: [0, half, 0], texture: [0.5, 1.0] }, // Top
+    { vertex: [-half, -half, 0], texture: [0.0, 0.0] }, // Bottom Left
+    { vertex: [half, -half, 0], texture: [1.0, 0.0] }, // Bottom Right
+  ];
+
+  const baseVertices = [];
+  for (const data of rawPoints) {
+    const entry = [];
+    if (!in3d) {
+      data.vertex.pop();
+    }
+    entry.push(...data.vertex);
+    if (useTexture) {
+      entry.push(...data.texture);
+    }
+    if (useNormal) {
+      entry.push(0, 0, 1); // Pointing forward along Z+
+    }
+    baseVertices.push(entry);
+  }
+
+  const indices = [0, 1, 2];
+  if (indexed) {
+    const vertices = [];
+    for (const v of baseVertices) {
+      vertices.push(...v);
+    }
+    return { vertices: new Float32Array(vertices), indices: new Uint16Array(indices) };
+  }
+
+  const vertices = [];
+  for (const index of indices) {
+    vertices.push(...baseVertices[index]);
+  }
+  return { vertices: new Float32Array(vertices) };
+}
+
+/**
+ * @param {Object} [options]
+ * @param {number} [options.radius]
+ * @param {number} [options.innerRadius]
+ * @param {number} [options.segments]
+ * @param {boolean} [options.in3d]
+ * @param {boolean} [options.useTexture]
+ * @param {boolean} [options.useNormal]
+ * @param {boolean} [options.indexed]
+ * @returns {{vertices: Float32Array, indices?: Uint16Array}}
+ */
+export function createCircleGeometry(options = {}) {
+  const { radius = 1.0, innerRadius = 0.0, segments = 32, in3d = true, useTexture = true, useNormal = true, indexed = true } = options;
+
+  const baseVertices = [];
+
+  for (let i = 0; i <= segments; i++) {
+    const angle = (i * 2 * Math.PI) / segments;
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+
+    const ix = innerRadius * cos;
+    const iy = innerRadius * sin;
+    const innerEntry = [ix, iy, 0];
+    if (!in3d) {
+      innerEntry.pop();
+    }
+    if (useTexture) {
+      innerEntry.push((ix * 0.5) / radius + 0.5, (iy * 0.5) / radius + 0.5);
+    }
+    if (useNormal) {
+      innerEntry.push(0, 0, 1);
+    }
+    baseVertices.push(innerEntry);
+
+    const ox = radius * cos;
+    const oy = radius * sin;
+    const outerEntry = [ox, oy, 0];
+    if (!in3d) {
+      outerEntry.pop();
+    }
+    if (useTexture) {
+      outerEntry.push((ox * 0.5) / radius + 0.5, (oy * 0.5) / radius + 0.5);
+    }
+    if (useNormal) {
+      outerEntry.push(0, 0, 1);
+    }
+    baseVertices.push(outerEntry);
+  }
+
+  const indices = [];
+  for (let i = 0; i < segments; i++) {
+    const innerCurr = 2 * i;
+    const outerCurr = 2 * i + 1;
+    const innerNext = 2 * (i + 1);
+    const outerNext = 2 * (i + 1) + 1;
+    indices.push(innerCurr, outerCurr, innerNext);
+    indices.push(outerCurr, outerNext, innerNext);
+  }
+
+  if (indexed) {
+    const vertices = [];
+    for (const v of baseVertices) {
+      vertices.push(...v);
+    }
+    return { vertices: new Float32Array(vertices), indices: new Uint16Array(indices) };
+  }
+
+  const vertices = [];
+  for (const index of indices) {
+    vertices.push(...baseVertices[index]);
+  }
+  return { vertices: new Float32Array(vertices) };
+}
+
+/**
+ * @param {Object} [options]
+ * @param {number} [options.size]
  * @param {boolean} [options.useTexture]
  * @param {boolean} [options.useNormal]
  * @param {boolean} [options.indexed]
