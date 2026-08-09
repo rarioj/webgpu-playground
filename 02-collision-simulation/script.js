@@ -15,6 +15,7 @@ const { canvas } = createCanvasElement({
   container: document.querySelector("article"),
   width: Math.floor(parseInt(getQueryValue("width", 512))),
   height: Math.floor(parseInt(getQueryValue("height", 512))),
+  devicePixelRatio: 1,
   style: {
     outline: "1px solid black",
   },

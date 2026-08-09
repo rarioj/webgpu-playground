@@ -19,6 +19,7 @@ try {
     container: document.querySelector("article"),
     width: 512,
     height: 512,
+    devicePixelRatio: 1,
     style: {
       outline: "1px solid black",
     },

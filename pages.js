@@ -33,3 +33,7 @@ pages["04-webgpu-tutorial/04-textures"] = true;
 pages["04-webgpu-tutorial/05-lighting"] = true;
 pages["04-webgpu-tutorial/06-shadowmap"] = true;
 pages["04-webgpu-tutorial/07-compute-pipeline"] = true;
+
+pages["05-webgpu-fundamentals"] = false;
+pages["05-webgpu-fundamentals/01-fundamentals-drawing-triangles"] = true;
+pages["05-webgpu-fundamentals/02-fundamentals-run-computations"] = true;

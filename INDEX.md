@@ -12,20 +12,21 @@ Any external libraries are loaded directly from within the HTML file, with no re
 
 ### Learned
 
-- [x] [Your first WebGPU app](https://codelabs.developers.google.com/your-first-webgpu-app) by Brandon Jones, François Beaufort → [Conway's Game of Life](./index.html?page=01-conways-game-of-life)
-- [x] [WebGPU — All of the cores, none of the canvas](https://surma.dev/things/webgpu/) by Surma → [Collision Simulation](./index.html?page=02-collision-simulation)
-- [x] 🎥 [Introduction to WebGPU - CIS 565 GPU Programming Fall 2023](https://www.youtube.com/watch?v=41pC1MLMVdA) by Brandon Jones (Toji)
-- [x] 🎥 [WebGPU Tutorial](https://www.youtube.com/playlist?list=PLVHfUzm5DIVCZxjmaZsBXEXoohzSqeCnV) by Orillusion → [Learning Materials](./index.html?page=04-webgpu-tutorial)
+- [x] 𓉘[Conway's Game of Life](./index.html?page=01-conways-game-of-life)𓉝 • [Your first WebGPU app](https://codelabs.developers.google.com/your-first-webgpu-app) by Brandon Jones, François Beaufort
+- [x] 𓉘[Collision Simulation](./index.html?page=02-collision-simulation)𓉝 • [WebGPU — All of the cores, none of the canvas](https://surma.dev/things/webgpu/) by Surma
+- [x] *No implementation* • 🎥 [Introduction to WebGPU - CIS 565 GPU Programming Fall 2023](https://www.youtube.com/watch?v=41pC1MLMVdA) by Brandon Jones (Toji)
+- [x] 𓉘[Learning Materials](./index.html?page=04-webgpu-tutorial)𓉝 • 🎥 [WebGPU Tutorial](https://www.youtube.com/playlist?list=PLVHfUzm5DIVCZxjmaZsBXEXoohzSqeCnV) by Orillusion
+- [x] *No implementation* • 🎥 [WebGPU](https://www.youtube.com/playlist?list=PLTEbuqk52pIDtLeBrv0GcuHT8fy5RpLPZ) by Visionary 3D
 
 ### Learning
 
-- [ ] 🎥 [WebGPU for Beginners](https://www.youtube.com/playlist?list=PLn3eTxaOtL2Ns3wkxdyS3CiqkJuwQdZzn) by The Graphics Guy → [Learning Materials](./index.html?page=03-webgpu-for-beginners)
+- [ ] 𓉘[Learning Materials](./index.html?page=03-webgpu-for-beginners)𓉝 • 🎥 [WebGPU for Beginners](https://www.youtube.com/playlist?list=PLn3eTxaOtL2Ns3wkxdyS3CiqkJuwQdZzn) by The Graphics Guy
+- [ ] 𓉘[Learning Materials](./index.html?page=05-webgpu-fundamentals)𓉝 • [WebGPU Fundamentals](https://webgpufundamentals.org/)
 
 ### To Learn
 
 Not in any particular order.
 
-- [WebGPU Fundamentals](https://webgpufundamentals.org/)
 - [From 0 to glTF with WebGPU: The First Triangle](https://www.willusher.io/graphics/2023/04/10/0-to-gltf-triangle/)
 - [Efficiently rendering glTF models](https://toji.dev/webgpu-gltf-case-study/)
 - [WebGPU Engine from Scratch](https://dev.to/ndesmic/webgpu-engine-from-scratch-1-basic-rendering-51cl) by ndesmic
@@ -34,7 +35,6 @@ Not in any particular order.
 - #️⃣ [WebGPU Samples](https://github.com/webgpu/webgpu-samples) by Austin Eng
 - #️⃣ [RedGPU](https://github.com/redcamel/RedGPU) by @RedCamel15
 - 🎥 [WebGPU Graphics Programming Step-by-Step](https://www.youtube.com/playlist?list=PL_UrKDEhALdKh0118flOjuAnVIGKFUJXN)
-- 🎥 [WebGPU](https://www.youtube.com/playlist?list=PLTEbuqk52pIDtLeBrv0GcuHT8fy5RpLPZ) by Visionary 3D
 - 🎥 [WebGPU Game Dev](https://www.youtube.com/playlist?list=PLCnmpqh8sKKynYSJqrrC0nWwPB3OVf5lt) by 3Angle
 
 ## Other Resources
@@ -42,7 +42,7 @@ Not in any particular order.
 ### Documentation and Specification
 
 - [WebGPU API](https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API) - The MDN Web Docs site provides information about Open Web technologies including HTML, CSS, and APIs for both Web sites and progressive web apps.
-- [W3C GPU for the Web Community Group](https://github.com/gpuweb/gpuweb) - The repository for the W3C GPU for the Web Community Group WebGPU API and WebGPU Shading Language (WGSL) specifications. → [WebGPU (Published Version)](https://www.w3.org/TR/webgpu/) • [WebGPU (Editor's Draft)](https://gpuweb.github.io/gpuweb/) • [WGSL (Published Version)](https://www.w3.org/TR/WGSL/) • [WGSL (Editor's Draft)](https://gpuweb.github.io/gpuweb/wgsl/) • [WebGPU API Reference](https://gpuweb.github.io/types/index.html)
+- [W3C GPU for the Web Community Group](https://github.com/gpuweb/gpuweb) - The repository for the W3C GPU for the Web Community Group WebGPU API and WebGPU Shading Language (WGSL) specifications. • [WebGPU (Published Version)](https://www.w3.org/TR/webgpu/) • [WebGPU (Editor's Draft)](https://gpuweb.github.io/gpuweb/) • [WGSL (Published Version)](https://www.w3.org/TR/WGSL/) • [WGSL (Editor's Draft)](https://gpuweb.github.io/gpuweb/wgsl/) • [WebGPU API Reference](https://gpuweb.github.io/types/index.html)
 
 ### Tools and Libraries
 

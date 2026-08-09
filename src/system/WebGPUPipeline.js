@@ -107,7 +107,7 @@ export class WebGPUPipeline {
    * @returns {WebGPUPipeline}
    */
   setVertexShader(vertexState) {
-    this.renderPipelineDescriptor.vertex = { ...{ module: this.shaderModule, entryPoint: "vertexMain" }, ...vertexState };
+    this.renderPipelineDescriptor.vertex = { ...{ module: this.shaderModule }, ...vertexState };
     return this;
   }
 
@@ -116,7 +116,7 @@ export class WebGPUPipeline {
    * @returns {WebGPUPipeline}
    */
   setFragmentShader(fragmentState) {
-    this.renderPipelineDescriptor.fragment = { ...{ module: this.shaderModule, entryPoint: "fragmentMain" }, ...fragmentState };
+    this.renderPipelineDescriptor.fragment = { ...{ module: this.shaderModule }, ...fragmentState };
     return this;
   }
 
@@ -125,7 +125,7 @@ export class WebGPUPipeline {
    * @returns {WebGPUPipeline}
    */
   setComputeShader(programmableStage) {
-    this.computePipelineDescriptor.compute = { ...{ module: this.shaderModule, entryPoint: "computeMain" }, ...programmableStage };
+    this.computePipelineDescriptor.compute = { ...{ module: this.shaderModule }, ...programmableStage };
     return this;
   }
 
@@ -160,7 +160,7 @@ export class WebGPUPipeline {
    * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createPipelineLayout|GPUDevice: createPipelineLayout() method}
    * @param {GPUPipelineLayoutDescriptor} [overridePipelineLayoutDescriptor]
    */
-  #createPipelineLayout(overridePipelineLayoutDescriptor = {}) {
+  createPipelineLayout(overridePipelineLayoutDescriptor = {}) {
     if (!this.renderPipelineDescriptor.layout && !this.computePipelineDescriptor.layout) {
       /** @type {GPUPipelineLayoutDescriptor} */
       const finalPipelineLayoutDescriptor = { ...this.pipelineLayoutDescriptor, ...overridePipelineLayoutDescriptor };
@@ -183,7 +183,7 @@ export class WebGPUPipeline {
    */
   build(options = {}) {
     const { overridePipelineLayoutDescriptor = {}, overrideRenderPipelineDescriptor = {}, overrideComputePipelineDescriptor = {} } = options;
-    this.#createPipelineLayout(overridePipelineLayoutDescriptor);
+    this.createPipelineLayout(overridePipelineLayoutDescriptor);
 
     if (this.renderPipelineDescriptor?.vertex) {
       /** @type {GPURenderPipelineDescriptor} */
@@ -215,7 +215,7 @@ export class WebGPUPipeline {
    */
   async buildAsync(options = {}) {
     const { overridePipelineLayoutDescriptor = {}, overrideRenderPipelineDescriptor = {}, overrideComputePipelineDescriptor = {} } = options;
-    this.#createPipelineLayout(overridePipelineLayoutDescriptor);
+    this.createPipelineLayout(overridePipelineLayoutDescriptor);
 
     if (this.renderPipelineDescriptor?.vertex) {
       /** @type {GPURenderPipelineDescriptor} */
