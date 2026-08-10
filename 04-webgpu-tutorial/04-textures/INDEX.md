@@ -2,13 +2,13 @@
 
 ###### Textures • WebGPU Tutorial • WebGPU Playground
 
-**Textures:**
+> **Textures:**
 𓉘[Image](./index.html?page=04-webgpu-tutorial/04-textures&texture=image)𓉝
 𓉘[Video](./index.html?page=04-webgpu-tutorial/04-textures&texture=video) †𓉝
 𓉘[Drawing Canvas](./index.html?page=04-webgpu-tutorial/04-textures&texture=canvasDraw)𓉝
 𓉘[Other GPU Canvas](./index.html?page=04-webgpu-tutorial/04-textures&texture=canvasGPU)𓉝
 
-**†**: Require HTTPS.
+**†**: Requires HTTPS.
 
 ##### Learning
 

@@ -2,7 +2,7 @@
 
 ###### Triangles • WebGPU for Beginners • WebGPU Playground
 
-**Objects:**
+> **Objects:**
 𓉘[256](./index.html?page=03-webgpu-for-beginners/15-triangles&objects=256)𓉝
 𓉘[512](./index.html?page=03-webgpu-for-beginners/15-triangles&objects=512)𓉝
 𓉘[1024](./index.html?page=03-webgpu-for-beginners/15-triangles&objects=1024)𓉝

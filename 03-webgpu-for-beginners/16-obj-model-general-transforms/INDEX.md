@@ -2,7 +2,7 @@
 
 ###### Tracing an OBJ Model + General Transforms • WebGPU for Beginners • WebGPU Playground
 
-**Statue:**
+> **Statue:**
 𓉘[Apollo](./index.html?page=03-webgpu-for-beginners/16-obj-model-general-transforms&statue=apollo) (421k)𓉝
 𓉘[Ballerina](./index.html?page=03-webgpu-for-beginners/16-obj-model-general-transforms&statue=ballerina) (173k)𓉝
 𓉘[Horus](./index.html?page=03-webgpu-for-beginners/16-obj-model-general-transforms&statue=horus) (273k)𓉝

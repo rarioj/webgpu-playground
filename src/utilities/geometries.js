@@ -9,7 +9,7 @@
  * @param {boolean} [options.useTexture]
  * @param {boolean} [options.useNormal]
  * @param {boolean} [options.indexed]
- * @returns {{vertices: Float32Array, indices?: Uint16Array}}
+ * @returns {{vertices: Float32Array, indices?: Uint32Array}}
  */
 export function createTriangleGeometry(options = {}) {
   const { size = 1.0, in3d = true, useTexture = true, useNormal = true, indexed = true } = options;
@@ -43,7 +43,7 @@ export function createTriangleGeometry(options = {}) {
     for (const v of baseVertices) {
       vertices.push(...v);
     }
-    return { vertices: new Float32Array(vertices), indices: new Uint16Array(indices) };
+    return { vertices: new Float32Array(vertices), indices: new Uint32Array(indices) };
   }
 
   const vertices = [];
@@ -62,7 +62,7 @@ export function createTriangleGeometry(options = {}) {
  * @param {boolean} [options.useTexture]
  * @param {boolean} [options.useNormal]
  * @param {boolean} [options.indexed]
- * @returns {{vertices: Float32Array, indices?: Uint16Array}}
+ * @returns {{vertices: Float32Array, indices?: Uint32Array}}
  */
 export function createCircleGeometry(options = {}) {
   const { radius = 1.0, innerRadius = 0.0, segments = 32, in3d = true, useTexture = true, useNormal = true, indexed = true } = options;
@@ -118,7 +118,7 @@ export function createCircleGeometry(options = {}) {
     for (const v of baseVertices) {
       vertices.push(...v);
     }
-    return { vertices: new Float32Array(vertices), indices: new Uint16Array(indices) };
+    return { vertices: new Float32Array(vertices), indices: new Uint32Array(indices) };
   }
 
   const vertices = [];
@@ -134,7 +134,7 @@ export function createCircleGeometry(options = {}) {
  * @param {boolean} [options.useTexture]
  * @param {boolean} [options.useNormal]
  * @param {boolean} [options.indexed]
- * @returns {{vertices: Float32Array, indices?: Uint16Array}}
+ * @returns {{vertices: Float32Array, indices?: Uint32Array}}
  */
 export function createCubeGeometry(options = {}) {
   const { size = 1.0, useTexture = true, useNormal = true, indexed = true } = options;
@@ -206,7 +206,7 @@ export function createCubeGeometry(options = {}) {
     for (const v of baseVertices) {
       vertices.push(...v);
     }
-    return { vertices: new Float32Array(vertices), indices: new Uint16Array(indices) };
+    return { vertices: new Float32Array(vertices), indices: new Uint32Array(indices) };
   }
 
   const vertices = [];
@@ -224,7 +224,7 @@ export function createCubeGeometry(options = {}) {
  * @param {boolean} [options.useTexture]
  * @param {boolean} [options.useNormal]
  * @param {boolean} [options.indexed]
- * @returns {{vertices: Float32Array, indices: Uint16Array}}
+ * @returns {{vertices: Float32Array, indices: Uint32Array}}
  */
 export function createSphereGeometry(options = {}) {
   const { radius = 1.0, latitudes = 16, longitudes = 16, useTexture = true, useNormal = true, indexed = true } = options;
@@ -272,7 +272,7 @@ export function createSphereGeometry(options = {}) {
     for (const v of baseVertices) {
       vertices.push(...v);
     }
-    return { vertices: new Float32Array(vertices), indices: new Uint16Array(indices) };
+    return { vertices: new Float32Array(vertices), indices: new Uint32Array(indices) };
   }
 
   const vertices = [];

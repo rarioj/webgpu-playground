@@ -2,7 +2,7 @@
 
 ###### Lighting • WebGPU Tutorial • WebGPU Playground
 
-**Object Count:**
+> **Object Count:**
 𓉘[512 Objects](./index.html?page=04-webgpu-tutorial/05-lighting&count=512)𓉝
 𓉘[1024 Objects](./index.html?page=04-webgpu-tutorial/05-lighting&count=1024)𓉝
 𓉘[2048 Objects](./index.html?page=04-webgpu-tutorial/05-lighting&count=2048)𓉝

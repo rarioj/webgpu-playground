@@ -2,7 +2,7 @@
 
 ###### Acceleration Structures • WebGPU for Beginners • WebGPU Playground
 
-**Spheres:**
+> **Spheres:**
 𓉘[256](./index.html?page=03-webgpu-for-beginners/13-acceleration-structures&spheres=256)𓉝
 𓉘[512](./index.html?page=03-webgpu-for-beginners/13-acceleration-structures&spheres=512)𓉝
 𓉘[1024](./index.html?page=03-webgpu-for-beginners/13-acceleration-structures&spheres=1024)𓉝

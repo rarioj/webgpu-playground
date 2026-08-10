@@ -2,7 +2,7 @@
 
 ###### BindGroup with Multi-Objects • WebGPU Tutorial • WebGPU Playground
 
-**Object Count:**
+> **Object Count:**
 𓉘[512 Cubes](./index.html?page=04-webgpu-tutorial/03-multiple-objects&count=512)𓉝
 𓉘[1024 Cubes](./index.html?page=04-webgpu-tutorial/03-multiple-objects&count=1024)𓉝
 𓉘[2048 Cubes](./index.html?page=04-webgpu-tutorial/03-multiple-objects&count=2048)𓉝

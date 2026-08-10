@@ -325,11 +325,11 @@ try {
       .setBindGroup(0, shadowVertexBindGroup)
       // cube
       .setVertexBuffer(0, cubeVertexBuffer)
-      .setIndexBuffer(cubeIndexBuffer, "uint16")
+      .setIndexBuffer(cubeIndexBuffer, "uint32")
       .drawIndexed(cubeGeometry.indices.length, 2, 0, 0, 0)
       // sphere
       .setVertexBuffer(0, sphereVertexBuffer)
-      .setIndexBuffer(sphereIndexBuffer, "uint16")
+      .setIndexBuffer(sphereIndexBuffer, "uint32")
       .drawIndexed(sphereGeometry.indices.length, OBJECT_COUNT - 2, 0, 0, 2)
       .end()
 
@@ -340,11 +340,11 @@ try {
       .setBindGroup(1, shaderFragmentBindGroup)
       // cube
       .setVertexBuffer(0, cubeVertexBuffer)
-      .setIndexBuffer(cubeIndexBuffer, "uint16")
+      .setIndexBuffer(cubeIndexBuffer, "uint32")
       .drawIndexed(cubeGeometry.indices.length, 2, 0, 0, 0)
       // sphere
       .setVertexBuffer(0, sphereVertexBuffer)
-      .setIndexBuffer(sphereIndexBuffer, "uint16")
+      .setIndexBuffer(sphereIndexBuffer, "uint32")
       .drawIndexed(sphereGeometry.indices.length, OBJECT_COUNT - 2, 0, 0, 2)
       .end()
 

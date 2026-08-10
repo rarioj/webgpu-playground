@@ -111,9 +111,9 @@ try {
         })
       : { undefined };
   if (video instanceof HTMLVideoElement) {
-    const canvasHelp = document.createElement("footer");
+    const canvasHelp = document.createElement("p");
     canvasHelp.innerHTML = `Click on the canvas to start the video texture. See: <a href="https://webkit.org/blog/6784/new-video-policies-for-ios/">New &lt;video&gt; Policies for iOS</a>`;
-    document.querySelector("article").appendChild(canvasHelp);
+    document.querySelector("article").prepend(canvasHelp);
 
     canvas.addEventListener("click", async () => {
       await video.play().then(() => {
@@ -181,9 +181,9 @@ try {
   const contextDraw = textureType === "canvasDraw" ? canvasDraw.getContext("2d") : undefined;
 
   if (textureType === "canvasDraw") {
-    const canvasHelp = document.createElement("footer");
+    const canvasHelp = document.createElement("p");
     canvasHelp.innerText = "Draw on the smaller canvas!";
-    document.querySelector("article").appendChild(canvasHelp);
+    document.querySelector("article").prepend(canvasHelp);
 
     contextDraw.fillStyle = "#999999";
     contextDraw.lineWidth = "2";
@@ -307,9 +307,9 @@ try {
   const objectsGPU = textureType === "canvasGPU" ? await initCanvasGPU(canvasGPU) : undefined;
 
   if (textureType === "canvasGPU") {
-    const canvasHelp = document.createElement("footer");
+    const canvasHelp = document.createElement("p");
     canvasHelp.innerHTML = 'The smaller canvas runs the <a href="./index.html?page=02-collision-simulation">Collision Simulation</a> lesson.';
-    document.querySelector("article").appendChild(canvasHelp);
+    document.querySelector("article").prepend(canvasHelp);
   }
 
   //// Textures and bind groups

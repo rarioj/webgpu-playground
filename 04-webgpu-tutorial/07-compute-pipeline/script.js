@@ -237,7 +237,7 @@ try {
       .setPipeline(renderPipeline)
       .setBindGroup(0, renderBindGroup)
       .setVertexBuffer(0, vertexBuffer)
-      .setIndexBuffer(indexBuffer, "uint16")
+      .setIndexBuffer(indexBuffer, "uint32")
       .drawIndexed(cubeData.indices.length, OBJECT_COUNT)
       .end()
 

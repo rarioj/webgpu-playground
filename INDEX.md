@@ -8,22 +8,20 @@ Many WebGPU learning resources and articles use TypeScript as the primary langua
 
 Any external libraries are loaded directly from within the HTML file, with no reliance on Node.js, `package.json`, bundlers, transpilers, or other development tooling.
 
-## Materials
-
-### Learned
+## Materials Learned
 
 - [x] 𓉘[Conway's Game of Life](./index.html?page=01-conways-game-of-life)𓉝 • [Your first WebGPU app](https://codelabs.developers.google.com/your-first-webgpu-app) by Brandon Jones, François Beaufort
 - [x] 𓉘[Collision Simulation](./index.html?page=02-collision-simulation)𓉝 • [WebGPU — All of the cores, none of the canvas](https://surma.dev/things/webgpu/) by Surma
-- [x] *No implementation* • 🎥 [Introduction to WebGPU - CIS 565 GPU Programming Fall 2023](https://www.youtube.com/watch?v=41pC1MLMVdA) by Brandon Jones (Toji)
-- [x] 𓉘[Learning Materials](./index.html?page=04-webgpu-tutorial)𓉝 • 🎥 [WebGPU Tutorial](https://www.youtube.com/playlist?list=PLVHfUzm5DIVCZxjmaZsBXEXoohzSqeCnV) by Orillusion
-- [x] *No implementation* • 🎥 [WebGPU](https://www.youtube.com/playlist?list=PLTEbuqk52pIDtLeBrv0GcuHT8fy5RpLPZ) by Visionary 3D
-
-### Learning
-
 - [ ] 𓉘[Learning Materials](./index.html?page=03-webgpu-for-beginners)𓉝 • 🎥 [WebGPU for Beginners](https://www.youtube.com/playlist?list=PLn3eTxaOtL2Ns3wkxdyS3CiqkJuwQdZzn) by The Graphics Guy
+- [x] 𓉘[Learning Materials](./index.html?page=04-webgpu-tutorial)𓉝 • 🎥 [WebGPU Tutorial](https://www.youtube.com/playlist?list=PLVHfUzm5DIVCZxjmaZsBXEXoohzSqeCnV) by Orillusion
 - [ ] 𓉘[Learning Materials](./index.html?page=05-webgpu-fundamentals)𓉝 • [WebGPU Fundamentals](https://webgpufundamentals.org/) by greggman
 
-### To Learn
+---
+
+- [x] 🎥 [Introduction to WebGPU - CIS 565 GPU Programming Fall 2023](https://www.youtube.com/watch?v=41pC1MLMVdA) by Brandon Jones (Toji)
+- [x] 🎥 [WebGPU](https://www.youtube.com/playlist?list=PLTEbuqk52pIDtLeBrv0GcuHT8fy5RpLPZ) by Visionary 3D
+
+### TODO
 
 Not in any particular order.
 

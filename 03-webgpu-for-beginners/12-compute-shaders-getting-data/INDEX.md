@@ -2,7 +2,7 @@
 
 ###### Compute Shaders 101 + Getting Data In • WebGPU for Beginners • WebGPU Playground
 
-**Spheres:**
+> **Spheres:**
 𓉘[256](./index.html?page=03-webgpu-for-beginners/12-compute-shaders-getting-data&spheres=256)𓉝
 𓉘[512](./index.html?page=03-webgpu-for-beginners/12-compute-shaders-getting-data&spheres=512)𓉝
 𓉘[1024](./index.html?page=03-webgpu-for-beginners/12-compute-shaders-getting-data&spheres=1024)𓉝

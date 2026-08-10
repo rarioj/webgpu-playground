@@ -17,3 +17,4 @@ GitHub: [webgpufundamentals](https://github.com/webgpu/webgpufundamentals)
 
 - [x] [Inter-stage Variables](./index.html?page=05-webgpu-fundamentals/03-interstage-variables)
 - [x] [Uniforms + Storage Buffers](./index.html?page=05-webgpu-fundamentals/04-uniforms-storage-buffers)
+- [x] [Vertex Buffers](./index.html?page=05-webgpu-fundamentals/05-vertex-buffers)

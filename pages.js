@@ -39,3 +39,4 @@ pages["05-webgpu-fundamentals/01-fundamentals-drawing-triangles"] = true;
 pages["05-webgpu-fundamentals/02-fundamentals-run-computations"] = true;
 pages["05-webgpu-fundamentals/03-interstage-variables"] = true;
 pages["05-webgpu-fundamentals/04-uniforms-storage-buffers"] = true;
+pages["05-webgpu-fundamentals/05-vertex-buffers"] = true;

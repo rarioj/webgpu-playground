@@ -2,7 +2,7 @@
 
 ###### Reflections + Image Based Lighting • WebGPU for Beginners • WebGPU Playground
 
-**Bubbles:**
+> **Bubbles:**
 𓉘[256](./index.html?page=03-webgpu-for-beginners/14-reflections-image-based-lighting&bubbles=256)𓉝
 𓉘[512](./index.html?page=03-webgpu-for-beginners/14-reflections-image-based-lighting&bubbles=512)𓉝
 𓉘[1024](./index.html?page=03-webgpu-for-beginners/14-reflections-image-based-lighting&bubbles=1024)𓉝

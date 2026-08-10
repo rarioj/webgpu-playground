@@ -2,7 +2,7 @@
 
 ###### Conway's Game of Life • WebGPU Playground
 
-**Grid Size:**
+> **Grid Size:**
 𓉘[64x64](./index.html?page=01-conways-game-of-life&size=64)𓉝
 𓉘[128x128](./index.html?page=01-conways-game-of-life&size=128)𓉝
 𓉘[256x256](./index.html?page=01-conways-game-of-life&size=256)𓉝

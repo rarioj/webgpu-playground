@@ -273,11 +273,11 @@ try {
 
       // cube
       .setVertexBuffer(0, cubeVertexBuffer)
-      .setIndexBuffer(cubeIndexBuffer, "uint16")
+      .setIndexBuffer(cubeIndexBuffer, "uint32")
       .drawIndexed(cubeGeometry.indices.length, CUBE_COUNT, 0, 0, 0)
       // sphere
       .setVertexBuffer(0, sphereVertexBuffer)
-      .setIndexBuffer(sphereIndexBuffer, "uint16")
+      .setIndexBuffer(sphereIndexBuffer, "uint32")
       .drawIndexed(sphereGeometry.indices.length, SPHERE_COUNT, 0, 0, CUBE_COUNT)
 
       .end()

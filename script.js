@@ -33,17 +33,9 @@ const markdown = await loadAssets([{ name: "content", url: `${path}/INDEX.md`, t
 const converter = new showdown.Converter({ openLinksInNewWindow: false, tasklists: true, parseImgDimensions: true });
 document.querySelector("section").innerHTML = converter.makeHtml(markdown.content.data);
 
-if (available && pages[page]) {
-  const script = document.createElement("script");
-  script.src = `${path}/script.js`;
-  script.type = "module";
-  document.body.appendChild(script);
-} else {
-  const article = document.querySelector("article");
-  article.remove();
-}
-
 const header = document.querySelector("header");
+const article = document.querySelector("article");
+const blockquote = document.querySelector("blockquote");
 const heading1 = document.querySelector("h1");
 const heading6 = document.querySelector("h6");
 
@@ -55,4 +47,17 @@ if (header) {
     header.appendChild(heading6);
     document.title = heading6 ? heading6.innerText : "WebGPU Playground";
   }
+  if (blockquote) {
+    article.appendChild(...blockquote.children);
+    blockquote.remove();
+  }
+}
+
+if (available && pages[page]) {
+  const script = document.createElement("script");
+  script.src = `${path}/script.js`;
+  script.type = "module";
+  document.body.appendChild(script);
+} else {
+  article.remove();
 }
