@@ -7,21 +7,6 @@ import { vec3, mat4 } from "../external/wgpu-matrix.js";
  */
 export class CameraObject extends BaseObject {
   /**
-   * @type {GPUCanvasContext}
-   */
-  context;
-
-  /**
-   * @type {{fov: number, aspect: number, left: number, right: number, bottom: number, top: number, near: number, far: number, orthographic: boolean}}
-   */
-  frustum;
-
-  /**
-   * @type {[number, number]}
-   */
-  scaling;
-
-  /**
    * @type {vec3}
    */
   scaledRight;
@@ -42,40 +27,40 @@ export class CameraObject extends BaseObject {
   projectionMatrix;
 
   /**
-   * @param {GPUCanvasContext} context
    * @param {Object} [options]
+   * @param {number} [options.width]
+   * @param {number} [options.height]
    * @param {number} [options.fov]
    * @param {number} [options.aspect]
+   * @param {number} [options.orthographic]
    * @param {number} [options.left]
    * @param {number} [options.right]
    * @param {number} [options.bottom]
    * @param {number} [options.top]
    * @param {number} [options.near]
    * @param {number} [options.far]
-   * @param {number} [options.orthographic]
    * @param {number} [options.verticalScale]
    * @param {number} [options.horizontalScale]
    */
-  constructor(context, options = {}) {
-    super();
-
+  constructor(options = {}) {
     const {
+      width = 800,
+      height = 600,
       fov = Math.PI / 4,
-      aspect = context.canvas.width / context.canvas.height,
-      left = context.canvas.width * -0.1,
-      right = context.canvas.width * 0.1,
-      bottom = context.canvas.height * -0.1,
-      top = context.canvas.height * 0.1,
+      aspect = width / height,
+      orthographic = 0,
+      left = orthographic * aspect * -0.5,
+      right = orthographic * aspect * 0.5,
+      bottom = orthographic * -0.5,
+      top = orthographic * 0.5,
       near = 0.01,
       far = 100,
-      orthographic = false,
       verticalScale = Math.tan(Math.PI / 8),
-      horizontalScale = (verticalScale * context.canvas.width) / context.canvas.height,
+      horizontalScale = (verticalScale * width) / height,
     } = options;
 
-    this.context = context;
-    this.frustum = { fov, aspect, left, right, bottom, top, near, far, orthographic };
-    this.scaling = [verticalScale, horizontalScale];
+    super({ width, height, fov, aspect, orthographic, left, right, bottom, top, near, far, verticalScale, horizontalScale });
+
     this.scaledRight = vec3.create();
     this.scaledUp = vec3.create();
     this.viewMatrix = mat4.create();
@@ -83,50 +68,16 @@ export class CameraObject extends BaseObject {
   }
 
   /**
-   * @param {Object} [frustum]
-   * @param {number} [options.fov]
-   * @param {number} [options.aspect]
-   * @param {number} [options.left]
-   * @param {number} [options.right]
-   * @param {number} [options.bottom]
-   * @param {number} [options.top]
-   * @param {number} [options.near]
-   * @param {number} [options.far]
-   * @param {number} [options.orthographic]
-   * @returns {BaseCamera}
-   */
-  setFrustum(frustum = {}) {
-    this.frustum = { ...this.frustum, ...frustum };
-    return this;
-  }
-
-  /**
-   * @param {Object} [scaling]
-   * @param {number} [scaling.vScale]
-   * @param {number} [scaling.hScale]
-   * @returns {BaseCamera}
-   */
-  setScaling(scaling = {}) {
-    if (scaling.vScale !== undefined) {
-      this.scaling[0] = scaling.vScale;
-    }
-    if (scaling.hScale !== undefined) {
-      this.scaling[1] = scaling.hScale;
-    }
-    return this;
-  }
-
-  /**
    * @returns {BaseCamera}
    */
   updateOrthonormalVectors() {
     super.updateOrthonormalVectors();
-    this.scaledRight[0] = this.scaling[1] * this.right[0];
-    this.scaledRight[1] = this.scaling[1] * this.right[1];
-    this.scaledRight[2] = this.scaling[1] * this.right[2];
-    this.scaledUp[0] = this.scaling[0] * this.up[0];
-    this.scaledUp[1] = this.scaling[0] * this.up[1];
-    this.scaledUp[2] = this.scaling[0] * this.up[2];
+    this.scaledRight[0] = this.attributes.horizontalScale * this.right[0];
+    this.scaledRight[1] = this.attributes.horizontalScale * this.right[1];
+    this.scaledRight[2] = this.attributes.horizontalScale * this.right[2];
+    this.scaledUp[0] = this.attributes.verticalScale * this.up[0];
+    this.scaledUp[1] = this.attributes.verticalScale * this.up[1];
+    this.scaledUp[2] = this.attributes.verticalScale * this.up[2];
     return this;
   }
 
@@ -144,10 +95,27 @@ export class CameraObject extends BaseObject {
    * @returns {BaseCamera}
    */
   updateProjectionMatrix() {
-    const projection = this.frustum.orthographic
-      ? mat4.ortho(this.frustum.left, this.frustum.right, this.frustum.bottom, this.frustum.top, this.frustum.near, this.frustum.far)
-      : mat4.perspective(this.frustum.fov, this.frustum.aspect, this.frustum.near, this.frustum.far);
+    const projection = this.attributes.orthographic
+      ? mat4.ortho(this.attributes.left, this.attributes.right, this.attributes.bottom, this.attributes.top, this.attributes.near, this.attributes.far)
+      : mat4.perspective(this.attributes.fov, this.attributes.aspect, this.attributes.near, this.attributes.far);
     this.projectionMatrix.set(projection);
+    return this;
+  }
+
+  /**
+   * @param {number} width
+   * @param {number} height
+   * @returns {BaseCamera}
+   */
+  resize(width, height) {
+    super.resize(width, height);
+    this.attributes.width = width;
+    this.attributes.height = height;
+    this.attributes.aspect = width / height;
+    this.attributes.left = this.attributes.orthographic * this.attributes.aspect * -0.5;
+    this.attributes.right = this.attributes.orthographic * this.attributes.aspect * 0.5;
+    this.attributes.horizontalScale = (this.attributes.verticalScale * width) / height;
+    this.updateProjectionMatrix();
     return this;
   }
 }

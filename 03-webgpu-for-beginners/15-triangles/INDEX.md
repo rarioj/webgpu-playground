@@ -2,13 +2,11 @@
 
 ###### Triangles • WebGPU for Beginners • WebGPU Playground
 
-> **Objects:**
-𓉘[256](./index.html?page=03-webgpu-for-beginners/15-triangles&objects=256)𓉝
-𓉘[512](./index.html?page=03-webgpu-for-beginners/15-triangles&objects=512)𓉝
-𓉘[1024](./index.html?page=03-webgpu-for-beginners/15-triangles&objects=1024)𓉝
-𓉘[2048](./index.html?page=03-webgpu-for-beginners/15-triangles&objects=2048)𓉝
-𓉘[4096](./index.html?page=03-webgpu-for-beginners/15-triangles&objects=4096) ⚠️𓉝
-𓉘[8192](./index.html?page=03-webgpu-for-beginners/15-triangles&objects=8192) ⚠️𓉝
+> [64](./index.html?page=03-webgpu-for-beginners/15-triangles) •
+[128](./index.html?page=03-webgpu-for-beginners/15-triangles&objects=128) •
+[256](./index.html?page=03-webgpu-for-beginners/15-triangles&objects=256) •
+[512](./index.html?page=03-webgpu-for-beginners/15-triangles&objects=512) •
+[1024](./index.html?page=03-webgpu-for-beginners/15-triangles&objects=1024)
 
 ##### Learning
 

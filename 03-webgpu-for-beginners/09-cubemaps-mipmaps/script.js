@@ -10,14 +10,7 @@ import { assetArray, triangleVertices, tileVertices } from "./config.js";
 
 //// Initialisation
 
-const { canvas } = createCanvasElement({
-  container: document.querySelector("article"),
-  width: 800,
-  height: 600,
-  style: {
-    outline: "1px solid black",
-  },
-});
+const { canvas } = createCanvasElement({ noWrapper: true, style: { height: "100vh" } });
 const webgpu = await WebGPU.init();
 const context = webgpu.createCanvasContext(canvas);
 
@@ -26,18 +19,18 @@ const context = webgpu.createCanvasContext(canvas);
 const assets = await loadAssets(assetArray, true);
 
 const { textureView: cubemapView, sampler: cubemapSampler } = webgpu
-  .setupTextureView(context, "Cubemap")
+  .setupTextureView("Cubemap")
   .setTextureUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT)
   .loadBitmaps([assets.cubemap_px, assets.cubemap_nx, assets.cubemap_py, assets.cubemap_ny, assets.cubemap_pz, assets.cubemap_nz])
   .build({ createSampler: true, overrideTextureViewDescriptor: { dimension: "cube" } });
 
 const { textureView: imageView, sampler: imageSampler } = webgpu
-  .setupTextureView(context, "Images")
+  .setupTextureView("Images")
   .setTextureUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT)
   .loadBitmaps(assets.image)
   .build({ enableMipmap: true, overrideSamplerDescriptor: { maxAnisotropy: 4 } });
 
-const { depthStencilState, depthStencilAttachment } = webgpu.setupTextureView(context).buildDepthStencil();
+const { builder: depthStencilBuilder } = webgpu.setupDepthStencil().setTextureSize(canvas.width, canvas.height).build();
 
 //// Buffers
 
@@ -92,7 +85,7 @@ const { builder: objectBufferBuilder, buffer: objectBuffer } = webgpu
 
 const scene = new Scene();
 
-const camera = new CameraObject(context);
+const camera = new CameraObject({ width: canvas.width, height: canvas.height });
 camera.setPosition(-7, -0.5, 0.5);
 camera.viewMatrix = uniformBufferBuilder.dataPointer(0, 16);
 camera.projectionMatrix = uniformBufferBuilder.dataPointer(16, 32);
@@ -106,6 +99,11 @@ camera.addUpdateCallback(() => {
   camera.move();
 });
 scene.addObject(camera, "camera");
+
+webgpu.observeCanvasResize(canvas, (width, height) => {
+  camera.resize(width, height);
+  depthStencilBuilder.setTextureSize(width, height).build();
+});
 
 let pointerIndex = 0;
 for (let i = -5; i < 5; i++) {
@@ -179,7 +177,7 @@ const { pipeline: cubemapPipeline } = await webgpu
   .setVertexShader({ entryPoint: "skyVertexMain" })
   .setFragmentShader({ entryPoint: "skyFragmentMain", targets: [{ format: context.getConfiguration().format }] })
   .setRenderPrimitive({ topology: "triangle-list" })
-  .setRenderDepthStencil(depthStencilState)
+  .setRenderDepthStencil(depthStencilBuilder.state)
   .buildAsync();
 
 const { pipeline: standardPipeline } = await webgpu
@@ -190,7 +188,7 @@ const { pipeline: standardPipeline } = await webgpu
   .setVertexShader({ buffers: [triangleBufferLayout] })
   .setFragmentShader({ targets: [{ format: context.getConfiguration().format }] })
   .setRenderPrimitive({ topology: "triangle-list" })
-  .setRenderDepthStencil(depthStencilState)
+  .setRenderDepthStencil(depthStencilBuilder.state)
   .buildAsync();
 
 //// Renderer
@@ -205,11 +203,12 @@ const renderPassDescriptor = {
       clearValue: { r: 0.25, g: 0.25, b: 0.25, a: 1.0 },
     },
   ],
-  depthStencilAttachment,
+  depthStencilAttachment: undefined,
 };
 
 function render() {
   renderPassDescriptor.colorAttachments[0].view = context.getCurrentTexture().createView();
+  renderPassDescriptor.depthStencilAttachment = depthStencilBuilder.attachment;
 
   scene.play();
 

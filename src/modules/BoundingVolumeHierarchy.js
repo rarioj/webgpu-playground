@@ -76,13 +76,19 @@ export class BoundingVolumeHierarchy {
   assigned;
 
   /**
-   *
+   * @type {number}
    */
-  constructor() {
+  leafSize;
+
+  /**
+   * @param {number} leafSize
+   */
+  constructor(leafSize = 4) {
     this.inputNodes = [];
     this.outputNodes = [];
     this.indices = [];
     this.assigned = 0;
+    this.leafSize = leafSize;
   }
 
   /**
@@ -113,6 +119,10 @@ export class BoundingVolumeHierarchy {
   build() {
     const objectCount = this.inputNodes.length;
 
+    if (objectCount === 0) {
+      return;
+    }
+
     if (!(this.indices instanceof Uint32Array)) {
       this.indices = new Uint32Array(objectCount);
     }
@@ -120,7 +130,7 @@ export class BoundingVolumeHierarchy {
       this.indices[i] = i;
     }
 
-    const nodeGeneratedCount = 2 * objectCount - 1;
+    const nodeGeneratedCount = Math.max(1, 2 * objectCount - 1);
     this.outputNodes = new Array(nodeGeneratedCount);
     for (let i = 0; i < nodeGeneratedCount; i++) {
       this.outputNodes[i] = new BVHNode();
@@ -156,7 +166,7 @@ export class BoundingVolumeHierarchy {
     const currentNode = this.outputNodes[index];
     const currentPrimitiveCount = currentNode.primitiveCount[0];
     const currentLeftChild = currentNode.leftChild[0];
-    if (currentPrimitiveCount < 2) {
+    if (currentPrimitiveCount < this.leafSize) {
       return;
     }
 
@@ -168,7 +178,8 @@ export class BoundingVolumeHierarchy {
 
     while (i <= j) {
       const childNode = this.inputNodes[this.indices[i]];
-      if ((childNode.minCorner[axis] + childNode.maxCorner[axis]) / 2 < splitPosition) {
+      const childCenter = (childNode.minCorner[axis] + childNode.maxCorner[axis]) * 0.5;
+      if (childCenter < splitPosition) {
         i++;
       } else {
         [this.indices[i], this.indices[j]] = [this.indices[j], this.indices[i]];

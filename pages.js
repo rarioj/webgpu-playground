@@ -1,42 +1,42 @@
 /**
- * @type {Object.<string, boolean>}
+ * @type {Object.<string, ("script"|"noarticle"|"fullscreen")[]>}
  */
 export const pages = {};
 
-pages["01-conways-game-of-life"] = true;
+pages["01-conways-game-of-life"] = ["script"];
 
-pages["02-collision-simulation"] = true;
+pages["02-collision-simulation"] = ["script"];
 
-pages["03-webgpu-for-beginners"] = false;
-pages["03-webgpu-for-beginners/01-hello-triangle"] = true;
-pages["03-webgpu-for-beginners/02-vertex-buffers"] = true;
-pages["03-webgpu-for-beginners/03-transformations"] = true;
-pages["03-webgpu-for-beginners/04-textures"] = true;
-pages["03-webgpu-for-beginners/05-first-person-camera"] = true;
-pages["03-webgpu-for-beginners/06-multiple-triangles-depth-testing"] = true;
-pages["03-webgpu-for-beginners/07-multiple-objects-bind-groups-layouts"] = true;
-pages["03-webgpu-for-beginners/08-obj-models"] = true;
-pages["03-webgpu-for-beginners/09-cubemaps-mipmaps"] = true;
-pages["03-webgpu-for-beginners/10-framebuffers-alpha-blending"] = true;
-pages["03-webgpu-for-beginners/11-screen-curve-gun"] = true;
-pages["03-webgpu-for-beginners/12-compute-shaders-getting-data"] = true;
-pages["03-webgpu-for-beginners/13-acceleration-structures"] = true;
-pages["03-webgpu-for-beginners/14-reflections-image-based-lighting"] = true;
-pages["03-webgpu-for-beginners/15-triangles"] = true;
-pages["03-webgpu-for-beginners/16-obj-model-general-transforms"] = true;
+pages["03-webgpu-for-beginners"] = ["noarticle"];
+pages["03-webgpu-for-beginners/01-hello-triangle"] = ["script"];
+pages["03-webgpu-for-beginners/02-vertex-buffers"] = ["script"];
+pages["03-webgpu-for-beginners/03-transformations"] = ["script"];
+pages["03-webgpu-for-beginners/04-textures"] = ["script"];
+pages["03-webgpu-for-beginners/05-first-person-camera"] = ["script"];
+pages["03-webgpu-for-beginners/06-multiple-triangles-depth-testing"] = ["script"];
+pages["03-webgpu-for-beginners/07-multiple-objects-bind-groups-layouts"] = ["script"];
+pages["03-webgpu-for-beginners/08-obj-models"] = ["script"];
+pages["03-webgpu-for-beginners/09-cubemaps-mipmaps"] = ["script", "fullscreen", "noarticle"];
+pages["03-webgpu-for-beginners/10-framebuffers-alpha-blending"] = ["script"];
+pages["03-webgpu-for-beginners/11-screen-curve-gun"] = ["script"];
+pages["03-webgpu-for-beginners/12-compute-shaders-getting-data"] = ["script"];
+pages["03-webgpu-for-beginners/13-acceleration-structures"] = ["script"];
+pages["03-webgpu-for-beginners/14-reflections-image-based-lighting"] = ["script", "fullscreen", "noarticle"];
+pages["03-webgpu-for-beginners/15-triangles"] = ["script", "fullscreen", "noarticle"];
+pages["03-webgpu-for-beginners/16-obj-model-general-transforms"] = ["script", "fullscreen", "noarticle"];
 
-pages["04-webgpu-tutorial"] = false;
-pages["04-webgpu-tutorial/01-intro-getting-started"] = true;
-pages["04-webgpu-tutorial/02-3d-transform"] = true;
-pages["04-webgpu-tutorial/03-multiple-objects"] = true;
-pages["04-webgpu-tutorial/04-textures"] = true;
-pages["04-webgpu-tutorial/05-lighting"] = true;
-pages["04-webgpu-tutorial/06-shadowmap"] = true;
-pages["04-webgpu-tutorial/07-compute-pipeline"] = true;
+pages["04-webgpu-tutorial"] = ["noarticle"];
+pages["04-webgpu-tutorial/01-intro-getting-started"] = ["script"];
+pages["04-webgpu-tutorial/02-3d-transform"] = ["script"];
+pages["04-webgpu-tutorial/03-multiple-objects"] = ["script", "fullscreen", "noarticle"];
+pages["04-webgpu-tutorial/04-textures"] = ["script"];
+pages["04-webgpu-tutorial/05-lighting"] = ["script"];
+pages["04-webgpu-tutorial/06-shadowmap"] = ["script", "fullscreen", "noarticle"];
+pages["04-webgpu-tutorial/07-compute-pipeline"] = ["script"];
 
-pages["05-webgpu-fundamentals"] = false;
-pages["05-webgpu-fundamentals/01-fundamentals-drawing-triangles"] = true;
-pages["05-webgpu-fundamentals/02-fundamentals-run-computations"] = true;
-pages["05-webgpu-fundamentals/03-interstage-variables"] = true;
-pages["05-webgpu-fundamentals/04-uniforms-storage-buffers"] = true;
-pages["05-webgpu-fundamentals/05-vertex-buffers"] = true;
+pages["05-webgpu-fundamentals"] = ["noarticle"];
+pages["05-webgpu-fundamentals/01-fundamentals-drawing-triangles"] = ["script"];
+pages["05-webgpu-fundamentals/02-fundamentals-run-computations"] = ["script"];
+pages["05-webgpu-fundamentals/03-interstage-variables"] = ["script"];
+pages["05-webgpu-fundamentals/04-uniforms-storage-buffers"] = ["script"];
+pages["05-webgpu-fundamentals/05-vertex-buffers"] = ["script"];

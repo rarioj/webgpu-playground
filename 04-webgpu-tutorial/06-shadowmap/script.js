@@ -10,19 +10,12 @@ import { BaseObject } from "../../src/objects/BaseObject.js";
 import { CameraObject } from "../../src/objects/CameraObject.js";
 import { FirstPersonControl } from "../../src/modules/FirstPersonControl.js";
 
-const OBJECT_COUNT = Math.floor(parseInt(getQueryValue("count", 64)));
+const OBJECT_COUNT = Math.floor(parseInt(getQueryValue("count", 128)));
 
 try {
   //// Initialisation
 
-  const { canvas } = createCanvasElement({
-    container: document.querySelector("article"),
-    width: 800,
-    height: 600,
-    style: {
-      outline: "1px solid black",
-    },
-  });
+  const { canvas } = createCanvasElement({ noWrapper: true, style: { height: "100vh" } });
   const webgpu = await WebGPU.init();
   const context = webgpu.createCanvasContext(canvas);
   const format = context.getConfiguration().format;
@@ -55,11 +48,11 @@ try {
     .setTextureFormat("depth32float")
     .build({ createSampler: true, overrideSamplerDescriptor: { compare: "less" } });
 
-  const { textureView: renderDepthTextureView } = webgpu
-    .setupTextureView(context, "Shadow depth texture")
+  const renderDepthTextureBuilder = webgpu
+    .setupTextureView("Shadow depth texture")
+    .setTextureSize(canvas.width, canvas.height)
     .setTextureUsage(GPUTextureUsage.RENDER_ATTACHMENT)
-    .setTextureFormat("depth32float")
-    .build();
+    .setTextureFormat("depth32float");
 
   //// Buffers
 
@@ -122,7 +115,7 @@ try {
   //// Scene
 
   const scene = new Scene();
-  const camera = new CameraObject(context, { far: 1000 });
+  const camera = new CameraObject({ width: canvas.width, height: canvas.height, far: 1000 });
   camera.setPosition(-90, 0, 30);
   camera.setEulers(0, -30, 0);
   camera.updateProjectionMatrix();
@@ -137,7 +130,7 @@ try {
   const fps = new FirstPersonControl(camera, context.canvas, { debug: true, moveSpeed: 0.3, orientSpeed: 0.3 });
 
   const factor = 0.5;
-  const light = new CameraObject(context, {
+  const light = new CameraObject({
     left: -context.canvas.width * factor,
     right: context.canvas.width * factor,
     bottom: -context.canvas.height * factor,
@@ -217,6 +210,12 @@ try {
     lightProjectionBufferBuilder.writeDataToBuffer();
     // colorBufferBuilder.writeDataToBuffer();
     lightBufferBuilder.writeDataToBuffer();
+  });
+
+  renderDepthTextureBuilder.build();
+  webgpu.observeCanvasResize(canvas, (width, height) => {
+    camera.resize(width, height);
+    renderDepthTextureBuilder.setTextureSize(width, height).build();
   });
 
   //// Pipelines
@@ -304,7 +303,7 @@ try {
       },
     ],
     depthStencilAttachment: {
-      view: renderDepthTextureView,
+      view: renderDepthTextureBuilder.textureView,
       depthClearValue: 1.0,
       depthLoadOp: "clear",
       depthStoreOp: "store",
@@ -313,6 +312,7 @@ try {
 
   function frame() {
     renderPassDescriptor.colorAttachments[0].view = context.getCurrentTexture().createView();
+    renderPassDescriptor.depthStencilAttachment.view = renderDepthTextureBuilder.textureView;
 
     scene.play();
 

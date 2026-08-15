@@ -1,4 +1,5 @@
 import { WebGPUTexture } from "./WebGPUTexture.js";
+import { WebGPUDepthStencil } from "./WebGPUDepthStencil.js";
 import { WebGPUBuffer } from "./WebGPUBuffer.js";
 import { WebGPUBindGroup } from "./WebGPUBindGroup.js";
 import { WebGPUPipeline } from "./WebGPUPipeline.js";
@@ -8,6 +9,41 @@ import { WebGPUEncoder } from "./WebGPUEncoder.js";
  * @classdesc
  */
 export class WebGPU {
+  /**
+   * @type {boolean}
+   */
+  debug;
+
+  /**
+   * @type {GPUAdapter}
+   */
+  adapter;
+
+  /**
+   * @type {GPUDevice}
+   */
+  device;
+
+  /**
+   * @type {GPUQueue}
+   */
+  queue;
+
+  /**
+   * @type {GPUCanvasContext[]}
+   */
+  contexts;
+
+  /**
+   * @type {Map.<HTMLCanvasElement, function(): void>}
+   */
+  canvasResizeCallbacks;
+
+  /**
+   * @type {ResizeObserver}
+   */
+  canvasResizeObserver;
+
   /**
    * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/GPU/requestAdapter|GPU: requestAdapter() method}
    * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUAdapter/requestDevice|GPUAdapter: requestDevice() method}
@@ -56,31 +92,6 @@ export class WebGPU {
   }
 
   /**
-   * @type {boolean}
-   */
-  debug;
-
-  /**
-   * @type {GPUAdapter}
-   */
-  adapter;
-
-  /**
-   * @type {GPUDevice}
-   */
-  device;
-
-  /**
-   * @type {GPUQueue}
-   */
-  queue;
-
-  /**
-   * @type {GPUCanvasContext[]}
-   */
-  contexts;
-
-  /**
    * @param {GPUAdapter} adapter
    * @param {GPUDevice} device
    */
@@ -94,6 +105,8 @@ export class WebGPU {
     this.device = device;
     this.queue = device.queue;
     this.contexts = [];
+    this.canvasResizeCallbacks = undefined;
+    this.canvasResizeObserver = undefined;
   }
 
   /**
@@ -119,12 +132,53 @@ export class WebGPU {
   }
 
   /**
-   * @param {GPUCanvasContext} [context]
+   * @param {HTMLCanvasElement} canvas
+   * @param {function(): void} [callback]
+   */
+  observeCanvasResize(canvas, callback = undefined) {
+    if (!this.canvasResizeCallbacks) {
+      this.canvasResizeCallbacks = new Map();
+    }
+    if (!this.canvasResizeObserver) {
+      this.canvasResizeObserver = new ResizeObserver((entries) => {
+        const dpr = Math.min(2, window.devicePixelRatio) || 1;
+        for (const entry of entries) {
+          entry.target.width = entry.devicePixelContentBoxSize
+            ? entry.devicePixelContentBoxSize[0].inlineSize
+            : Math.round(entry.contentBoxSize[0].inlineSize * dpr);
+          entry.target.height = entry.devicePixelContentBoxSize
+            ? entry.devicePixelContentBoxSize[0].blockSize
+            : Math.round(entry.contentBoxSize[0].blockSize * dpr);
+          if (this.canvasResizeCallbacks.has(entry.target)) {
+            const callback = this.canvasResizeCallbacks.get(entry.target);
+            callback(entry.target.width, entry.target.height);
+          }
+        }
+      });
+    }
+    if (callback) {
+      this.canvasResizeCallbacks.set(canvas, callback);
+    }
+    this.canvasResizeObserver.observe(canvas);
+  }
+
+  /**
    * @param {string} [label]
    * @returns {WebGPUTexture}
    */
-  setupTextureView(context = undefined, label = "Unlabelled") {
-    const builder = new WebGPUTexture(this.device, context, label);
+  setupTextureView(label = "Unlabelled") {
+    const builder = new WebGPUTexture(this.device, label);
+    builder.debug = this.debug;
+    return builder;
+  }
+
+  /**
+   * @param {string} [label]
+   * @returns {WebGPUDepthStencil}
+   */
+  setupDepthStencil(label = "Unlabelled") {
+    const textureBuilder = new WebGPUTexture(this.device, label);
+    const builder = new WebGPUDepthStencil(this.device, textureBuilder);
     builder.debug = this.debug;
     return builder;
   }

@@ -7,6 +7,11 @@ import { vec3, mat4 } from "../external/wgpu-matrix.js";
  */
 export class BaseObject {
   /**
+   * @type {Object.<string, any>}
+   */
+  attributes;
+
+  /**
    * @type {[number, number, number]}
    */
   position;
@@ -57,9 +62,10 @@ export class BaseObject {
   resizeCallbacks;
 
   /**
-   *
+   * @param {Object} [options]
    */
-  constructor() {
+  constructor(options = {}) {
+    this.attributes = options;
     this.position = [0, 0, 0];
     this.eulers = [0, 0, 0];
     this.scale = [1, 1, 1];
@@ -70,6 +76,16 @@ export class BaseObject {
     this.modelMatrix = mat4.create();
     this.updateCallbacks = [];
     this.resizeCallbacks = [];
+  }
+
+  /**
+   * @param {string} key
+   * @param {any} value
+   * @returns {BaseObject}
+   */
+  setAttribute(key, value) {
+    this.attributes[key] = value;
+    return this;
   }
 
   /**

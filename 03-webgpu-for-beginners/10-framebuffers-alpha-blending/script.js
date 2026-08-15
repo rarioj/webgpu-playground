@@ -26,29 +26,30 @@ const context = webgpu.createCanvasContext(canvas);
 const assets = await loadAssets(config.assetArray, true);
 
 const { textureView: cubemapView, sampler: cubemapSampler } = webgpu
-  .setupTextureView(context, "Cubemap")
+  .setupTextureView("Cubemap")
   .setTextureUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT)
   .loadBitmaps(assets.skyImages)
   .build({ createSampler: true, overrideTextureViewDescriptor: { dimension: "cube" } });
 
 const { textureView: imageView, sampler: imageSampler } = webgpu
-  .setupTextureView(context, "Images")
+  .setupTextureView("Images")
   .setTextureUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT)
   .loadBitmaps(assets.assetImages)
   .build({ enableMipmap: true, overrideSamplerDescriptor: { maxAnisotropy: 4 } });
 
 const { textureView: hudView, sampler: hudSampler } = webgpu
-  .setupTextureView(context, "HUD")
+  .setupTextureView("HUD")
   .setTextureUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT)
   .loadBitmaps([assets.hudImage])
   .build();
 
 const { textureView: strobeLightView, sampler: strobeLightSampler } = webgpu
-  .setupTextureView(context, "Strobe light")
+  .setupTextureView("Strobe light")
   .setTextureUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT)
+  .setTextureSize(canvas.width, canvas.height)
   .build();
 
-const { depthStencilState, depthStencilAttachment } = webgpu.setupTextureView(context).buildDepthStencil();
+const { state: depthStencilState, attachment: depthStencilAttachment } = webgpu.setupDepthStencil().setTextureSize(canvas.width, canvas.height).build();
 
 //// Buffers
 
@@ -110,7 +111,7 @@ const { builder: timeBufferBuilder, buffer: timeBuffer } = webgpu
 const scene = new Scene();
 scene.elapsed = timeBufferBuilder.dataPointer();
 
-const camera = new CameraObject(context);
+const camera = new CameraObject({ width: canvas.width, height: canvas.height });
 camera.setPosition(-7, -0.5, 0.5);
 camera.viewMatrix = uniformBufferBuilder.dataPointer(0, 16);
 camera.projectionMatrix = uniformBufferBuilder.dataPointer(16, 32);

@@ -39,7 +39,7 @@ try {
     true,
   );
 
-  const { depthStencilState, depthStencilAttachment } = webgpu.setupTextureView(context).buildDepthStencil();
+  const { state: depthStencilState, attachment: depthStencilAttachment } = webgpu.setupDepthStencil().setTextureSize(canvas.width, canvas.height).build();
 
   //// Buffers and scene
 
@@ -62,7 +62,7 @@ try {
     .build();
 
   const scene = new Scene();
-  const camera = new CameraObject(context);
+  const camera = new CameraObject({ width: canvas.width, height: canvas.height });
   camera.setPosition(-5, 0, 0);
   camera.updateOrthonormalVectors();
   camera.updateProjectionMatrix();

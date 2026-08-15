@@ -10,19 +10,12 @@ import { getRandom } from "../../src/utilities/maths.js";
 import { getSphereCorners } from "../../src/utilities/matrices.js";
 import { config } from "./config.js";
 
-const NUM_BUBBLES = Math.floor(parseInt(getQueryValue("bubbles", 512)));
+const NUM_BUBBLES = Math.floor(parseInt(getQueryValue("bubbles", 64)));
 const MAX_BOUNCES = 4;
 
 //// Initialisation
 
-const { canvas } = createCanvasElement({
-  container: document.querySelector("article"),
-  width: 800,
-  height: 600,
-  style: {
-    outline: "1px solid black",
-  },
-});
+const { canvas } = createCanvasElement({ noWrapper: true, style: { height: "100vh" } });
 const webgpu = await WebGPU.init({ deviceDescriptor: { requiredFeatures: ["core-features-and-limits", "bgra8unorm-storage"] } });
 const context = webgpu.createCanvasContext(canvas, { format: "bgra8unorm" });
 
@@ -35,14 +28,13 @@ debugBubbleCount.innerText = `${NUM_BUBBLES} bubbles`;
 
 const assets = await loadAssets(config.resources, true);
 
-const { textureView: screenView, sampler: screenSampler } = webgpu
-  .setupTextureView(context)
+const screenTextureBuilder = webgpu
+  .setupTextureView("Screen texture")
   .setTextureFormat("rgba8unorm")
-  .setTextureUsage(GPUTextureUsage.COPY_DST | GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING)
-  .build();
+  .setTextureUsage(GPUTextureUsage.COPY_DST | GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING);
 
 const { textureView: cubemapView, sampler: cubemapSampler } = webgpu
-  .setupTextureView(context)
+  .setupTextureView("Cubemap texture")
   .setTextureUsage(GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING)
   .loadBitmaps(assets.skyImages)
   .build({ overrideTextureViewDescriptor: { dimension: "cube" } });
@@ -55,14 +47,15 @@ const { builder: parameterBufferBuilder, buffer: parameterBuffer } = webgpu
   .setData(new Float32Array(16))
   .build();
 
-const camera = new CameraObject(context);
+const relativePos = NUM_BUBBLES < 100 ? 20 : NUM_BUBBLES < 200 ? 40 : NUM_BUBBLES < 300 ? 60 : 80;
+const camera = new CameraObject({ width: canvas.width, height: canvas.height });
 camera.position = parameterBufferBuilder.dataPointer(0, 3);
 camera.forward = parameterBufferBuilder.dataPointer(4, 7);
 camera.scaledRight = parameterBufferBuilder.dataPointer(8, 11);
 parameterBufferBuilder.data[11] = MAX_BOUNCES;
 camera.scaledUp = parameterBufferBuilder.dataPointer(12, 15);
 parameterBufferBuilder.data[15] = NUM_BUBBLES;
-camera.setPosition(-30, 0, 0);
+camera.setPosition(-relativePos * 4, 0, 0);
 camera.updateProjectionMatrix();
 
 const fpc = new FirstPersonControl(camera, context.canvas, { debug: true, moveSpeed: 0.4, orientSpeed: 0.25, flipY: true });
@@ -83,7 +76,7 @@ const { builder: spheresBufferBuilder, buffer: spheresBuffer } = webgpu
   .build();
 
 for (let i = 0; i < NUM_BUBBLES; i++) {
-  const center = [getRandom(-50.0, 100.0), getRandom(-50.0, 100.0), getRandom(-50.0, 100.0)];
+  const center = [getRandom(-relativePos, relativePos), getRandom(-relativePos, relativePos), getRandom(-relativePos, relativePos)];
   const color = [getRandom(0.75, 0.9), getRandom(0.75, 0.9), getRandom(0.75, 0.9)];
   const radius = getRandom(0.1, 2.9);
   const corners = getSphereCorners(center, radius);
@@ -120,15 +113,11 @@ nodeBufferBuilder.writeDataToBuffer();
 
 //// Bind groups
 
-const { bindGroup: screenBindGroup, bindGroupLayout: screenBindGroupLayout } = webgpu
-  .setupBindGroup("Screen fragment")
-  .addTexture(screenView, GPUShaderStage.FRAGMENT)
-  .addSampler(screenSampler, GPUShaderStage.FRAGMENT)
-  .build();
+const screenBindGroupBuilder = webgpu.setupBindGroup("Screen fragment").addTexture(null, GPUShaderStage.FRAGMENT).addSampler(null, GPUShaderStage.FRAGMENT);
 
-const { bindGroup: raytracerBindGroup, bindGroupLayout: raytracerBindGroupLayout } = webgpu
+const raytracerBindGroupBuilder = webgpu
   .setupBindGroup("Ray tracing")
-  .addStorageTexture(screenView, GPUShaderStage.COMPUTE, {
+  .addStorageTexture(null, GPUShaderStage.COMPUTE, {
     access: "write-only",
     format: "rgba8unorm",
     viewDimension: "2d",
@@ -151,14 +140,25 @@ const { bindGroup: raytracerBindGroup, bindGroupLayout: raytracerBindGroupLayout
   .addTexture(cubemapView, GPUShaderStage.COMPUTE, {
     viewDimension: "cube",
   })
-  .addSampler(cubemapSampler, GPUShaderStage.COMPUTE)
-  .build();
+  .addSampler(cubemapSampler, GPUShaderStage.COMPUTE);
+
+const sceneResize = (width, height) => {
+  camera.resize(width, height);
+  screenTextureBuilder.setTextureSize(canvas.width, canvas.height).build();
+  screenBindGroupBuilder.setResource(0, screenTextureBuilder.textureView);
+  screenBindGroupBuilder.setResource(1, screenTextureBuilder.sampler);
+  raytracerBindGroupBuilder.setResource(0, screenTextureBuilder.textureView);
+  screenBindGroupBuilder.build();
+  raytracerBindGroupBuilder.build();
+};
+sceneResize(canvas.width, canvas.height);
+webgpu.observeCanvasResize(canvas, sceneResize);
 
 //// Pipelines
 
 const { pipeline: screenPipeline } = await webgpu
-  .setupPipeline()
-  .addBindGroupLayout(screenBindGroupLayout)
+  .setupPipeline("Screen pipeline")
+  .addBindGroupLayout(screenBindGroupBuilder.bindGroupDescriptor.layout)
   .useShaderCode(assets.shaderCode.data)
   .setVertexShader()
   .setFragmentShader({ targets: [{ format: context.getConfiguration().format }] })
@@ -166,8 +166,8 @@ const { pipeline: screenPipeline } = await webgpu
   .buildAsync();
 
 const { pipeline: raytracerPipeline } = await webgpu
-  .setupPipeline()
-  .addBindGroupLayout(raytracerBindGroupLayout)
+  .setupPipeline("Raytracer pipeline")
+  .addBindGroupLayout(raytracerBindGroupBuilder.bindGroupDescriptor.layout)
   .useShaderCode(assets.raytracerCode.data)
   .setComputeShader()
   .buildAsync();
@@ -206,14 +206,14 @@ function render() {
     // compute pass
     .beginComputePass()
     .setPipeline(raytracerPipeline)
-    .setBindGroup(0, raytracerBindGroup)
+    .setBindGroup(0, raytracerBindGroupBuilder.bindGroup)
     .dispatchWorkgroups(Math.ceil(canvas.width / 16), Math.ceil(canvas.height / 16), 1)
     .end()
 
     // render pass
     .beginRenderPass(renderPassDescriptor)
     .setPipeline(screenPipeline)
-    .setBindGroup(0, screenBindGroup)
+    .setBindGroup(0, screenBindGroupBuilder.bindGroup)
     .draw(6, 1, 0, 0)
     .end()
 

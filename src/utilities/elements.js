@@ -9,10 +9,11 @@
  * @param {string} [options.classname]
  * @param {number} [options.width]
  * @param {number} [options.height]
- * @param {number} [options.devicePixelRatio]
+ * @param {number} [options.forceDPR]
+ * @param {boolean} [options.noWrapper]
  * @param {CSSStyleDeclaration} [options.wrapperStyle]
  * @param {CSSStyleDeclaration} [options.style]
- * @returns {{wrapper: HTMLElement, canvas: HTMLCanvasElement}}
+ * @returns {{wrapper?: HTMLElement, canvas: HTMLCanvasElement}}
  */
 export function createCanvasElement(options = {}) {
   createCanvasElement.id = createCanvasElement.id || 0;
@@ -23,7 +24,8 @@ export function createCanvasElement(options = {}) {
     classname = "default-canvas",
     width = window.innerWidth,
     height = window.innerHeight,
-    devicePixelRatio = window.devicePixelRatio || 1,
+    forceDPR = false,
+    noWrapper = false,
     wrapperStyle = {},
     style = {},
   } = options;
@@ -36,14 +38,22 @@ export function createCanvasElement(options = {}) {
   wrapper.style.maxHeight = `${height}px`;
   Object.assign(wrapper.style, wrapperStyle);
 
+  const dpr = forceDPR ? forceDPR : Math.min(2, window.devicePixelRatio) || 1;
   const canvas = document.createElement("canvas");
   canvas.id = id;
   canvas.classList.add(classname);
-  canvas.width = width * devicePixelRatio;
-  canvas.height = height * devicePixelRatio;
+  canvas.width = width * dpr;
+  canvas.height = height * dpr;
   canvas.style.width = "100%";
   canvas.style.height = "100%";
   Object.assign(canvas.style, style);
+
+  if (noWrapper) {
+    if (container instanceof HTMLElement) {
+      container.appendChild(canvas);
+    }
+    return { canvas };
+  }
 
   wrapper.appendChild(canvas);
   if (container instanceof HTMLElement) {
@@ -60,7 +70,8 @@ export function createCanvasElement(options = {}) {
  * @param {string} [options.id]
  * @param {string} [options.classname]
  * @param {boolean} [options.open]
- * @param {boolean} [options.closable]
+ * @param {string} [options.closeButton]
+ * @param {boolean} [options.closeDestroy]
  * @param {CSSStyleDeclaration} [options.headerStyle]
  * @param {CSSStyleDeclaration} [options.titleStyle]
  * @param {CSSStyleDeclaration} [options.contentStyle]
@@ -75,7 +86,8 @@ export function createModalElement(title, content, options = {}) {
     id = `default-modal-${createModalElement.id++}`,
     classname = "default-modal",
     open = true,
-    closable = "✕",
+    closeButton = "✕",
+    closeDestroy = false,
     headerStyle = {},
     titleStyle = {},
     contentStyle = {},
@@ -104,20 +116,26 @@ export function createModalElement(title, content, options = {}) {
     header.appendChild(strong);
   }
 
-  if (closable) {
-    const closeElement = document.createElement("a");
-    closeElement.ariaLabel = "Close";
-    closeElement.innerText = closable;
-    closeElement.style.cursor = "pointer";
-    closeElement.style.position = "absolute";
-    closeElement.style.right = "1em";
-    closeElement.style.textDecoration = "none";
-    closeElement.style.top = "0.5em";
-    closeElement.onclick = () => {
-      dialog.close();
-      dialog.remove();
-    };
-    header.appendChild(closeElement);
+  if (closeButton) {
+    const close = document.createElement("a");
+    close.ariaLabel = "Close";
+    close.innerText = closeButton;
+    close.style.cursor = "pointer";
+    close.style.position = "absolute";
+    close.style.right = "1em";
+    close.style.textDecoration = "none";
+    close.style.top = "0.5em";
+    if (closeDestroy) {
+      close.onclick = () => {
+        dialog.close();
+        dialog.remove();
+      };
+    } else {
+      close.onclick = () => {
+        dialog.close();
+      };
+    }
+    header.appendChild(close);
   }
   article.appendChild(header);
 
@@ -144,10 +162,11 @@ export function createModalElement(title, content, options = {}) {
  * @param {HTMLElement} [options.container]
  * @param {string} [options.id]
  * @param {string} [options.classname]
+ * @param {boolean} [options.noWrapper]
  * @param {CSSStyleDeclaration} [options.wrapperStyle]
  * @param {CSSStyleDeclaration} [options.labelStyle]
  * @param {CSSStyleDeclaration} [options.style]
- * @returns {(wrapper: HTMLElement, label: HTMLLabelElement, progress: HTMLProgressElement)}
+ * @returns {(wrapper?: HTMLElement, label: HTMLLabelElement, progress: HTMLProgressElement)}
  */
 export function createProgressBarElement(options = {}) {
   createProgressBarElement.id = createProgressBarElement.id || 0;
@@ -156,6 +175,7 @@ export function createProgressBarElement(options = {}) {
     container = document.body,
     id = `default-progress-bar-${createProgressBarElement.id++}`,
     classname = "default-progress-bar",
+    noWrapper = false,
     wrapperStyle = {},
     labelStyle = {},
     style = {},
@@ -177,9 +197,16 @@ export function createProgressBarElement(options = {}) {
   progress.max = 100;
   Object.assign(progress.style, style);
 
+  if (noWrapper) {
+    if (container instanceof HTMLElement) {
+      container.appendChild(label);
+      container.appendChild(progress);
+    }
+    return { label, progress };
+  }
+
   wrapper.appendChild(label);
   wrapper.appendChild(progress);
-
   if (container instanceof HTMLElement) {
     container.appendChild(wrapper);
   }
@@ -193,10 +220,10 @@ export function createProgressBarElement(options = {}) {
  * @param {string} [options.id]
  * @param {string} [options.classname]
  * @param {string} [options.label]
- * @param {CSSStyleDeclaration} [options.wrapperStyle]
+ * @param {CSSStyleDeclaration} [options.parentStyle]
  * @param {CSSStyleDeclaration} [options.labelStyle]
  * @param {CSSStyleDeclaration} [options.style]
- * @returns {{wrapper: HTMLElement, label: HTMLLabelElement, content: HTMLSpanElement}}
+ * @returns {{parent: HTMLElement, label: HTMLLabelElement, content: HTMLSpanElement}}
  */
 export function createDebugElement(options = {}) {
   createDebugElement.id = createDebugElement.id || 0;
@@ -206,23 +233,24 @@ export function createDebugElement(options = {}) {
     id = `default-debug-${createDebugElement.id++}`,
     classname = "default-debug",
     label = "Debug:",
-    wrapperStyle = {},
+    parentStyle = {},
     labelStyle = {},
     style = {},
   } = options;
 
-  if (!(createDebugElement.wrapperElement instanceof HTMLElement)) {
-    const wrapper = document.createElement("section");
-    wrapper.style.display = "flex";
-    wrapper.style.fontSize = "small";
-    wrapper.style.position = "fixed";
-    wrapper.style.right = "0";
-    wrapper.style.top = "0";
-    Object.assign(wrapper.style, wrapperStyle);
+  if (!(createDebugElement.parentElement instanceof HTMLElement)) {
+    const parent = document.createElement("article");
+    parent.classList.add(`${classname}-parent`);
+    parent.style.display = "flex";
+    parent.style.padding = "0.5em";
+    parent.style.position = "fixed";
+    parent.style.right = "0";
+    parent.style.top = "0";
+    Object.assign(parent.style, parentStyle);
 
-    createDebugElement.wrapperElement = wrapper;
+    createDebugElement.parentElement = parent;
     if (container instanceof HTMLElement) {
-      container.appendChild(createDebugElement.wrapperElement);
+      container.appendChild(createDebugElement.parentElement);
     }
   }
 
@@ -237,9 +265,9 @@ export function createDebugElement(options = {}) {
   Object.assign(content.style, style);
 
   labelElement.appendChild(content);
-  createDebugElement.wrapperElement.appendChild(labelElement);
+  createDebugElement.parentElement.appendChild(labelElement);
 
-  return { wrapper: createDebugElement.wrapperElement, label: labelElement, content };
+  return { parent: createDebugElement.parentElement, label: labelElement, content };
 }
 
 /**
@@ -255,9 +283,10 @@ export function createDebugElement(options = {}) {
  * @param {boolean} [options.muted]
  * @param {boolean} [options.playsInline]
  * @param {boolean} [options.controls]
+ * @param {boolean} [options.noWrapper]
  * @param {CSSStyleDeclaration} [options.wrapperStyle]
  * @param {CSSStyleDeclaration} [options.style]
- * @returns {{wrapper: HTMLElement, video: HTMLVideoElement}}
+ * @returns {{wrapper?: HTMLElement, video: HTMLVideoElement}}
  */
 export function createVideoElement(sources, options = {}) {
   createVideoElement.id = createVideoElement.id || 0;
@@ -273,6 +302,7 @@ export function createVideoElement(sources, options = {}) {
     muted = true,
     playsInline = true,
     controls = true,
+    noWrapper = false,
     wrapperStyle = {},
     style = {},
   } = options;
@@ -318,6 +348,13 @@ export function createVideoElement(sources, options = {}) {
     video.appendChild(source);
   }
 
+  if (noWrapper) {
+    if (container instanceof HTMLElement) {
+      container.appendChild(video);
+    }
+    return { video };
+  }
+
   wrapper.appendChild(video);
   if (container instanceof HTMLElement) {
     container.appendChild(wrapper);
@@ -337,10 +374,11 @@ export function createVideoElement(sources, options = {}) {
  * @param {number} [options.max]
  * @param {number} [options.step]
  * @param {number} [options.value]
+ * @param {boolean} [options.noWrapper]
  * @param {CSSStyleDeclaration} [options.wrapperStyle]
  * @param {CSSStyleDeclaration} [options.valueStyle]
  * @param {CSSStyleDeclaration} [options.style]
- * @returns {{wrapper: HTMLLabelElement, value: HTMLSpanElement, input: HTMLInputElement}}
+ * @returns {{wrapper?: HTMLLabelElement, value: HTMLElement, input: HTMLInputElement}}
  */
 export function createInputRangeElement(options = {}) {
   createInputRangeElement.id = createInputRangeElement.id || 0;
@@ -354,6 +392,7 @@ export function createInputRangeElement(options = {}) {
     max = "1",
     step = "0.1",
     value = "0",
+    noWrapper = false,
     wrapperStyle = {},
     valueStyle = {},
     style = {},
@@ -364,10 +403,9 @@ export function createInputRangeElement(options = {}) {
   wrapper.innerText = label + " • ";
   Object.assign(wrapper.style, wrapperStyle);
 
-  const span = document.createElement("span");
-  span.innerText = value;
-  span.style.fontWeight = "bold";
-  Object.assign(span.style, valueStyle);
+  const valueElement = document.createElement("mark");
+  valueElement.innerText = value;
+  Object.assign(valueElement.style, valueStyle);
 
   const input = document.createElement("input");
   input.id = id;
@@ -379,15 +417,22 @@ export function createInputRangeElement(options = {}) {
   input.value = value;
   Object.assign(input.style, style);
   input.addEventListener("input", (event) => {
-    span.innerText = event.target.value;
+    valueElement.innerText = event.target.value;
   });
 
-  wrapper.appendChild(span);
-  wrapper.appendChild(input);
+  if (noWrapper) {
+    if (container instanceof HTMLElement) {
+      container.appendChild(valueElement);
+      container.appendChild(input);
+    }
+    return { value: valueElement, input };
+  }
 
+  wrapper.appendChild(valueElement);
+  wrapper.appendChild(input);
   if (container instanceof HTMLElement) {
     container.appendChild(wrapper);
   }
 
-  return { wrapper, value: span, input };
+  return { wrapper, value: valueElement, input };
 }

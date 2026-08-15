@@ -2,11 +2,9 @@
 
 ###### Shadow Mapping • WebGPU Tutorial • WebGPU Playground
 
-> **Object Count:**
-𓉘[64 Objects](./index.html?page=04-webgpu-tutorial/06-shadowmap&count=64)𓉝
-𓉘[128 Objects](./index.html?page=04-webgpu-tutorial/06-shadowmap&count=128)𓉝
-𓉘[256 Objects](./index.html?page=04-webgpu-tutorial/06-shadowmap&count=256)𓉝
-𓉘[512 Objects](./index.html?page=04-webgpu-tutorial/06-shadowmap&count=512)𓉝
+> [128](./index.html?page=04-webgpu-tutorial/06-shadowmap) •
+[256](./index.html?page=04-webgpu-tutorial/06-shadowmap&count=256) •
+[512](./index.html?page=04-webgpu-tutorial/06-shadowmap&count=512)
 
 ##### Learning
 

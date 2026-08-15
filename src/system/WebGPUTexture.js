@@ -13,11 +13,6 @@ export class WebGPUTexture {
   device;
 
   /**
-   * @type {GPUCanvasContext}
-   */
-  context;
-
-  /**
    * @type {GPUTextureDescriptor}
    */
   textureDescriptor;
@@ -49,19 +44,17 @@ export class WebGPUTexture {
 
   /**
    * @param {GPUDevice} device
-   * @param {GPUCanvasContext} [context]
    * @param {string} [label]
    */
-  constructor(device, context = undefined, label = "Unlabelled") {
+  constructor(device, label = "Unlabelled") {
     this.debug = false;
     this.device = device;
-    this.context = context;
     this.textureDescriptor = {
       label: `${label} (GPUTexture)`,
-      format: context ? context.getConfiguration().format : "bgra8unorm",
+      format: "bgra8unorm",
       size: {
-        width: context ? context.canvas.width : 0,
-        height: context ? context.canvas.height : 0,
+        width: 0,
+        height: 0,
         depthOrArrayLayers: 1,
       },
       usage: GPUTextureUsage.RENDER_ATTACHMENT,
@@ -211,6 +204,9 @@ export class WebGPUTexture {
     /** @type {GPUTextureDescriptor} */
     const finalTextureDescriptor = { ...this.textureDescriptor, ...adjustTextureDescriptor, ...overrideTextureDescriptor };
     this.debug && console.debug("GPUTextureDescriptor", finalTextureDescriptor);
+    if (this.texture instanceof GPUTexture) {
+      this.texture.destroy();
+    }
     this.texture = this.device.createTexture(finalTextureDescriptor);
 
     if (imgCount) {
@@ -237,39 +233,5 @@ export class WebGPUTexture {
       return { builder: this, texture: this.texture, textureView: this.textureView, sampler: this.sampler };
     }
     return { builder: this, texture: this.texture, textureView: this.textureView };
-  }
-
-  /**
-   * @param {Object} [options]
-   * @param {GPUTextureDescriptor} [options.overrideTextureDescriptor]
-   * @param {GPUTextureViewDescriptor} [options.overrideTextureViewDescriptor]
-   * @returns {{builder: WebGPUTexture, texture: GPUTexture, textureView: GPUTextureView, depthStencilState: GPUDepthStencilState, depthStencilAttachment: GPURenderPassDepthStencilAttachment}}
-   */
-  buildDepthStencil(options = {}) {
-    const { overrideTextureDescriptor = {}, overrideTextureViewDescriptor = {} } = options;
-
-    this.setTextureFormat("depth24plus-stencil8")
-      .setTextureSize(this.textureDescriptor.size.width, this.textureDescriptor.size.height)
-      .setTextureUsage(GPUTextureUsage.RENDER_ATTACHMENT)
-      .build({ createSampler: false, overrideTextureDescriptor, overrideTextureViewDescriptor });
-
-    /** @type {GPUDepthStencilState} */
-    const depthStencilState = {
-      depthCompare: "less-equal",
-      depthWriteEnabled: true,
-      format: this.textureDescriptor.format,
-    };
-
-    /** @type {GPURenderPassDepthStencilAttachment} */
-    const depthStencilAttachment = {
-      view: this.textureView,
-      depthClearValue: 1.0,
-      depthLoadOp: "clear",
-      depthStoreOp: "store",
-      stencilLoadOp: "clear",
-      stencilStoreOp: "discard",
-    };
-
-    return { builder: this, texture: this.texture, textureView: this.textureView, depthStencilState, depthStencilAttachment };
   }
 }

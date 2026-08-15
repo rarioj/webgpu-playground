@@ -10,11 +10,6 @@ export class Scene {
   updateEvents;
 
   /**
-   * @type {Array.<function(number, number): void>}
-   */
-  resizeEvents;
-
-  /**
    * @type {Object.<string, number>}
    */
   typeCount;
@@ -44,7 +39,6 @@ export class Scene {
    */
   constructor() {
     this.updateEvents = [];
-    this.resizeEvents = [];
     this.typeCount = {};
     const now = performance.now();
     this.startTime = now;
@@ -60,7 +54,6 @@ export class Scene {
    */
   addObject(object, type = "__default__") {
     this.updateEvents.push(() => object.update());
-    this.resizeEvents.push(() => object.resize());
     if (this.typeCount[type]) {
       this.typeCount[type]++;
     } else {
@@ -79,15 +72,6 @@ export class Scene {
   }
 
   /**
-   * @param {function(number, number): void} callback
-   * @returns {BaseScene}
-   */
-  addResizeEvent(callback) {
-    this.resizeEvents.push(callback);
-    return this;
-  }
-
-  /**
    *
    */
   play() {
@@ -97,15 +81,6 @@ export class Scene {
     this.elapsed[0] = (this.currentTime - this.startTime) / 1000;
     for (let i = 0; i < this.updateEvents.length; i++) {
       this.updateEvents[i](this.elapsed[0], this.delta[0]);
-    }
-  }
-
-  /**
-   *
-   */
-  resize() {
-    for (let i = 0; i < this.resizeEvents.length; i++) {
-      this.resizeEvents[i]();
     }
   }
 }

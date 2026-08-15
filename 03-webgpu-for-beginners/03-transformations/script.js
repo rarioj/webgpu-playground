@@ -68,7 +68,7 @@ model.addUpdateCallback(() => {
   uniformBuilder.writeDataToBuffer();
 });
 
-const camera = new CameraObject(context);
+const camera = new CameraObject({ width: canvas.width, height: canvas.height });
 camera.setPosition(-2.5, 0, 0);
 camera.viewMatrix = uniformBuilder.dataPointer(16, 32);
 camera.projectionMatrix = uniformBuilder.dataPointer(32, 48);

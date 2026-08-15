@@ -2,12 +2,11 @@
 
 ###### Collision Simulation • WebGPU Playground
 
-> **Presets:**
-𓉘[Default](./index.html?page=02-collision-simulation)𓉝
-𓉘[Smaller area](./index.html?page=02-collision-simulation&width=256&height=256)𓉝
-𓉘[Larger area](./index.html?page=02-collision-simulation&width=800&height=800)𓉝
-𓉘[Larger area extra balls](./index.html?page=02-collision-simulation&balls=500&width=800&height=800)𓉝
-𓉘[Larger area bigger balls](./index.html?page=02-collision-simulation&balls=400&min_radius=8&max_radius=16&width=800&height=800)𓉝
+> [Default](./index.html?page=02-collision-simulation) •
+[Small](./index.html?page=02-collision-simulation&width=256&height=256) •
+[Large](./index.html?page=02-collision-simulation&width=768&height=768) •
+[Large (extra balls)](./index.html?page=02-collision-simulation&balls=512&width=768&height=768) •
+[Large (bigger balls)](./index.html?page=02-collision-simulation&balls=256&min_radius=8&max_radius=16&width=768&height=768)
 
 ##### Learning
 

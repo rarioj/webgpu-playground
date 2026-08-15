@@ -10,6 +10,7 @@ const SIZE: u32 = u32(128);
 fn computeMain(@builtin(global_invocation_id) GlobalInvocationId: vec3<u32>) {
     var index: u32 = GlobalInvocationId.x;
     if f32(index) > input[0] {
+        mvpMatrix[index] = projection * modelView[index];
         return;
     }
     var xMin: f32 = input[1];

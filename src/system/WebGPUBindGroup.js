@@ -56,6 +56,16 @@ export class WebGPUBindGroup {
   }
 
   /**
+   * @param {number} index
+   * @param {GPUBindingResource} resource
+   * @returns {WebGPUBindGroup}
+   */
+  setResource(index, resource) {
+    this.bindGroupDescriptor.entries[index].resource = resource;
+    return this;
+  }
+
+  /**
    * @param {GPUBindingResource} bindingResource
    * @param {GPUBindGroupLayoutEntry} [bindGroupLayoutEntry]
    * @returns {WebGPUBindGroup}

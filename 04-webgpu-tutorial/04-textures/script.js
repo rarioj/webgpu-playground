@@ -19,7 +19,7 @@ try {
     container: document.querySelector("article"),
     width: 512,
     height: 512,
-    devicePixelRatio: 1,
+    forceDPR: 1,
     style: {
       outline: "1px solid black",
     },
@@ -32,7 +32,7 @@ try {
 
   const assets = await loadAssets(config.resources, true);
 
-  const { depthStencilState, depthStencilAttachment } = webgpu.setupTextureView(context).buildDepthStencil();
+  const { builder: depthStencilBuilder } = webgpu.setupDepthStencil().setTextureSize(canvas.width, canvas.height).build();
 
   //// Buffers and scene
 
@@ -52,7 +52,7 @@ try {
     .build();
 
   const scene = new Scene();
-  const camera = new CameraObject(context);
+  const camera = new CameraObject({ width: canvas.width, height: canvas.height });
   camera.setPosition(-5, 0, 0);
   camera.updateOrthonormalVectors();
   camera.updateProjectionMatrix();
@@ -88,7 +88,7 @@ try {
       cullMode: "back",
       frontFace: "ccw",
     })
-    .setRenderDepthStencil(depthStencilState)
+    .setRenderDepthStencil(depthStencilBuilder.state)
     .buildAsync();
 
   //// Texture variants
@@ -170,7 +170,7 @@ try {
           container: document.querySelector("article"),
           width: 150,
           height: 150,
-          devicePixelRatio: 1,
+          forceDPR: 1,
           style: {
             outline: "1px solid black",
             verticalAlign: "top",
@@ -295,7 +295,7 @@ try {
           container: document.querySelector("article"),
           width: 150,
           height: 150,
-          devicePixelRatio: 1,
+          forceDPR: 1,
           style: {
             outline: "1px solid black",
             verticalAlign: "top",
@@ -322,10 +322,10 @@ try {
   let bindGroupTexture = null;
 
   if (textureType === "video") {
-    sampler = webgpu.setupTextureView(context).createSampler();
+    sampler = webgpu.setupTextureView().createSampler();
   } else if (textureType === "image") {
     ({ texture, textureView, sampler } = webgpu
-      .setupTextureView(context)
+      .setupTextureView()
       .setTextureUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT)
       .loadBitmaps([assets.image])
       .build());
@@ -337,7 +337,7 @@ try {
       .build());
   } else if (textureType === "canvasDraw" || textureType === "canvasGPU") {
     ({ texture, textureView, sampler } = webgpu
-      .setupTextureView(context)
+      .setupTextureView()
       .setTextureSize(150, 150)
       .setTextureUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT)
       .build());
@@ -361,7 +361,7 @@ try {
         storeOp: "store",
       },
     ],
-    depthStencilAttachment,
+    depthStencilAttachment: depthStencilBuilder.attachment,
   };
 
   function animateFrame() {

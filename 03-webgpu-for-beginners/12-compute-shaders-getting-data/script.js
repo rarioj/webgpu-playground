@@ -6,7 +6,7 @@ import { BaseObject } from "../../src/objects/BaseObject.js";
 import { CameraObject } from "../../src/objects/CameraObject.js";
 import { getRandom } from "../../src/utilities/maths.js";
 
-const NUM_SPHERES = Math.floor(parseInt(getQueryValue("spheres", 512)));
+const NUM_SPHERES = Math.floor(parseInt(getQueryValue("spheres", 64)));
 
 //// Initialisation
 
@@ -45,9 +45,10 @@ const assets = await loadAssets(
 );
 
 const { textureView: screenView, sampler: screenSampler } = webgpu
-  .setupTextureView(context)
+  .setupTextureView()
   .setTextureFormat("rgba8unorm")
   .setTextureUsage(GPUTextureUsage.COPY_DST | GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING)
+  .setTextureSize(canvas.width, canvas.height)
   .build();
 
 //// Buffers
@@ -66,21 +67,23 @@ const { builder: spheresBufferBuilder, buffer: spheresBuffer } = webgpu
 
 //// Scene
 
-const camera = new CameraObject(context);
+const relativePos = NUM_SPHERES < 100 ? 10 : NUM_SPHERES < 200 ? 20 : NUM_SPHERES < 300 ? 30 : 40;
+
+const camera = new CameraObject({ width: canvas.width, height: canvas.height });
 camera.position = parameterBufferBuilder.dataPointer(0, 3);
 camera.forward = parameterBufferBuilder.dataPointer(4, 7);
 camera.right = parameterBufferBuilder.dataPointer(8, 11);
 camera.up = parameterBufferBuilder.dataPointer(12, 15);
 parameterBufferBuilder.data[15] = NUM_SPHERES;
-camera.setPosition(-30, 0, 0);
+camera.setPosition(-relativePos * 2, 0, 0);
 camera.updateOrthonormalVectors();
 camera.updateViewMatrix();
 camera.updateProjectionMatrix();
 
 for (let i = 0; i < NUM_SPHERES; i++) {
-  spheresBufferBuilder.data[i * 8 + 0] = getRandom(-50.0, 100.0);
-  spheresBufferBuilder.data[i * 8 + 1] = getRandom(-50.0, 100.0);
-  spheresBufferBuilder.data[i * 8 + 2] = getRandom(-50.0, 100.0);
+  spheresBufferBuilder.data[i * 8 + 0] = getRandom(-relativePos, relativePos);
+  spheresBufferBuilder.data[i * 8 + 1] = getRandom(-relativePos, relativePos);
+  spheresBufferBuilder.data[i * 8 + 2] = getRandom(-relativePos, relativePos);
   spheresBufferBuilder.data[i * 8 + 3] = 0;
   spheresBufferBuilder.data[i * 8 + 4] = getRandom(0.1, 0.9);
   spheresBufferBuilder.data[i * 8 + 5] = getRandom(0.1, 0.9);

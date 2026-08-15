@@ -23,12 +23,14 @@ const context = webgpu.createCanvasContext(canvas);
 //// Assets
 
 const assets = await loadAssets(assetArray, true);
+
 const { textureView, sampler } = webgpu
-  .setupTextureView(context)
+  .setupTextureView()
   .setTextureUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT)
   .loadBitmaps(assets.image)
   .build();
-const { depthStencilState, depthStencilAttachment } = webgpu.setupTextureView(context).buildDepthStencil();
+
+const { state: depthStencilState, attachment: depthStencilAttachment } = webgpu.setupDepthStencil().setTextureSize(canvas.width, canvas.height).build();
 
 //// Buffers
 
@@ -57,7 +59,7 @@ const { builder: objectBufferBuilder, buffer: objectBuffer } = webgpu
 
 const scene = new Scene();
 
-const camera = new CameraObject(context);
+const camera = new CameraObject({ width: canvas.width, height: canvas.height });
 camera.setPosition(-7, -0.5, 0);
 camera.viewMatrix = uniformBufferBuilder.dataPointer(0, 16);
 camera.projectionMatrix = uniformBufferBuilder.dataPointer(16, 32);

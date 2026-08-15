@@ -1,17 +1,18 @@
-footer li a {
-  cursor: pointer;
-  font-size: 1em;
-  line-height: 1em;
-  text-decoration: none;
-  vertical-align: middle;
+article .default-canvas-wrapper,
+article .default-video-wrapper {
+  display: inline-flex;
 }
 
-footer img {
-  height: 2ex;
-  width: auto;
+article.default-debug-parent {
+  font-size: clamp(0.5rem, 0.7vw + 0.25rem, 0.9rem);
 }
 
-article canvas {
+article.default-debug-parent * {
+  font-size: inherit;
+}
+
+canvas {
+  display: block;
   outline: none;
   touch-action: none;
   user-select: none;
@@ -20,7 +21,36 @@ article canvas {
   -webkit-user-select: none;
 }
 
-article .default-canvas-wrapper,
-article .default-video-wrapper {
-  display: inline-flex;
+footer nav li a {
+  cursor: pointer;
+  font-size: 1em;
+  line-height: 1em;
+  text-decoration: none;
+  vertical-align: middle;
+}
+
+footer nav img {
+  height: 2ex;
+  width: auto;
+}
+
+footer.fullscreen-mode {
+  background-color: var(--pico-background-color);
+  bottom: 0;
+  font-size: clamp(0.5rem, 0.7vw + 0.25rem, 0.9rem);
+  padding: 0 1ex;
+  position: fixed;
+}
+
+footer.fullscreen-mode * {
+  font-size: inherit;
+}
+
+footer.fullscreen-mode li {
+  padding: 1ex;
+}
+
+footer.fullscreen-mode p {
+  margin: 0;
+  padding: 0;
 }

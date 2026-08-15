@@ -2,11 +2,10 @@
 
 ###### 3D Transform • WebGPU Tutorial • WebGPU Playground
 
-> **Geometry:**
-𓉘[Cube](./index.html?page=04-webgpu-tutorial/02-3d-transform&geometry=cube)𓉝
-𓉘[Sphere (smoothness 8)](./index.html?page=04-webgpu-tutorial/02-3d-transform&geometry=sphere)𓉝
-𓉘[Sphere (smoothness 32)](./index.html?page=04-webgpu-tutorial/02-3d-transform&geometry=sphere&smoothness=32)𓉝
-𓉘[Sphere (smoothness 128)](./index.html?page=04-webgpu-tutorial/02-3d-transform&geometry=sphere&smoothness=128)𓉝
+> [Cube](./index.html?page=04-webgpu-tutorial/02-3d-transform) •
+[Sphere (8)](./index.html?page=04-webgpu-tutorial/02-3d-transform&geometry=sphere) •
+[Sphere (32)](./index.html?page=04-webgpu-tutorial/02-3d-transform&geometry=sphere&smoothness=32) •
+[Sphere (128)](./index.html?page=04-webgpu-tutorial/02-3d-transform&geometry=sphere&smoothness=128)
 
 ##### Learning
 

@@ -9,7 +9,7 @@ import { BoundingVolumeHierarchy } from "../../src/modules/BoundingVolumeHierarc
 import { getRandom } from "../../src/utilities/maths.js";
 import { getSphereCorners } from "../../src/utilities/matrices.js";
 
-const NUM_SPHERES = Math.floor(parseInt(getQueryValue("spheres", 512)));
+const NUM_SPHERES = Math.floor(parseInt(getQueryValue("spheres", 64)));
 
 //// Initialisation
 
@@ -48,9 +48,10 @@ const assets = await loadAssets(
 );
 
 const { textureView: screenView, sampler: screenSampler } = webgpu
-  .setupTextureView(context)
+  .setupTextureView()
   .setTextureFormat("rgba8unorm")
   .setTextureUsage(GPUTextureUsage.COPY_DST | GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING)
+  .setTextureSize(canvas.width, canvas.height)
   .build();
 
 //// Buffers and scene
@@ -61,13 +62,15 @@ const { builder: parameterBufferBuilder, buffer: parameterBuffer } = webgpu
   .setData(new Float32Array(16))
   .build();
 
-const camera = new CameraObject(context);
+const relativePos = NUM_SPHERES < 100 ? 10 : NUM_SPHERES < 200 ? 20 : NUM_SPHERES < 300 ? 30 : 40;
+
+const camera = new CameraObject({ width: canvas.width, height: canvas.height });
 camera.position = parameterBufferBuilder.dataPointer(0, 3);
 camera.forward = parameterBufferBuilder.dataPointer(4, 7);
 camera.scaledRight = parameterBufferBuilder.dataPointer(8, 11);
 camera.scaledUp = parameterBufferBuilder.dataPointer(12, 15);
 parameterBufferBuilder.data[15] = NUM_SPHERES;
-camera.setPosition(-30, 0, 0);
+camera.setPosition(-relativePos * 2, 0, 0);
 camera.updateProjectionMatrix();
 
 const fpc = new FirstPersonControl(camera, context.canvas, { debug: true, moveSpeed: 0.4, orientSpeed: 0.25, flipY: true });
@@ -88,7 +91,7 @@ const { builder: spheresBufferBuilder, buffer: spheresBuffer } = webgpu
   .build();
 
 for (let i = 0; i < NUM_SPHERES; i++) {
-  const center = [getRandom(-50.0, 100.0), getRandom(-50.0, 100.0), getRandom(-50.0, 100.0)];
+  const center = [getRandom(-relativePos, relativePos), getRandom(-relativePos, relativePos), getRandom(-relativePos, relativePos)];
   const color = [getRandom(0.1, 0.9), getRandom(0.1, 0.9), getRandom(0.1, 0.9)];
   const radius = getRandom(0.1, 2.9);
   const corners = getSphereCorners(center, radius);

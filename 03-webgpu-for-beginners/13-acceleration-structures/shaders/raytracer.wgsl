@@ -92,7 +92,7 @@ fn rayColor(ray: Ray) -> vec3<f32> {
     var somethingHit: bool = false;
     var renderState: RenderState;
     var node: NodeObject = tree.nodes[0];
-    var stack: array<NodeObject, 15>;
+    var stack: array<NodeObject, 16>;
     var stackIndex: u32 = 0u;
 
     while true {

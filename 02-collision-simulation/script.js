@@ -4,18 +4,20 @@ import { getQueryValue } from "../src/utilities/helpers.js";
 import { loadAssets } from "../src/utilities/assets.js";
 import { getRandom } from "../src/utilities/maths.js";
 
-const NUM_BALLS = Math.floor(parseInt(getQueryValue("balls", 100)));
+const NUM_BALLS = Math.floor(parseInt(getQueryValue("balls", 128)));
 const BUFFER_SIZE = NUM_BALLS * 6 * Float32Array.BYTES_PER_ELEMENT;
-const MIN_RADIUS = Math.floor(parseInt(getQueryValue("min_radius", 2)));
-const MAX_RADIUS = Math.floor(parseInt(getQueryValue("max_radius", 10)));
+const MIN_RADIUS = Math.floor(parseInt(getQueryValue("min_radius", 4)));
+const MAX_RADIUS = Math.floor(parseInt(getQueryValue("max_radius", 8)));
+const WIDTH = Math.floor(parseInt(getQueryValue("width", 512)));
+const HEIGHT = Math.floor(parseInt(getQueryValue("height", 512)));
 
 //// Initialisation
 
 const { canvas } = createCanvasElement({
   container: document.querySelector("article"),
-  width: Math.floor(parseInt(getQueryValue("width", 512))),
-  height: Math.floor(parseInt(getQueryValue("height", 512))),
-  devicePixelRatio: 1,
+  width: WIDTH,
+  height: HEIGHT,
+  forceDPR: 1,
   style: {
     outline: "1px solid black",
   },
@@ -24,7 +26,7 @@ const webgpu = await WebGPU.init();
 const context = canvas.getContext("2d");
 
 const debugGridSize = createDebugElement({ label: "𖣯" }).content;
-debugGridSize.innerText = `${canvas.width}x${canvas.height}`;
+debugGridSize.innerText = `${WIDTH}x${HEIGHT}`;
 
 const debugBallCount = createDebugElement({ label: "🟣" }).content;
 debugBallCount.innerText = `${NUM_BALLS}`;

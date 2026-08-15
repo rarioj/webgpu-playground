@@ -2,13 +2,12 @@
 
 ###### Tracing an OBJ Model + General Transforms • WebGPU for Beginners • WebGPU Playground
 
-> **Statue:**
-𓉘[Apollo](./index.html?page=03-webgpu-for-beginners/16-obj-model-general-transforms&statue=apollo) (421k)𓉝
-𓉘[Ballerina](./index.html?page=03-webgpu-for-beginners/16-obj-model-general-transforms&statue=ballerina) (173k)𓉝
-𓉘[Horus](./index.html?page=03-webgpu-for-beginners/16-obj-model-general-transforms&statue=horus) (273k)𓉝
-𓉘[Hussar](./index.html?page=03-webgpu-for-beginners/16-obj-model-general-transforms&statue=hussar) (290k)𓉝
-𓉘[Knight](./index.html?page=03-webgpu-for-beginners/16-obj-model-general-transforms&statue=knight) (94k)𓉝
-𓉘[Rock Singer](./index.html?page=03-webgpu-for-beginners/16-obj-model-general-transforms&statue=rocksinger) (469k)𓉝
+> [Apollo](./index.html?page=03-webgpu-for-beginners/16-obj-model-general-transforms) •
+[Ballerina](./index.html?page=03-webgpu-for-beginners/16-obj-model-general-transforms&statue=ballerina) •
+[Horus](./index.html?page=03-webgpu-for-beginners/16-obj-model-general-transforms&statue=horus) •
+[Hussar](./index.html?page=03-webgpu-for-beginners/16-obj-model-general-transforms&statue=hussar) •
+[Knight](./index.html?page=03-webgpu-for-beginners/16-obj-model-general-transforms&statue=knight) •
+[Singer](./index.html?page=03-webgpu-for-beginners/16-obj-model-general-transforms&statue=rocksinger)
 
 ##### Learning
 

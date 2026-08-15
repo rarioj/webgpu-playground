@@ -16,14 +16,7 @@ const GEOMETRY = getQueryValue("geometry", "cube");
 try {
   //// Initialisation
 
-  const { canvas } = createCanvasElement({
-    container: document.querySelector("article"),
-    width: 800,
-    height: 600,
-    style: {
-      outline: "1px solid black",
-    },
-  });
+  const { canvas } = createCanvasElement({ noWrapper: true, style: { height: "100vh" } });
   const webgpu = await WebGPU.init();
   const context = webgpu.createCanvasContext(canvas);
   const format = context.getConfiguration().format;
@@ -44,7 +37,7 @@ try {
     true,
   );
 
-  const { depthStencilState, depthStencilAttachment } = webgpu.setupTextureView(context).buildDepthStencil();
+  const depthStencilBuilder = webgpu.setupDepthStencil().setTextureSize(canvas.width, canvas.height);
 
   //// Buffers and scene
 
@@ -67,7 +60,7 @@ try {
     .build();
 
   const scene = new Scene();
-  const camera = new CameraObject(context, { far: 1000 });
+  const camera = new CameraObject({ width: canvas.width, height: canvas.height, far: 1000 });
   camera.setPosition(-25, 0, 0);
   camera.updateProjectionMatrix();
   camera.addUpdateCallback(() => {
@@ -101,6 +94,12 @@ try {
     mvpBufferBuilder.writeDataToBuffer();
   });
 
+  depthStencilBuilder.build();
+  webgpu.observeCanvasResize(canvas, (width, height) => {
+    camera.resize(width, height);
+    depthStencilBuilder.setTextureSize(width, height).build();
+  });
+
   //// Pipelines
 
   const { pipeline } = await webgpu
@@ -113,7 +112,7 @@ try {
       topology: "triangle-list",
       cullMode: "back",
     })
-    .setRenderDepthStencil(depthStencilState)
+    .setRenderDepthStencil(depthStencilBuilder.state)
     .buildAsync();
 
   //// Bind groups
@@ -132,7 +131,7 @@ try {
         storeOp: "store",
       },
     ],
-    depthStencilAttachment,
+    depthStencilAttachment: depthStencilBuilder.attachment,
   };
 
   function frame() {

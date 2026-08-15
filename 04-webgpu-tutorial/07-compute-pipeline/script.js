@@ -10,8 +10,8 @@ import { CameraObject } from "../../src/objects/CameraObject.js";
 import { FirstPersonControl } from "../../src/modules/FirstPersonControl.js";
 
 const OBJECT_COUNT = 100000;
-const OBJECT_MIN = 50000;
-const OBJECT_MAX = 500000;
+const OBJECT_MIN = 0;
+const OBJECT_MAX = 1000000;
 
 try {
   //// Initialisation
@@ -53,7 +53,7 @@ try {
     true,
   );
 
-  const { depthStencilState, depthStencilAttachment } = webgpu.setupTextureView(context).buildDepthStencil();
+  const { state: depthStencilState, attachment: depthStencilAttachment } = webgpu.setupDepthStencil().setTextureSize(canvas.width, canvas.height).build();
 
   //// Buffers
 
@@ -105,7 +105,7 @@ try {
 
   //// Scene
 
-  const camera = new CameraObject(context, { far: 10000 });
+  const camera = new CameraObject({ width: canvas.width, height: canvas.height, far: 10000 });
   camera.setPosition(-5000, 0, 0);
   camera.updateProjectionMatrix();
   camera.addUpdateCallback(() => {
@@ -182,10 +182,10 @@ try {
 
   const { input: particleCountInput } = createInputRangeElement({
     container: controls,
-    label: "Particle count",
+    label: "Moving particle count",
     min: OBJECT_MIN,
     max: OBJECT_MAX,
-    step: 100,
+    step: 1000,
     value: OBJECT_COUNT,
   });
 

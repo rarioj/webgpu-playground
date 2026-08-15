@@ -2,13 +2,10 @@
 
 ###### BindGroup with Multi-Objects • WebGPU Tutorial • WebGPU Playground
 
-> **Object Count:**
-𓉘[512 Cubes](./index.html?page=04-webgpu-tutorial/03-multiple-objects&count=512)𓉝
-𓉘[1024 Cubes](./index.html?page=04-webgpu-tutorial/03-multiple-objects&count=1024)𓉝
-𓉘[2048 Cubes](./index.html?page=04-webgpu-tutorial/03-multiple-objects&count=2048)𓉝
-𓉘[512 Spheres](./index.html?page=04-webgpu-tutorial/03-multiple-objects&count=512&geometry=sphere)𓉝
-𓉘[1024 Spheres](./index.html?page=04-webgpu-tutorial/03-multiple-objects&count=1024&geometry=sphere)𓉝
-𓉘[2048 Spheres](./index.html?page=04-webgpu-tutorial/03-multiple-objects&count=2048&geometry=sphere)𓉝
+> [1024 📦](./index.html?page=04-webgpu-tutorial/03-multiple-objects) •
+[2048 📦](./index.html?page=04-webgpu-tutorial/03-multiple-objects&count=2048) •
+[1024 ⚽](./index.html?page=04-webgpu-tutorial/03-multiple-objects&count=1024&geometry=sphere) •
+[2048 ⚽](./index.html?page=04-webgpu-tutorial/03-multiple-objects&count=2048&geometry=sphere)
 
 ##### Learning
 
