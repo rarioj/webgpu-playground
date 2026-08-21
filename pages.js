@@ -30,9 +30,9 @@ pages["04-webgpu-tutorial/01-intro-getting-started"] = ["script"];
 pages["04-webgpu-tutorial/02-3d-transform"] = ["script"];
 pages["04-webgpu-tutorial/03-multiple-objects"] = ["script", "fullscreen", "noarticle"];
 pages["04-webgpu-tutorial/04-textures"] = ["script"];
-pages["04-webgpu-tutorial/05-lighting"] = ["script"];
+pages["04-webgpu-tutorial/05-lighting"] = ["script", "fullscreen", "noarticle"];
 pages["04-webgpu-tutorial/06-shadowmap"] = ["script", "fullscreen", "noarticle"];
-pages["04-webgpu-tutorial/07-compute-pipeline"] = ["script"];
+pages["04-webgpu-tutorial/07-compute-pipeline"] = ["script", "fullscreen", "noarticle"];
 
 pages["05-webgpu-fundamentals"] = ["noarticle"];
 pages["05-webgpu-fundamentals/01-fundamentals-drawing-triangles"] = ["script"];
@@ -40,3 +40,4 @@ pages["05-webgpu-fundamentals/02-fundamentals-run-computations"] = ["script"];
 pages["05-webgpu-fundamentals/03-interstage-variables"] = ["script"];
 pages["05-webgpu-fundamentals/04-uniforms-storage-buffers"] = ["script"];
 pages["05-webgpu-fundamentals/05-vertex-buffers"] = ["script"];
+pages["05-webgpu-fundamentals/06-textures"] = ["script"];

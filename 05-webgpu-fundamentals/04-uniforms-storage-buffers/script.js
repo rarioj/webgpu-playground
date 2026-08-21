@@ -53,13 +53,13 @@ try {
   const { builder: colorOffsetBufferBuilder, buffer: colorOffsetBuffer } = webgpu
     .setupBuffer("Static storage for color and offset")
     .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
-    .setData(new Float32Array((4 + 2 + 2) * OBJECT_COUNT)) // color: vec4<f32> + offset: vec2<f32> + 2 padding
+    .loadBufferData(new Float32Array((4 + 2 + 2) * OBJECT_COUNT)) // color: vec4<f32> + offset: vec2<f32> + 2 padding
     .build();
 
   const { builder: scaleBufferBuilder, buffer: scaleBuffer } = webgpu
     .setupBuffer("Changing storage for scale")
     .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
-    .setData(new Float32Array(2 * OBJECT_COUNT)) // scale: vec2<f32>
+    .loadBufferData(new Float32Array(2 * OBJECT_COUNT)) // scale: vec2<f32>
     .build();
 
   const { vertices: vertexData } =
@@ -70,7 +70,7 @@ try {
   const { builder: vertexBufferBuilder, buffer: vertexBuffer } = webgpu
     .setupBuffer("Vertex buffer")
     .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
-    .setData(vertexData)
+    .loadBufferData(vertexData)
     .build();
 
   for (let i = 0; i < OBJECT_COUNT; i++) {
@@ -118,6 +118,6 @@ try {
 
   render();
 } catch (error) {
-  createModalElement("🛑 Error", error);
+  createModalElement("🛑 Error", error, { container: document.querySelector("main") });
   console.error(error);
 }

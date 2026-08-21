@@ -211,7 +211,7 @@ export class WebGPUPipeline {
    * @param {GPUPipelineLayoutDescriptor} [options.overridePipelineLayoutDescriptor]
    * @param {GPURenderPipelineDescriptor} [options.overrideRenderPipelineDescriptor]
    * @param {GPUComputePipelineDescriptor} [options.overrideComputePipelineDescriptor]
-   * @returns {{builder: WebGPUPipeline, pipelineLayout: GPUPipelineLayout, pipeline: GPURenderPipeline|GPUComputePipeline}}
+   * @returns {Promise.<{builder: WebGPUPipeline, pipelineLayout: GPUPipelineLayout, pipeline: GPURenderPipeline|GPUComputePipeline}>}
    */
   async buildAsync(options = {}) {
     const { overridePipelineLayoutDescriptor = {}, overrideRenderPipelineDescriptor = {}, overrideComputePipelineDescriptor = {} } = options;

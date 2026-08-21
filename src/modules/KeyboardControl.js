@@ -1,5 +1,5 @@
 import { CameraObject } from "../objects/CameraObject.js";
-import { createDebugElement } from "../utilities/elements.js";
+import { createTweakElement } from "../utilities/elements.js";
 
 /**
  * @classdesc
@@ -21,7 +21,7 @@ export class KeyboardControl {
   keypresses;
 
   /**
-   * @type {HTMLElement}
+   * @type {Object.<string, any>}
    */
   debugger;
 
@@ -37,11 +37,7 @@ export class KeyboardControl {
     this.camera = camera;
     this.speed = speed;
     this.keypresses = {};
-
-    this.debugger = undefined;
-    if (debug) {
-      this.debugger = createDebugElement({ label: "⌨" }).content;
-    }
+    this.debugger = debug ? createTweakElement("Keyboard", "", { readonly: true }) : { Keyboard: "" };
 
     const boundKeydown = this.keydown.bind(this);
     const boundKeyup = this.keyup.bind(this);
@@ -71,9 +67,7 @@ export class KeyboardControl {
     }
 
     this.keypresses[event.code] = event.code;
-    if (this.debugger) {
-      this.debugger.innerText = Object.values(this.keypresses).join("+");
-    }
+    this.debugger.Keyboard = Object.values(this.keypresses).join("+");
   }
 
   /**
@@ -98,8 +92,6 @@ export class KeyboardControl {
     }
 
     delete this.keypresses[event.code];
-    if (this.debugger) {
-      this.debugger.innerText = Object.values(this.keypresses).join("+");
-    }
+    this.debugger.Keyboard = Object.values(this.keypresses).join("+");
   }
 }

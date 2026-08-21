@@ -1,5 +1,5 @@
 import { WebGPU } from "../src/system/WebGPU.js";
-import { createCanvasElement, createDebugElement } from "../src/utilities/elements.js";
+import { createCanvasElement } from "../src/utilities/elements.js";
 import { getQueryValue } from "../src/utilities/helpers.js";
 import { loadAssets } from "../src/utilities/assets.js";
 import { getRandom } from "../src/utilities/maths.js";
@@ -24,12 +24,6 @@ const { canvas } = createCanvasElement({
 });
 const webgpu = await WebGPU.init();
 const context = canvas.getContext("2d");
-
-const debugGridSize = createDebugElement({ label: "𖣯" }).content;
-debugGridSize.innerText = `${WIDTH}x${HEIGHT}`;
-
-const debugBallCount = createDebugElement({ label: "🟣" }).content;
-debugBallCount.innerText = `${NUM_BALLS}`;
 
 //// Assets
 
@@ -58,7 +52,7 @@ for (let i = 0; i < NUM_BALLS; i++) {
 const { builder: inputBufferBuilder, buffer: inputBuffer } = webgpu
   .setupBuffer("Input buffer")
   .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
-  .setData(inputStates)
+  .loadBufferData(inputStates)
   .build();
 
 const { buffer: outputBuffer } = webgpu
@@ -76,7 +70,7 @@ const { buffer: stagingBuffer } = webgpu
 const { buffer: sceneBuffer } = webgpu
   .setupBuffer("Scene buffer")
   .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
-  .setData(new Float32Array([canvas.width, canvas.height]))
+  .loadBufferData(new Float32Array([canvas.width, canvas.height]))
   .build();
 
 //// Bind groups
@@ -138,8 +132,6 @@ function updateCanvas(data) {
 }
 
 while (true) {
-  performance.mark("webgpu start");
-
   const builder = webgpu
     .setupEncoder()
 
@@ -157,11 +149,8 @@ while (true) {
   const updatedStates = new Float32Array(copyArrayBuffer);
   stagingBuffer.unmap();
 
-  performance.mark("webgpu end");
-  performance.measure("webgpu", "webgpu start", "webgpu end");
-
   updateCanvas(updatedStates);
 
-  inputBufferBuilder.setData(updatedStates).writeDataToBuffer();
+  inputBufferBuilder.loadBufferData(updatedStates).writeDataToBuffer();
   await animateFrame();
 }

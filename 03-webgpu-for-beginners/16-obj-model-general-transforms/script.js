@@ -1,6 +1,5 @@
 import { WebGPU } from "../../src/system/WebGPU.js";
-import { createCanvasElement, createDebugElement } from "../../src/utilities/elements.js";
-import { getQueryValue } from "../../src/utilities/helpers.js";
+import { createCanvasElement, createTweakElement } from "../../src/utilities/elements.js";
 import { loadAssets } from "../../src/utilities/assets.js";
 import { Scene } from "../../src/modules/Scene.js";
 import { OBJModelObject } from "../../src/objects/OBJModelObject.js";
@@ -21,14 +20,14 @@ const context = webgpu.createCanvasContext(canvas, { format: "bgra8unorm" });
 const assets = await loadAssets(config.resources, true);
 
 const screenTextureBuilder = webgpu
-  .setupTextureView("Screen texture")
+  .setupTexture("Screen texture")
   .setTextureFormat("rgba8unorm")
   .setTextureUsage(GPUTextureUsage.COPY_DST | GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING);
 
 const { textureView: cubemapView, sampler: cubemapSampler } = webgpu
-  .setupTextureView("Cubemap texture")
+  .setupTexture("Cubemap texture")
   .setTextureUsage(GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING)
-  .loadBitmaps(assets.skyImages)
+  .loadBitmapData(assets.skyImages)
   .build({ overrideTextureViewDescriptor: { dimension: "cube" } });
 
 //// Buffers and scene
@@ -38,7 +37,7 @@ const scene = new Scene();
 const { builder: parameterBufferBuilder, buffer: parameterBuffer } = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
-  .setData(new Float32Array(32))
+  .loadBufferData(new Float32Array(32))
   .build();
 
 const statue = new OBJModelObject(assets.statueObj.data, { parseImmediately: false, useTexture: false, useNormal: true, useBVH: true });
@@ -92,19 +91,19 @@ const fpc = new FirstPersonControl(camera, context.canvas, { debug: true, moveSp
 const { builder: objectIndicesBufferBuilder, buffer: objectIndicesBuffer } = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
-  .setData(statue.bvh.indices)
+  .loadBufferData(statue.bvh.indices)
   .build();
 
 const { builder: objectsBufferBuilder, buffer: objectsBuffer } = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
-  .setData(new Float32Array(statue.vertexData))
+  .loadBufferData(new Float32Array(statue.vertexData))
   .build();
 
 const { builder: nodeBufferBuilder, buffer: nodeBuffer } = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
-  .setData(new Float32Array(8 * statue.bvh.assigned))
+  .loadBufferData(new Float32Array(8 * statue.bvh.assigned))
   .build();
 for (let i = 0; i < statue.bvh.assigned; i++) {
   nodeBufferBuilder.data.set(statue.bvh.outputNodes[i].data, i * 8);
@@ -130,10 +129,9 @@ objectsBufferBuilder.writeDataToBuffer();
 objectIndicesBufferBuilder.writeDataToBuffer();
 nodeBufferBuilder.writeDataToBuffer();
 
-const debugPerformance = createDebugElement({ label: "⏱️" }).content;
-const debugFramePerSec = createDebugElement({ label: "🏃‍♂️" }).content;
-const debugSphereCount = createDebugElement({ label: "🔺" }).content;
-debugSphereCount.innerText = `${statue.bvh.outputNodes.length} triangles`;
+const tweak = createTweakElement("Triangles", `${statue.bvh.outputNodes.length}`, { readonly: true });
+createTweakElement("FPS", "", { readonly: true });
+createTweakElement("Perform.", "", { readonly: true });
 
 //// Bind groups
 
@@ -243,7 +241,7 @@ function render() {
 
     .submitCommandBuffer(() => {
       const endTime = performance.now();
-      debugPerformance.innerText = `${(endTime - startTime).toFixed(1)} ms`;
+      tweak["Perform."] = `${(endTime - startTime).toFixed(1)} ms`;
     });
 
   fpsCount++;
@@ -251,7 +249,7 @@ function render() {
     fpsCurrent = Math.round((fpsCount * 1000) / (startTime - fpsStart));
     fpsCount = 0;
     fpsStart = startTime;
-    debugFramePerSec.innerText = `${fpsCurrent} fps`;
+    tweak.FPS = `${fpsCurrent}`;
   }
 
   requestAnimationFrame(render);

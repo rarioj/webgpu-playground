@@ -28,12 +28,14 @@ const SUPPORTED_ASSET_TYPES = {
 /**
  * @param {AssetDescriptor[]} assets
  * @param {boolean} [unpackOneItem]
- * @returns {Object.<string, AssetResource|AssetResource[]>}
+ * @returns {Promise.<Object.<string, AssetResource|AssetResource[]>>}
  */
 export async function loadAssets(assets, unpackOneItem = false) {
   let downloaded = 0;
 
-  const { wrapper, label, progress } = createProgressBarElement();
+  const { wrapper, label, progress } = createProgressBarElement({
+    container: document.querySelector("main"),
+  });
 
   /** @type {Object.<string, AssetResource|AssetResource[]>} */
   const resources = {};

@@ -19,16 +19,16 @@ const context = webgpu.createCanvasContext(canvas);
 const assets = await loadAssets(assetArray, true);
 
 const { textureView: cubemapView, sampler: cubemapSampler } = webgpu
-  .setupTextureView("Cubemap")
+  .setupTexture("Cubemap")
   .setTextureUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT)
-  .loadBitmaps([assets.cubemap_px, assets.cubemap_nx, assets.cubemap_py, assets.cubemap_ny, assets.cubemap_pz, assets.cubemap_nz])
+  .loadBitmapData([assets.cubemap_px, assets.cubemap_nx, assets.cubemap_py, assets.cubemap_ny, assets.cubemap_pz, assets.cubemap_nz])
   .build({ createSampler: true, overrideTextureViewDescriptor: { dimension: "cube" } });
 
 const { textureView: imageView, sampler: imageSampler } = webgpu
-  .setupTextureView("Images")
+  .setupTexture("Images")
   .setTextureUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT)
-  .loadBitmaps(assets.image)
-  .build({ enableMipmap: true, overrideSamplerDescriptor: { maxAnisotropy: 4 } });
+  .loadBitmapData(assets.image, true)
+  .build({ overrideSamplerDescriptor: { maxAnisotropy: 4 } });
 
 const { builder: depthStencilBuilder } = webgpu.setupDepthStencil().setTextureSize(canvas.width, canvas.height).build();
 
@@ -37,7 +37,7 @@ const { builder: depthStencilBuilder } = webgpu.setupDepthStencil().setTextureSi
 const { buffer: triangleBuffer, vertexBufferLayout: triangleBufferLayout } = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST)
-  .setData(new Float32Array(triangleVertices))
+  .loadBufferData(new Float32Array(triangleVertices))
   .addVertexAttribute("float32x3") // x, y, z
   .addVertexAttribute("float32x2") // u, v
   .build();
@@ -45,7 +45,7 @@ const { buffer: triangleBuffer, vertexBufferLayout: triangleBufferLayout } = web
 const { buffer: tileBuffer } = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST)
-  .setData(new Float32Array(tileVertices))
+  .loadBufferData(new Float32Array(tileVertices))
   .addVertexAttribute("float32x3") // x, y, z
   .addVertexAttribute("float32x2") // u, v
   .build();
@@ -55,7 +55,7 @@ statue.setScale(0.25, 0.25, 0.25);
 const { buffer: statueBuffer } = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST)
-  .setData(new Float32Array(statue.vertexData))
+  .loadBufferData(new Float32Array(statue.vertexData))
   .addVertexAttribute("float32x3") // x, y, z
   .addVertexAttribute("float32x2") // u, v
   .build();
@@ -63,13 +63,13 @@ const { buffer: statueBuffer } = webgpu
 const { builder: cameraBufferBuilder, buffer: cameraBuffer } = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
-  .setData(new Float32Array(4 * 3)) // 4 bytes * 3 types (forward, right, up)
+  .loadBufferData(new Float32Array(4 * 3)) // 4 bytes * 3 types (forward, right, up)
   .build();
 
 const { builder: uniformBufferBuilder, buffer: uniformBuffer } = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
-  .setData(new Float32Array(16 * 2)) // 4x4 matrix * 2 types (view, projection)
+  .loadBufferData(new Float32Array(16 * 2)) // 4x4 matrix * 2 types (view, projection)
   .build();
 
 const triangleCount = 10;
@@ -78,7 +78,7 @@ const statueCount = 1;
 const { builder: objectBufferBuilder, buffer: objectBuffer } = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
-  .setData(new Float32Array(16 * (triangleCount + tileCount + statueCount))) // 4x4 matrix * (10 triangles + 256 tiles + 1 statue)
+  .loadBufferData(new Float32Array(16 * (triangleCount + tileCount + statueCount))) // 4x4 matrix * (10 triangles + 256 tiles + 1 statue)
   .build();
 
 //// Scene and event

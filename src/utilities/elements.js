@@ -1,3 +1,5 @@
+import { Pane, TpChangeEvent } from "../external/tweakpane.js";
+
 /**
  * @file
  */
@@ -31,6 +33,7 @@ export function createCanvasElement(options = {}) {
   } = options;
 
   const wrapper = document.createElement("div");
+  wrapper.classList.add("canvas-element-wrapper");
   wrapper.classList.add(`${classname}-wrapper`);
   wrapper.style.width = "100%";
   wrapper.style.height = "100%";
@@ -41,6 +44,7 @@ export function createCanvasElement(options = {}) {
   const dpr = forceDPR ? forceDPR : Math.min(2, window.devicePixelRatio) || 1;
   const canvas = document.createElement("canvas");
   canvas.id = id;
+  canvas.classList.add("canvas-element");
   canvas.classList.add(classname);
   canvas.width = width * dpr;
   canvas.height = height * dpr;
@@ -96,6 +100,7 @@ export function createModalElement(title, content, options = {}) {
 
   const dialog = document.createElement("dialog");
   dialog.id = id;
+  dialog.classList.add("dialog-element");
   dialog.classList.add(classname);
   dialog.open = open;
   Object.assign(dialog.style, style);
@@ -182,9 +187,11 @@ export function createProgressBarElement(options = {}) {
   } = options;
 
   const wrapper = document.createElement("article");
+  wrapper.classList.add("progress-bar-element-wrapper");
   wrapper.classList.add(`${classname}-wrapper`);
   wrapper.style.position = "fixed";
   wrapper.style.top = "0";
+  wrapper.style.left = "0";
   wrapper.style.width = "100%";
   Object.assign(wrapper.style, wrapperStyle);
 
@@ -193,6 +200,7 @@ export function createProgressBarElement(options = {}) {
 
   const progress = document.createElement("progress");
   progress.id = id;
+  progress.classList.add("progress-bar-element");
   progress.classList.add(classname);
   progress.max = 100;
   Object.assign(progress.style, style);
@@ -215,6 +223,7 @@ export function createProgressBarElement(options = {}) {
 }
 
 /**
+ * @deprecated Use createTweakElement()
  * @param {Object} [options]
  * @param {HTMLElement} [options.container]
  * @param {string} [options.id]
@@ -240,11 +249,11 @@ export function createDebugElement(options = {}) {
 
   if (!(createDebugElement.parentElement instanceof HTMLElement)) {
     const parent = document.createElement("article");
-    parent.classList.add(`${classname}-parent`);
+    parent.classList.add("debug-element-parent");
     parent.style.display = "flex";
+    parent.style.left = "0";
     parent.style.padding = "0.5em";
     parent.style.position = "fixed";
-    parent.style.right = "0";
     parent.style.top = "0";
     Object.assign(parent.style, parentStyle);
 
@@ -256,6 +265,7 @@ export function createDebugElement(options = {}) {
 
   const labelElement = document.createElement("label");
   labelElement.id = id;
+  labelElement.classList.add("debug-element");
   labelElement.classList.add(classname);
   labelElement.innerText = label + " ";
   labelElement.style.margin = "0 0.5em";
@@ -308,11 +318,13 @@ export function createVideoElement(sources, options = {}) {
   } = options;
 
   const wrapper = document.createElement("div");
+  wrapper.classList.add("video-element-wrapper");
   wrapper.classList.add(`${classname}-wrapper`);
   Object.assign(wrapper.style, wrapperStyle);
 
   const video = document.createElement("video");
   video.id = id;
+  video.classList.add("video-element");
   video.classList.add(classname);
   video.width = width;
   video.height = height;
@@ -364,6 +376,7 @@ export function createVideoElement(sources, options = {}) {
 }
 
 /**
+ * @deprecated Use createTweakElement()
  * @param {string} src
  * @param {Object} [options]
  * @param {HTMLElement} [options.container]
@@ -399,6 +412,7 @@ export function createInputRangeElement(options = {}) {
   } = options;
 
   const wrapper = document.createElement("label");
+  wrapper.classList.add("input-range-element-wrapper");
   wrapper.classList.add(`${classname}-wrapper`);
   wrapper.innerText = label + " • ";
   Object.assign(wrapper.style, wrapperStyle);
@@ -409,6 +423,7 @@ export function createInputRangeElement(options = {}) {
 
   const input = document.createElement("input");
   input.id = id;
+  input.classList.add("input-range-element");
   input.classList.add(classname);
   input.type = "range";
   input.min = min;
@@ -435,4 +450,39 @@ export function createInputRangeElement(options = {}) {
   }
 
   return { wrapper, value: valueElement, input };
+}
+
+/**
+ * @param {string} name
+ * @param {any} value
+ * @param {Object.<string, any>} [options]
+ * @param {function(TpChangeEvent): void} [callback]
+ * @returns {Object.<string, any>}
+ */
+export function createTweakElement(name, value, options = {}, callback = undefined) {
+  if (!createTweakElement.parent) {
+    const parent = document.createElement("div");
+    parent.id = "pane-container";
+    parent.classList.add("tp-dfwv");
+    document.body.prepend(parent);
+    createTweakElement.parent = parent;
+  }
+  createTweakElement.settings = createTweakElement.settings || {};
+  createTweakElement.pane = createTweakElement.pane || new Pane({ container: createTweakElement.parent });
+
+  /** @type {Pane} */
+  const pane = createTweakElement.pane;
+  if (createTweakElement.init) {
+    pane.addBlade({ view: "separator" });
+  } else {
+    createTweakElement.init = true;
+  }
+  createTweakElement.settings[name] = value;
+
+  const binding = pane.addBinding(createTweakElement.settings, name, options);
+  if (callback) {
+    binding.on("change", callback);
+  }
+
+  return createTweakElement.settings;
 }

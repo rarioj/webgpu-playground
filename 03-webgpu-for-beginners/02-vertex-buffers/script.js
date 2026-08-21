@@ -34,7 +34,7 @@ const assets = await loadAssets(
 const { buffer, vertexBufferLayout } = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST)
-  .setData(
+  .loadBufferData(
     new Float32Array([
       //x, y, r, g, b
       // top corner (red)

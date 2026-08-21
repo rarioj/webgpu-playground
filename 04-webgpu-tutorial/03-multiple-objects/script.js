@@ -1,6 +1,6 @@
 import { WebGPU } from "../../src/system/WebGPU.js";
 import { getQueryValue } from "../../src/utilities/helpers.js";
-import { createCanvasElement, createModalElement, createDebugElement } from "../../src/utilities/elements.js";
+import { createCanvasElement, createModalElement, createTweakElement } from "../../src/utilities/elements.js";
 import { getRandom } from "../../src/utilities/maths.js";
 import { getModelViewProjectionMatrix } from "../../src/utilities/matrices.js";
 import { createCubeGeometry, createSphereGeometry } from "../../src/utilities/geometries.js";
@@ -21,8 +21,7 @@ try {
   const context = webgpu.createCanvasContext(canvas);
   const format = context.getConfiguration().format;
 
-  const debugCubeCount = createDebugElement({ label: GEOMETRY === "sphere" ? "⚽" : "📦" }).content;
-  debugCubeCount.innerText = `${OBJECT_COUNT} ${GEOMETRY}s`;
+  createTweakElement("Object", `${OBJECT_COUNT} ${GEOMETRY}s`, { readonly: true });
 
   //// Assets
 
@@ -47,7 +46,7 @@ try {
       : createCubeGeometry({ size: 2.0, useNormal: false, indexed: false });
   const { buffer: vertexBuffer, vertexBufferLayout } = webgpu
     .setupBuffer("Cube vertices")
-    .setData(geometryVertexData.vertices)
+    .loadBufferData(geometryVertexData.vertices)
     .setUsage(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST)
     .addVertexAttribute("float32x3") // x, y, z
     .addVertexAttribute("float32x2") // u, v
@@ -55,7 +54,7 @@ try {
 
   const { builder: mvpBufferBuilder, buffer: mvpBuffer } = webgpu
     .setupBuffer("MVP matrices")
-    .setData(new Float32Array(4 * 4 * 4 * OBJECT_COUNT)) // 4x4 matrix of 4-bytes float * number of cubes
+    .loadBufferData(new Float32Array(4 * 4 * 4 * OBJECT_COUNT)) // 4x4 matrix of 4-bytes float * number of cubes
     .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
     .build();
 
@@ -154,6 +153,6 @@ try {
 
   frame();
 } catch (error) {
-  createModalElement("🛑 Error", error);
+  createModalElement("🛑 Error", error, { container: document.querySelector("main") });
   console.error(error);
 }

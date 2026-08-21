@@ -51,7 +51,7 @@ export class WebGPU {
    * @param {boolean} [options.debug]
    * @param {GPURequestAdapterOptions} [options.requestAdapterOptions]
    * @param {GPUDeviceDescriptor} [options.deviceDescriptor]
-   * @returns {WebGPU}
+   * @returns {Promise.<WebGPU>}
    */
   static async init(options = {}) {
     const { debug = false, requestAdapterOptions = {}, deviceDescriptor = {} } = options;
@@ -134,8 +134,9 @@ export class WebGPU {
   /**
    * @param {HTMLCanvasElement} canvas
    * @param {function(): void} [callback]
+   * @param {number} [scale]
    */
-  observeCanvasResize(canvas, callback = undefined) {
+  observeCanvasResize(canvas, callback = undefined, scale = 1) {
     if (!this.canvasResizeCallbacks) {
       this.canvasResizeCallbacks = new Map();
     }
@@ -143,12 +144,10 @@ export class WebGPU {
       this.canvasResizeObserver = new ResizeObserver((entries) => {
         const dpr = Math.min(2, window.devicePixelRatio) || 1;
         for (const entry of entries) {
-          entry.target.width = entry.devicePixelContentBoxSize
-            ? entry.devicePixelContentBoxSize[0].inlineSize
-            : Math.round(entry.contentBoxSize[0].inlineSize * dpr);
-          entry.target.height = entry.devicePixelContentBoxSize
-            ? entry.devicePixelContentBoxSize[0].blockSize
-            : Math.round(entry.contentBoxSize[0].blockSize * dpr);
+          const width = entry.devicePixelContentBoxSize ? entry.devicePixelContentBoxSize[0].inlineSize : Math.round(entry.contentBoxSize[0].inlineSize * dpr);
+          const height = entry.devicePixelContentBoxSize ? entry.devicePixelContentBoxSize[0].blockSize : Math.round(entry.contentBoxSize[0].blockSize * dpr);
+          entry.target.width = Math.max(1, Math.min((width * scale) | 0, this.device.limits.maxTextureDimension2D));
+          entry.target.height = Math.max(1, Math.min((height * scale) | 0, this.device.limits.maxTextureDimension2D));
           if (this.canvasResizeCallbacks.has(entry.target)) {
             const callback = this.canvasResizeCallbacks.get(entry.target);
             callback(entry.target.width, entry.target.height);
@@ -166,7 +165,7 @@ export class WebGPU {
    * @param {string} [label]
    * @returns {WebGPUTexture}
    */
-  setupTextureView(label = "Unlabelled") {
+  setupTexture(label = "Unlabelled") {
     const builder = new WebGPUTexture(this.device, label);
     builder.debug = this.debug;
     return builder;

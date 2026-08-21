@@ -1,5 +1,5 @@
 import { WebGPU } from "../src/system/WebGPU.js";
-import { createCanvasElement, createDebugElement } from "../src/utilities/elements.js";
+import { createCanvasElement } from "../src/utilities/elements.js";
 import { getQueryValue } from "../src/utilities/helpers.js";
 import { loadAssets } from "../src/utilities/assets.js";
 
@@ -21,9 +21,6 @@ const { canvas } = createCanvasElement({
 });
 const webgpu = await WebGPU.init();
 const context = webgpu.createCanvasContext(canvas);
-
-const debugGridSize = createDebugElement({ label: "𖣯" }).content;
-debugGridSize.innerText = `${GRID_SIZE}x${GRID_SIZE}`;
 
 //// Assets
 
@@ -54,14 +51,14 @@ const vertexArray = new Float32Array([
 const { buffer: vertexBuffer } = webgpu
   .setupBuffer("Vertex")
   .setUsage(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST)
-  .setData(vertexArray)
+  .loadBufferData(vertexArray)
   .build();
 
 const uniformArray = new Float32Array([GRID_SIZE, GRID_SIZE]);
 const { buffer: uniformBuffer } = webgpu
   .setupBuffer("Uniform")
   .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
-  .setData(uniformArray)
+  .loadBufferData(uniformArray)
   .build();
 
 const cellStateArray = new Uint32Array(GRID_SIZE * GRID_SIZE);
@@ -71,7 +68,7 @@ for (let i = 0; i < cellStateArray.length; i++) {
 const { buffer: stateACellsBuffer, vertexBufferLayout: stateCellsBufferLayout } = webgpu
   .setupBuffer("State A cells")
   .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
-  .setData(cellStateArray)
+  .loadBufferData(cellStateArray)
   .addVertexAttribute("float32x2")
   .build();
 

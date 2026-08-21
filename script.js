@@ -32,12 +32,14 @@ const available = Object.hasOwn(pages, page);
 const path = page && available ? `./${page}` : ".";
 const markdown = await loadAssets([{ name: "content", url: `${path}/INDEX.md`, type: "text" }], true);
 const converter = new showdown.Converter({ openLinksInNewWindow: false, tasklists: true, parseImgDimensions: true });
-document.querySelector("section").innerHTML = converter.makeHtml(markdown.content.data);
+
+const main = document.querySelector("main");
+const section = document.querySelector("section");
+section.innerHTML = converter.makeHtml(markdown.content.data);
 
 const header = document.querySelector("header");
 const heading1 = document.querySelector("h1");
 const heading6 = document.querySelector("h6");
-
 if (header) {
   if (heading1) {
     header.appendChild(heading1);
@@ -45,6 +47,17 @@ if (header) {
   if (heading6) {
     header.appendChild(heading6);
     document.title = heading6 ? heading6.innerText : "WebGPU Playground";
+    if (page && available) {
+      let pagePath = `?page=${page}`;
+      let pageIndex = 0;
+      const crumbsNow = heading6.innerText.split(" • ");
+      const crumbsFinal = [];
+      while (pageIndex < crumbsNow.length) {
+        crumbsFinal.push(`<a href="./index.html${pagePath}">${crumbsNow[pageIndex++]}</a>`);
+        pagePath = pagePath.substring(0, pagePath.lastIndexOf("/"));
+      }
+      heading6.innerHTML = crumbsFinal.toReversed().join(" » ");
+    }
   }
 }
 
@@ -67,11 +80,16 @@ if (available) {
   }
 
   if (pages[page].includes("fullscreen")) {
-    const main = document.querySelector("main");
-    const modal = createModalElement(header, main, { open: false });
+    main.style.padding = "0";
+    const modal = createModalElement(header, section, { container: main, open: false });
     if (new URLSearchParams(location.search).size === 1) {
       modal.open = true;
     }
+
+    const hrs = document.querySelectorAll("hr");
+    hrs.forEach((element) => {
+      element.remove();
+    });
 
     const footer = document.querySelector("footer");
     footer.classList.add("fullscreen-mode");
@@ -79,6 +97,15 @@ if (available) {
     const firstListParent = document.querySelectorAll("ul")[0];
     const firstListItem = document.querySelectorAll("li")[0];
     firstListItem.remove();
+    {
+      const blockquote = document.querySelector("blockquote");
+      if (blockquote) {
+        const li = document.createElement("li");
+        li.appendChild(...blockquote.children);
+        firstListParent.appendChild(li);
+        blockquote.remove();
+      }
+    }
     {
       const li = document.createElement("li");
       const button = document.createElement("a");
@@ -90,15 +117,6 @@ if (available) {
       };
       li.appendChild(button);
       firstListParent.appendChild(li);
-    }
-    {
-      const blockquote = document.querySelector("blockquote");
-      if (blockquote) {
-        const li = document.createElement("li");
-        li.appendChild(...blockquote.children);
-        firstListParent.appendChild(li);
-        blockquote.remove();
-      }
     }
   }
 

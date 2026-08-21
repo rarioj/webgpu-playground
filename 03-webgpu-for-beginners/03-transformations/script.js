@@ -36,7 +36,7 @@ const assets = await loadAssets(
 const { buffer: triangleBuffer, vertexBufferLayout: triangleBufferLayout } = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST)
-  .setData(
+  .loadBufferData(
     new Float32Array([
       //x, y, z, r, g, b
       // red
@@ -54,7 +54,7 @@ const { buffer: triangleBuffer, vertexBufferLayout: triangleBufferLayout } = web
 const { builder: uniformBuilder, buffer: uniformBuffer } = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
-  .setData(new Float32Array(16 * 3)) // 4x4 matrix * 3 types (model, view, projection)
+  .loadBufferData(new Float32Array(16 * 3)) // 4x4 matrix * 3 types (model, view, projection)
   .build();
 
 //// Scene objects

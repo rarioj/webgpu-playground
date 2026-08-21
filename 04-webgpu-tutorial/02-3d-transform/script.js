@@ -49,7 +49,7 @@ try {
       : createCubeGeometry({ size: 2.0, useNormal: false, indexed: false });
   const { buffer: vertexBuffer, vertexBufferLayout } = webgpu
     .setupBuffer("Geometry vertices")
-    .setData(geometryVertexData.vertices)
+    .loadBufferData(geometryVertexData.vertices)
     .setUsage(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST)
     .addVertexAttribute("float32x3") // x, y, z
     .addVertexAttribute("float32x2") // u, v
@@ -57,7 +57,7 @@ try {
 
   const { builder: mvpBufferBuilder, buffer: mvpBuffer } = webgpu
     .setupBuffer("MVP matrices")
-    .setData(new Float32Array(4 * 4 * 4)) // 4x4 matrix of 4-bytes float
+    .loadBufferData(new Float32Array(4 * 4 * 4)) // 4x4 matrix of 4-bytes float
     .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
     .build();
 
@@ -139,6 +139,6 @@ try {
 
   frame();
 } catch (error) {
-  createModalElement("🛑 Error", error);
+  createModalElement("🛑 Error", error, { container: document.querySelector("main") });
   console.error(error);
 }

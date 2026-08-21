@@ -1,8 +1,7 @@
 import { WebGPU } from "../../src/system/WebGPU.js";
-import { createCanvasElement, createDebugElement } from "../../src/utilities/elements.js";
+import { createCanvasElement, createTweakElement } from "../../src/utilities/elements.js";
 import { getQueryValue } from "../../src/utilities/helpers.js";
 import { loadAssets } from "../../src/utilities/assets.js";
-import { BaseObject } from "../../src/objects/BaseObject.js";
 import { CameraObject } from "../../src/objects/CameraObject.js";
 import { FirstPersonControl } from "../../src/modules/FirstPersonControl.js";
 import { BoundingVolumeHierarchy } from "../../src/modules/BoundingVolumeHierarchy.js";
@@ -24,10 +23,9 @@ const { canvas } = createCanvasElement({
 const webgpu = await WebGPU.init({ deviceDescriptor: { requiredFeatures: ["core-features-and-limits", "bgra8unorm-storage"] } });
 const context = webgpu.createCanvasContext(canvas, { format: "bgra8unorm" });
 
-const debugPerformance = createDebugElement({ label: "⏱️" }).content;
-const debugFramePerSec = createDebugElement({ label: "🏃‍♂️" }).content;
-const debugSphereCount = createDebugElement({ label: "🏀" }).content;
-debugSphereCount.innerText = `${NUM_SPHERES} spheres`;
+const tweak = createTweakElement("Spheres", `${NUM_SPHERES}`, { readonly: true });
+createTweakElement("FPS", "", { readonly: true });
+createTweakElement("Perform.", "", { readonly: true });
 
 //// Assets
 
@@ -48,7 +46,7 @@ const assets = await loadAssets(
 );
 
 const { textureView: screenView, sampler: screenSampler } = webgpu
-  .setupTextureView()
+  .setupTexture()
   .setTextureFormat("rgba8unorm")
   .setTextureUsage(GPUTextureUsage.COPY_DST | GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING)
   .setTextureSize(canvas.width, canvas.height)
@@ -59,7 +57,7 @@ const { textureView: screenView, sampler: screenSampler } = webgpu
 const { builder: parameterBufferBuilder, buffer: parameterBuffer } = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
-  .setData(new Float32Array(16))
+  .loadBufferData(new Float32Array(16))
   .build();
 
 const relativePos = NUM_SPHERES < 100 ? 10 : NUM_SPHERES < 200 ? 20 : NUM_SPHERES < 300 ? 30 : 40;
@@ -78,7 +76,7 @@ const fpc = new FirstPersonControl(camera, context.canvas, { debug: true, moveSp
 const { builder: sphereIndicesBufferBuilder, buffer: sphereIndicesBuffer } = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
-  .setData(new Uint32Array(NUM_SPHERES))
+  .loadBufferData(new Uint32Array(NUM_SPHERES))
   .build();
 
 const bvh = new BoundingVolumeHierarchy();
@@ -87,7 +85,7 @@ bvh.indices = sphereIndicesBufferBuilder.dataPointer();
 const { builder: spheresBufferBuilder, buffer: spheresBuffer } = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
-  .setData(new Float32Array(8 * NUM_SPHERES))
+  .loadBufferData(new Float32Array(8 * NUM_SPHERES))
   .build();
 
 for (let i = 0; i < NUM_SPHERES; i++) {
@@ -110,7 +108,7 @@ bvh.build();
 const { builder: nodeBufferBuilder, buffer: nodeBuffer } = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
-  .setData(new Float32Array(8 * bvh.assigned))
+  .loadBufferData(new Float32Array(8 * bvh.assigned))
   .build();
 for (let i = 0; i < bvh.assigned; i++) {
   nodeBufferBuilder.data.set(bvh.outputNodes[i].data, i * 8);
@@ -223,7 +221,7 @@ function render() {
 
     .submitCommandBuffer(() => {
       const endTime = performance.now();
-      debugPerformance.innerText = `${(endTime - startTime).toFixed(1)} ms`;
+      tweak["Perform."] = `${(endTime - startTime).toFixed(1)} ms`;
     });
 
   fpsCount++;
@@ -231,7 +229,7 @@ function render() {
     fpsCurrent = Math.round((fpsCount * 1000) / (startTime - fpsStart));
     fpsCount = 0;
     fpsStart = startTime;
-    debugFramePerSec.innerText = `${fpsCurrent} fps`;
+    tweak.FPS = `${fpsCurrent}`;
   }
 
   requestAnimationFrame(render);

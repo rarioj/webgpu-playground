@@ -39,7 +39,7 @@ try {
   const cubeVertexData = createCubeGeometry({ size: 2.0, useNormal: false, indexed: false });
   const { buffer: vertexBuffer, vertexBufferLayout } = webgpu
     .setupBuffer("Cube vertices")
-    .setData(cubeVertexData.vertices)
+    .loadBufferData(cubeVertexData.vertices)
     .setUsage(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST)
     .addVertexAttribute("float32x3") // x, y, z
     .addVertexAttribute("float32x2") // u, v
@@ -47,7 +47,7 @@ try {
 
   const { builder: mvpBufferBuilder, buffer: mvpBuffer } = webgpu
     .setupBuffer("MVP matrices")
-    .setData(new Float32Array(4 * 4 * 4)) // 4x4 matrix of 4-bytes float
+    .loadBufferData(new Float32Array(4 * 4 * 4)) // 4x4 matrix of 4-bytes float
     .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
     .build();
 
@@ -237,7 +237,7 @@ try {
 
   /**
    * @param {HTMLCanvasElement} canvas
-   * @returns {Object}
+   * @returns {Promise.<Object>}
    */
   async function initCanvasGPU(canvas) {
     const NUM_BALLS = 100;
@@ -256,7 +256,7 @@ try {
     const { builder: inputBufferBuilder, buffer: inputBuffer } = webgpu
       .setupBuffer("Input buffer")
       .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
-      .setData(inputStates)
+      .loadBufferData(inputStates)
       .build();
     const { buffer: outputBuffer } = webgpu
       .setupBuffer("Output buffer")
@@ -271,7 +271,7 @@ try {
     const { buffer: sceneBuffer } = webgpu
       .setupBuffer("Scene buffer")
       .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
-      .setData(new Float32Array([canvas.width, canvas.height]))
+      .loadBufferData(new Float32Array([canvas.width, canvas.height]))
       .build();
     const { bindGroup, bindGroupLayout } = webgpu
       .setupBindGroup("Bind group")
@@ -322,12 +322,12 @@ try {
   let bindGroupTexture = null;
 
   if (textureType === "video") {
-    sampler = webgpu.setupTextureView().createSampler();
+    sampler = webgpu.setupTexture().createSampler();
   } else if (textureType === "image") {
     ({ texture, textureView, sampler } = webgpu
-      .setupTextureView()
+      .setupTexture()
       .setTextureUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT)
-      .loadBitmaps([assets.image])
+      .loadBitmapData([assets.image])
       .build());
     ({ bindGroup: bindGroupTexture } = webgpu
       .setupBindGroup("Image texture bind group")
@@ -337,7 +337,7 @@ try {
       .build());
   } else if (textureType === "canvasDraw" || textureType === "canvasGPU") {
     ({ texture, textureView, sampler } = webgpu
-      .setupTextureView()
+      .setupTexture()
       .setTextureSize(150, 150)
       .setTextureUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT)
       .build());
@@ -410,7 +410,7 @@ try {
       const updatedStates = new Float32Array(copyArrayBuffer);
       objectsGPU.stagingBuffer.unmap();
       updateCanvasGPU(contextGPU, updatedStates);
-      objectsGPU.inputBufferBuilder.setData(updatedStates).writeDataToBuffer();
+      objectsGPU.inputBufferBuilder.loadBufferData(updatedStates).writeDataToBuffer();
     } else if (textureType === "video") {
       if (videoIsPlaying) {
         webgpu
@@ -442,6 +442,6 @@ try {
 
   frame();
 } catch (error) {
-  createModalElement("🛑 Error", error);
+  createModalElement("🛑 Error", error, { container: document.querySelector("main") });
   console.error(error);
 }

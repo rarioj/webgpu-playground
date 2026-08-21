@@ -63,6 +63,6 @@ try {
     .end()
     .submitCommandBuffer();
 } catch (error) {
-  createModalElement("🛑 Error", error);
+  createModalElement("🛑 Error", error, { container: document.querySelector("main") });
   console.error(error);
 }

@@ -129,7 +129,7 @@ export class WebGPUBuffer {
    * @param {Int16Array|Uint16Array|Int32Array|Uint32Array|Float32Array} data
    * @returns {WebGPUBuffer}
    */
-  setData(data) {
+  loadBufferData(data) {
     this.data = data;
     this.setSize(Math.max(4, Math.ceil(data.byteLength / 4) * 4));
     this.bufferDescriptor.mappedAtCreation = true;

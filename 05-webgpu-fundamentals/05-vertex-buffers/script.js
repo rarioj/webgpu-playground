@@ -55,7 +55,7 @@ try {
   } = webgpu
     .setupBuffer("Vertex buffer")
     .setUsage(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST)
-    .setData(vertexData)
+    .loadBufferData(vertexData)
     .addVertexAttribute("float32x2") // x, y
     .addVertexAttribute("unorm8x4") // gradient_r, gradient_g, gradient_b
     .newVertexBufferLayoutGroup("instance")
@@ -67,19 +67,19 @@ try {
   const { buffer: indexBuffer } = webgpu
     .setupBuffer("Vertex index")
     .setUsage(GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST)
-    .setData(vertexIndex)
+    .loadBufferData(vertexIndex)
     .build();
 
   const { builder: colorOffsetBufferBuilder, buffer: colorOffsetBuffer } = webgpu
     .setupBuffer("Static storage for color and offset")
     .setUsage(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST)
-    .setData(new Float32Array((1 + 2) * OBJECT_COUNT)) // color: 1 + offset: 2
+    .loadBufferData(new Float32Array((1 + 2) * OBJECT_COUNT)) // color: 1 + offset: 2
     .build();
 
   const { builder: scaleBufferBuilder, buffer: scaleBuffer } = webgpu
     .setupBuffer("Changing storage for scale")
     .setUsage(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST)
-    .setData(new Float32Array(2 * OBJECT_COUNT)) // scale: 2
+    .loadBufferData(new Float32Array(2 * OBJECT_COUNT)) // scale: 2
     .build();
 
   for (let i = 0; i < OBJECT_COUNT; i++) {
@@ -141,6 +141,6 @@ try {
 
   render();
 } catch (error) {
-  createModalElement("🛑 Error", error);
+  createModalElement("🛑 Error", error, { container: document.querySelector("main") });
   console.error(error);
 }

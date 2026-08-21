@@ -1,6 +1,6 @@
 import { WebGPU } from "../../src/system/WebGPU.js";
 import { getQueryValue } from "../../src/utilities/helpers.js";
-import { createCanvasElement, createModalElement, createDebugElement, createInputRangeElement } from "../../src/utilities/elements.js";
+import { createCanvasElement, createModalElement, createTweakElement } from "../../src/utilities/elements.js";
 import { getRandom } from "../../src/utilities/maths.js";
 import { getViewProjectionMatrix } from "../../src/utilities/matrices.js";
 import { createCubeGeometry, createSphereGeometry } from "../../src/utilities/geometries.js";
@@ -20,8 +20,7 @@ try {
   const context = webgpu.createCanvasContext(canvas);
   const format = context.getConfiguration().format;
 
-  const debugCubeCount = createDebugElement({ label: "🌼" }).content;
-  debugCubeCount.innerText = `${OBJECT_COUNT} objects`;
+  createTweakElement("Object", `${OBJECT_COUNT - 2} balls`, { readonly: true });
 
   //// Assets
 
@@ -42,14 +41,14 @@ try {
   );
 
   const { textureView: shadowDepthTextureView, sampler: shadowDepthSampler } = webgpu
-    .setupTextureView(undefined, "Shadow depth texture")
+    .setupTexture(undefined, "Shadow depth texture")
     .setTextureSize(4096, 4096)
     .setTextureUsage(GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING)
     .setTextureFormat("depth32float")
     .build({ createSampler: true, overrideSamplerDescriptor: { compare: "less" } });
 
   const renderDepthTextureBuilder = webgpu
-    .setupTextureView("Shadow depth texture")
+    .setupTexture("Shadow depth texture")
     .setTextureSize(canvas.width, canvas.height)
     .setTextureUsage(GPUTextureUsage.RENDER_ATTACHMENT)
     .setTextureFormat("depth32float");
@@ -59,7 +58,7 @@ try {
   const cubeGeometry = createCubeGeometry();
   const { buffer: cubeVertexBuffer, vertexBufferLayout } = webgpu
     .setupBuffer("Cube vertices")
-    .setData(cubeGeometry.vertices)
+    .loadBufferData(cubeGeometry.vertices)
     .setUsage(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST)
     .addVertexAttribute("float32x3") // x, y, z
     .addVertexAttribute("float32x2") // u, v
@@ -67,14 +66,14 @@ try {
     .build();
   const { buffer: cubeIndexBuffer } = webgpu
     .setupBuffer("Cube indices")
-    .setData(cubeGeometry.indices)
+    .loadBufferData(cubeGeometry.indices)
     .setUsage(GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST)
     .build();
 
   const sphereGeometry = createSphereGeometry({ latitudes: 16, longitudes: 16 });
   const { buffer: sphereVertexBuffer } = webgpu
     .setupBuffer("Sphere vertices")
-    .setData(sphereGeometry.vertices)
+    .loadBufferData(sphereGeometry.vertices)
     .setUsage(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST)
     .addVertexAttribute("float32x3") // x, y, z
     .addVertexAttribute("float32x2") // u, v
@@ -82,33 +81,33 @@ try {
     .build();
   const { buffer: sphereIndexBuffer } = webgpu
     .setupBuffer("Sphere indices")
-    .setData(sphereGeometry.indices)
+    .loadBufferData(sphereGeometry.indices)
     .setUsage(GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST)
     .build();
 
   const { builder: modelViewBufferBuilder, buffer: modelViewBuffer } = webgpu
     .setupBuffer("Model view matrices")
-    .setData(new Float32Array(4 * 4 * OBJECT_COUNT)) // 4x4 matrix * number of objects
+    .loadBufferData(new Float32Array(4 * 4 * OBJECT_COUNT)) // 4x4 matrix * number of objects
     .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
     .build();
   const { builder: cameraProjectionBufferBuilder, buffer: cameraProjectionBuffer } = webgpu
     .setupBuffer("Camera projection matrix")
-    .setData(new Float32Array(4 * 4)) // 4x4 matrix
+    .loadBufferData(new Float32Array(4 * 4)) // 4x4 matrix
     .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
     .build();
   const { builder: lightProjectionBufferBuilder, buffer: lightProjectionBuffer } = webgpu
     .setupBuffer("Light projection matrix")
-    .setData(new Float32Array(4 * 4)) // 4x4 matrix
+    .loadBufferData(new Float32Array(4 * 4)) // 4x4 matrix
     .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
     .build();
   const { builder: colorBufferBuilder, buffer: colorBuffer } = webgpu
     .setupBuffer("Object color")
-    .setData(new Float32Array(4 * OBJECT_COUNT)) // 4 (rgba) * number of objects
+    .loadBufferData(new Float32Array(4 * OBJECT_COUNT)) // 4 (rgba) * number of objects
     .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
     .build();
   const { builder: lightBufferBuilder, buffer: lightBuffer } = webgpu
     .setupBuffer("Generic light")
-    .setData(new Float32Array(4)) // vec4
+    .loadBufferData(new Float32Array(4)) // vec4
     .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
     .build();
 
@@ -355,6 +354,6 @@ try {
 
   frame();
 } catch (error) {
-  createModalElement("🛑 Error", error);
+  createModalElement("🛑 Error", error, { container: document.querySelector("main") });
   console.error(error);
 }

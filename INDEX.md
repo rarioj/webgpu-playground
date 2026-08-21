@@ -50,6 +50,7 @@ Not in any particular order.
 - [Showdown](https://github.com/showdownjs/showdown) • A JavaScript Markdown to HTML converter, based on the original works by John Gruber.
 - [Pico ✨](https://picocss.com/) • A minimalist and lightweight starter kit that prioritizes semantic syntax, making every HTML element responsive and elegant by default.
 - [wgpu-matrix](https://wgpu-matrix.org/) • Fast 3D math library for WebGPU.
+- [Tweakpane](https://tweakpane.github.io/) • Compact pane library for fine-tuning parameters and monitoring value changes.
 - [Cube Map Converter](https://labs.xo3d.co.uk/cube-map-converter/) by XO3D LABS.
 - [Desmos](https://www.desmos.com/) • Beautiful free math.
 

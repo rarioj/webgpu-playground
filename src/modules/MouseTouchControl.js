@@ -1,5 +1,5 @@
 import { CameraObject } from "../objects/CameraObject.js";
-import { createDebugElement } from "../utilities/elements.js";
+import { createTweakElement } from "../utilities/elements.js";
 import { roundToDecimal } from "../utilities/maths.js";
 
 /**
@@ -37,7 +37,7 @@ export class MouseTouchControl {
   dragging;
 
   /**
-   * @type {HTMLElement}
+   * @type {Object.<string, any>}
    */
   debugger;
 
@@ -61,11 +61,7 @@ export class MouseTouchControl {
     this.moveSpeed = moveSpeed;
     this.flip = { x: flipX, y: flipY };
     this.dragging = false;
-
-    this.debugger = undefined;
-    if (debug) {
-      this.debugger = createDebugElement({ label: "🖱" }).content;
-    }
+    this.debugger = debug ? createTweakElement("Mouse move", "", { readonly: true }) : { "Mouse move": "" };
 
     const boundMousemove = this.mousemove.bind(this);
     const boundTouchdrag = this.touchdrag.bind(this);
@@ -77,14 +73,8 @@ export class MouseTouchControl {
       document.addEventListener("pointerlockchange", () => {
         if (document.pointerLockElement === this.pointerLockElement) {
           document.addEventListener("mousemove", boundMousemove);
-          if (this.debugger) {
-            this.debugger.innerText = "0x0";
-          }
         } else {
           document.removeEventListener("mousemove", boundMousemove);
-          if (this.debugger) {
-            this.debugger.innerText = "";
-          }
         }
       });
     } else {
@@ -102,10 +92,7 @@ export class MouseTouchControl {
     const x = this.flip.x ? -event.movementX : event.movementX;
     const y = this.flip.y ? -event.movementY : event.movementY;
     this.camera.lookAt(x * this.orientSpeed, y * this.orientSpeed);
-
-    if (this.debugger) {
-      this.debugger.innerText = `${roundToDecimal(x, 1)}x${roundToDecimal(y, 1)}`;
-    }
+    this.debugger["Mouse move"] = `${roundToDecimal(x, 1)}x${roundToDecimal(y, 1)}`;
   }
 
   /**

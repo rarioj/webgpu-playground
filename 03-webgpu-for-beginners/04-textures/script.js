@@ -37,9 +37,9 @@ const assets = await loadAssets(
 );
 
 const { textureView, sampler } = webgpu
-  .setupTextureView()
+  .setupTexture()
   .setTextureUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT)
-  .loadBitmaps([assets.image])
+  .loadBitmapData([assets.image])
   .build();
 
 //// Buffers
@@ -47,7 +47,7 @@ const { textureView, sampler } = webgpu
 const { buffer: triangleBuffer, vertexBufferLayout: triangleBufferLayout } = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST)
-  .setData(
+  .loadBufferData(
     new Float32Array([
       //x, y, z, u, v
       // top corner
@@ -65,7 +65,7 @@ const { buffer: triangleBuffer, vertexBufferLayout: triangleBufferLayout } = web
 const { builder: uniformBuilder, buffer: uniformBuffer } = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
-  .setData(new Float32Array(16 * 3)) // 4x4 matrix * 3 types (model, view, projection)
+  .loadBufferData(new Float32Array(16 * 3)) // 4x4 matrix * 3 types (model, view, projection)
   .build();
 
 //// Scene objects

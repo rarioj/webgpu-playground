@@ -40,7 +40,7 @@ try {
   const { buffer: inputBuffer } = webgpu
     .setupBuffer("Input numbers")
     .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST)
-    .setData(new Float32Array(input))
+    .loadBufferData(new Float32Array(input))
     .build();
 
   const { buffer: resultBuffer } = webgpu
@@ -80,6 +80,6 @@ try {
   const article = document.querySelector("article");
   article.innerHTML = content;
 } catch (error) {
-  createModalElement("🛑 Error", error);
+  createModalElement("🛑 Error", error, { container: document.querySelector("main") });
   console.error(error);
 }
