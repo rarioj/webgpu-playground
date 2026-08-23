@@ -48,11 +48,7 @@ try {
   for (let i = 0; i < vertexData.length / 3; i++) {
     vertexData[i * 3 + 2] = i % 2 ? 1.0 : 0.1;
   }
-  const {
-    builder: vertexBufferBuilder,
-    buffer: vertexBuffer,
-    arrayVertexBufferLayout,
-  } = webgpu
+  const { buffer: vertexBuffer, arrayVertexBufferLayout } = webgpu
     .setupBuffer("Vertex buffer")
     .setUsage(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST)
     .loadBufferData(vertexData)
@@ -70,13 +66,13 @@ try {
     .loadBufferData(vertexIndex)
     .build();
 
-  const { builder: colorOffsetBufferBuilder, buffer: colorOffsetBuffer } = webgpu
+  const colorOffsetBufferBuilder = webgpu
     .setupBuffer("Static storage for color and offset")
     .setUsage(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST)
     .loadBufferData(new Float32Array((1 + 2) * OBJECT_COUNT)) // color: 1 + offset: 2
     .build();
 
-  const { builder: scaleBufferBuilder, buffer: scaleBuffer } = webgpu
+  const scaleBufferBuilder = webgpu
     .setupBuffer("Changing storage for scale")
     .setUsage(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST)
     .loadBufferData(new Float32Array(2 * OBJECT_COUNT)) // scale: 2
@@ -87,8 +83,8 @@ try {
     const green = Math.random() * 255;
     const blue = Math.random() * 255;
     const color = (red * 65536 + green * 256 + blue) / 16777215;
-    colorOffsetBufferBuilder.data.set([color], i * 3 + 0); // color
-    colorOffsetBufferBuilder.data.set([getRandom(-1.0, 1.0), getRandom(-1.0, 1.0)], i * 3 + 1); // offset
+    colorOffsetBufferBuilder.setData([color], i * 3 + 0); // color
+    colorOffsetBufferBuilder.setData([getRandom(-1.0, 1.0), getRandom(-1.0, 1.0)], i * 3 + 1); // offset
     renderData.push(getRandom(0.2, 0.6));
   }
   colorOffsetBufferBuilder.writeDataToBuffer();
@@ -122,7 +118,7 @@ try {
     renderPassDescriptor.colorAttachments[0].view = context.getCurrentTexture().createView();
 
     for (let i = 0; i < OBJECT_COUNT; i++) {
-      scaleBufferBuilder.data.set([renderData[i] / aspect, renderData[i]], i * 2);
+      scaleBufferBuilder.setData([renderData[i] / aspect, renderData[i]], i * 2);
     }
     scaleBufferBuilder.writeDataToBuffer();
 
@@ -131,8 +127,8 @@ try {
       .beginRenderPass(renderPassDescriptor)
       .setPipeline(pipeline)
       .setVertexBuffer(0, vertexBuffer)
-      .setVertexBuffer(1, colorOffsetBuffer)
-      .setVertexBuffer(2, scaleBuffer)
+      .setVertexBuffer(1, colorOffsetBufferBuilder.buffer)
+      .setVertexBuffer(2, scaleBufferBuilder.buffer)
       .setIndexBuffer(indexBuffer, "uint32")
       .drawIndexed(vertexIndex.length, OBJECT_COUNT)
       .end()

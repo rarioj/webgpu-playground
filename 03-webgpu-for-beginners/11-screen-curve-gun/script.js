@@ -91,13 +91,13 @@ const { buffer: statueBuffer } = webgpu
   .addVertexAttribute("float32x2") // u, v
   .build();
 
-const { builder: cameraBufferBuilder, buffer: cameraBuffer } = webgpu
+const cameraBufferBuilder = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
   .loadBufferData(new Float32Array(4 * 3)) // 4 bytes * 3 types (forward, right, up)
   .build();
 
-const { builder: uniformBufferBuilder, buffer: uniformBuffer } = webgpu
+const uniformBufferBuilder = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
   .loadBufferData(new Float32Array(16 * 2)) // 4x4 matrix * 2 types (view, projection)
@@ -106,13 +106,13 @@ const { builder: uniformBufferBuilder, buffer: uniformBuffer } = webgpu
 const triangleCount = 10;
 const tileCount = 256;
 const statueCount = 1;
-const { builder: objectBufferBuilder, buffer: objectBuffer } = webgpu
+const objectBufferBuilder = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
   .loadBufferData(new Float32Array(16 * (triangleCount + tileCount + statueCount))) // 4x4 matrix * (10 triangles + 256 tiles + 1 statue)
   .build();
 
-const { builder: timeBufferBuilder, buffer: timeBuffer } = webgpu
+const timeBufferBuilder = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
   .loadBufferData(new Float32Array(1))
@@ -134,15 +134,15 @@ const { buffer: gunBuffer, vertexBufferLayout: gunBufferLayout } = webgpu
 //// Scene and event
 
 const scene = new Scene();
-scene.elapsed = timeBufferBuilder.dataPointer();
+scene.elapsed = timeBufferBuilder.mapData();
 
 const camera = new CameraObject({ width: canvas.width, height: canvas.height });
 camera.setPosition(-7, -0.5, 0.5);
-camera.viewMatrix = uniformBufferBuilder.dataPointer(0, 16);
-camera.projectionMatrix = uniformBufferBuilder.dataPointer(16, 32);
-camera.forward = cameraBufferBuilder.dataPointer(0, 3);
-camera.scaledRight = cameraBufferBuilder.dataPointer(4, 7);
-camera.scaledUp = cameraBufferBuilder.dataPointer(8, 11);
+camera.viewMatrix = uniformBufferBuilder.mapData(0, 16);
+camera.projectionMatrix = uniformBufferBuilder.mapData(16, 32);
+camera.forward = cameraBufferBuilder.mapData(0, 3);
+camera.scaledRight = cameraBufferBuilder.mapData(4, 7);
+camera.scaledUp = cameraBufferBuilder.mapData(8, 11);
 camera.updateProjectionMatrix();
 camera.addUpdateCallback(() => {
   camera.updateOrthonormalVectors();
@@ -155,7 +155,7 @@ let pointerIndex = 0;
 for (let i = -5; i < 5; i++) {
   const model = new BaseObject();
   model.setPosition(2, i, 0.5);
-  model.modelMatrix = objectBufferBuilder.dataPointer(pointerIndex * 16, pointerIndex * 16 + 16);
+  model.modelMatrix = objectBufferBuilder.mapData(pointerIndex * 16, pointerIndex * 16 + 16);
   model.addUpdateCallback(() => {
     model.updateModelMatrix();
     model.eulers[2]++;
@@ -168,12 +168,12 @@ for (let i = -8; i < 8; i++) {
   for (let j = -8; j < 8; j++) {
     const model = new BaseObject();
     model.setPosition(i, j, 0);
-    model.modelMatrix = objectBufferBuilder.dataPointer(pointerIndex * 16, pointerIndex * 16 + 16);
+    model.modelMatrix = objectBufferBuilder.mapData(pointerIndex * 16, pointerIndex * 16 + 16);
     model.updateModelMatrix();
     pointerIndex++;
   }
 }
-statue.modelMatrix = objectBufferBuilder.dataPointer(pointerIndex * 16, pointerIndex * 16 + 16);
+statue.modelMatrix = objectBufferBuilder.mapData(pointerIndex * 16, pointerIndex * 16 + 16);
 statue.addUpdateCallback(() => {
   statue.updateModelMatrix();
   statue.eulers[2]++;
@@ -203,13 +203,13 @@ const { bindGroup: cubemapBindGroup, bindGroupLayout: cubemapBindGroupLayout } =
   .setupBindGroup("Sky cubemap")
   .addTexture(cubemapView, GPUShaderStage.FRAGMENT, { viewDimension: "cube" })
   .addSampler(cubemapSampler, GPUShaderStage.FRAGMENT)
-  .addBuffer(cameraBuffer, GPUShaderStage.VERTEX, { type: "uniform" })
+  .addBuffer(cameraBufferBuilder.buffer, GPUShaderStage.VERTEX, { type: "uniform" })
   .build();
 
 const { bindGroup: vertexBindGroup, bindGroupLayout: vertexBindGroupLayout } = webgpu
   .setupBindGroup("Vertices")
-  .addBuffer(uniformBuffer, GPUShaderStage.VERTEX)
-  .addBuffer(objectBuffer, GPUShaderStage.VERTEX, {
+  .addBuffer(uniformBufferBuilder.buffer, GPUShaderStage.VERTEX)
+  .addBuffer(objectBufferBuilder.buffer, GPUShaderStage.VERTEX, {
     type: "read-only-storage",
     hasDynamicOffset: false,
   })
@@ -225,19 +225,19 @@ const { bindGroup: strobeLightBindGroup, bindGroupLayout: strobeLightBindGroupLa
   .setupBindGroup("Strobe light")
   .addTexture(strobeLightView, GPUShaderStage.FRAGMENT)
   .addSampler(strobeLightSampler, GPUShaderStage.FRAGMENT)
-  .addBuffer(timeBuffer, GPUShaderStage.FRAGMENT, { type: "uniform" })
+  .addBuffer(timeBufferBuilder.buffer, GPUShaderStage.FRAGMENT, { type: "uniform" })
   .build();
 
 const { bindGroup: weaponBindGroup, bindGroupLayout: weaponBindGroupLayout } = webgpu
   .setupBindGroup("Weapon layer")
   .addTexture(weaponView, GPUShaderStage.FRAGMENT)
   .addSampler(weaponSampler, GPUShaderStage.FRAGMENT)
-  .addBuffer(timeBuffer, GPUShaderStage.FRAGMENT, { type: "uniform" })
+  .addBuffer(timeBufferBuilder.buffer, GPUShaderStage.FRAGMENT, { type: "uniform" })
   .build();
 
 const { bindGroup: gunBindGroup, bindGroupLayout: gunBindGroupLayout } = webgpu
   .setupBindGroup()
-  .addBuffer(uniformBuffer, GPUShaderStage.VERTEX, { type: "uniform" })
+  .addBuffer(uniformBufferBuilder.buffer, GPUShaderStage.VERTEX, { type: "uniform" })
   .build();
 
 const { bindGroup: gunSkinBindGroup, bindGroupLayout: gunSkinBindGroupLayout } = webgpu

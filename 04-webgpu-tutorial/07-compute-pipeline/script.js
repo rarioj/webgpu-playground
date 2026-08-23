@@ -46,7 +46,7 @@ try {
     true,
   );
 
-  const { state: depthStencilState, attachment: depthStencilAttachment } = webgpu.setupDepthStencil().setTextureSize(canvas.width, canvas.height).build();
+  const depthStencilBuilder = webgpu.setupDepthStencil().setTextureSize(canvas.width, canvas.height);
 
   //// Buffers
 
@@ -66,31 +66,31 @@ try {
     .loadBufferData(cubeData.indices)
     .build();
 
-  const { builder: inputBufferBuilder, buffer: inputBuffer } = webgpu
+  const inputBufferBuilder = webgpu
     .setupBuffer("Input variables")
     .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
     .loadBufferData(new Float32Array([OBJECT_COUNT, XMIN, XMAX, YMIN, YMAX, ZMIN, ZMAX])) // 7 data
     .build();
 
-  const { builder: projectionBufferBuilder, buffer: projectionBuffer } = webgpu
+  const projectionBufferBuilder = webgpu
     .setupBuffer("Camera projection")
     .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
     .loadBufferData(new Float32Array(4 * 4)) // 4x4 matrix
     .build();
 
-  const { builder: modelBufferBuilder, buffer: modelBuffer } = webgpu
+  const modelBufferBuilder = webgpu
     .setupBuffer("Cube matrices storage")
     .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
     .loadBufferData(new Float32Array(4 * 4 * OBJECT_MAX)) // 4x4 matrix * max objects
     .build();
 
-  const { builder: velocityBufferBuilder, buffer: velocityBuffer } = webgpu
+  const velocityBufferBuilder = webgpu
     .setupBuffer("Velocities")
     .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
     .loadBufferData(new Float32Array(4 * OBJECT_MAX)) // 4 position * max objects
     .build();
 
-  const { builder: mvpBufferBuilder, buffer: mvpBuffer } = webgpu
+  const { buffer: mvpBuffer } = webgpu
     .setupBuffer("Model view projection matrices")
     .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
     .loadBufferData(new Float32Array(4 * 4 * OBJECT_MAX)) // 4x4 matrix * max objects
@@ -105,7 +105,7 @@ try {
     camera.updateOrthonormalVectors();
     camera.updateViewMatrix();
     camera.move();
-    projectionBufferBuilder.data.set(getViewProjectionMatrix(camera.viewMatrix, camera.projectionMatrix));
+    projectionBufferBuilder.setData(getViewProjectionMatrix(camera.viewMatrix, camera.projectionMatrix));
     projectionBufferBuilder.writeDataToBuffer();
   });
 
@@ -117,7 +117,7 @@ try {
     particle.setPosition(getRandom(XMIN, XMAX), getRandom(YMIN, YMAX), getRandom(ZMIN, ZMAX));
     particle.setScale(scale, scale, scale);
     particle.updateModelMatrix();
-    modelBufferBuilder.data.set(particle.modelMatrix, i * 16);
+    modelBufferBuilder.setData(particle.modelMatrix, i * 16);
     velocityBufferBuilder.data[i * 4 + 0] = getRandom(-5, 5);
     velocityBufferBuilder.data[i * 4 + 1] = getRandom(-5, 5);
     velocityBufferBuilder.data[i * 4 + 2] = getRandom(-5, 5);
@@ -125,6 +125,12 @@ try {
   }
   modelBufferBuilder.writeDataToBuffer();
   velocityBufferBuilder.writeDataToBuffer();
+
+  depthStencilBuilder.build();
+  webgpu.observeCanvasResize(canvas, (width, height) => {
+    camera.resize(width, height);
+    depthStencilBuilder.setTextureSize(width, height).build();
+  });
 
   //// Pipelines
 
@@ -138,7 +144,7 @@ try {
       topology: "triangle-list",
       cullMode: "back",
     })
-    .setRenderDepthStencil(depthStencilState)
+    .setRenderDepthStencil(depthStencilBuilder.state)
     .buildAsync();
 
   const { pipeline: computePipeline } = await webgpu
@@ -159,10 +165,10 @@ try {
   const { bindGroup: computeBindGroup } = webgpu
     .setupBindGroup("Compute bind group")
     .setLayout(computePipeline.getBindGroupLayout(0))
-    .addBuffer(inputBuffer)
-    .addBuffer(velocityBuffer)
-    .addBuffer(modelBuffer)
-    .addBuffer(projectionBuffer)
+    .addBuffer(inputBufferBuilder.buffer)
+    .addBuffer(velocityBufferBuilder.buffer)
+    .addBuffer(modelBufferBuilder.buffer)
+    .addBuffer(projectionBufferBuilder.buffer)
     .addBuffer(mvpBuffer)
     .build();
 
@@ -187,7 +193,7 @@ try {
         storeOp: "store",
       },
     ],
-    depthStencilAttachment,
+    depthStencilAttachment: depthStencilBuilder.attachment,
   };
 
   let fpsStart = performance.now();

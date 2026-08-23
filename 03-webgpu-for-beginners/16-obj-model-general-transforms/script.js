@@ -34,7 +34,7 @@ const { textureView: cubemapView, sampler: cubemapSampler } = webgpu
 
 const scene = new Scene();
 
-const { builder: parameterBufferBuilder, buffer: parameterBuffer } = webgpu
+const parameterBufferBuilder = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
   .loadBufferData(new Float32Array(32))
@@ -43,7 +43,7 @@ const { builder: parameterBufferBuilder, buffer: parameterBuffer } = webgpu
 const statue = new OBJModelObject(assets.statueObj.data, { parseImmediately: false, useTexture: false, useNormal: true, useBVH: true });
 statue.setEulers(180, 0, 0);
 statue.setScale(config.statueScale[0], config.statueScale[1], config.statueScale[2]);
-statue.inversedMatrix = parameterBufferBuilder.dataPointer(16);
+statue.inversedMatrix = parameterBufferBuilder.mapData(16);
 statue.addFaceDataCallback = (cache, data, tokens) => {
   const vtn = tokens.split("/"); // v//vn
   const vertices = cache.vertices[parseInt(vtn[0]) - 1]; // v
@@ -76,11 +76,11 @@ statue.bvh.build();
 scene.addObject(statue);
 
 const camera = new CameraObject({ width: canvas.width, height: canvas.height });
-camera.position = parameterBufferBuilder.dataPointer(0, 3);
-camera.forward = parameterBufferBuilder.dataPointer(4, 7);
-camera.scaledRight = parameterBufferBuilder.dataPointer(8, 11);
+camera.position = parameterBufferBuilder.mapData(0, 3);
+camera.forward = parameterBufferBuilder.mapData(4, 7);
+camera.scaledRight = parameterBufferBuilder.mapData(8, 11);
 parameterBufferBuilder.data[11] = MAX_BOUNCES;
-camera.scaledUp = parameterBufferBuilder.dataPointer(12, 15);
+camera.scaledUp = parameterBufferBuilder.mapData(12, 15);
 parameterBufferBuilder.data[15] = statue.bvh.outputNodes.length;
 camera.setPosition(-15, 0, 0);
 camera.updateProjectionMatrix();
@@ -88,25 +88,25 @@ scene.addObject(camera);
 
 const fpc = new FirstPersonControl(camera, context.canvas, { debug: true, moveSpeed: 0.4, orientSpeed: 0.25, flipY: true });
 
-const { builder: objectIndicesBufferBuilder, buffer: objectIndicesBuffer } = webgpu
+const objectIndicesBufferBuilder = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
   .loadBufferData(statue.bvh.indices)
   .build();
 
-const { builder: objectsBufferBuilder, buffer: objectsBuffer } = webgpu
+const objectsBufferBuilder = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
   .loadBufferData(new Float32Array(statue.vertexData))
   .build();
 
-const { builder: nodeBufferBuilder, buffer: nodeBuffer } = webgpu
+const nodeBufferBuilder = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
   .loadBufferData(new Float32Array(8 * statue.bvh.assigned))
   .build();
 for (let i = 0; i < statue.bvh.assigned; i++) {
-  nodeBufferBuilder.data.set(statue.bvh.outputNodes[i].data, i * 8);
+  nodeBufferBuilder.setData(statue.bvh.outputNodes[i].data, i * 8);
 }
 
 statue.addUpdateCallback(() => {
@@ -144,18 +144,18 @@ const raytracerBindGroupBuilder = webgpu
     format: "rgba8unorm",
     viewDimension: "2d",
   })
-  .addBuffer(parameterBuffer, GPUShaderStage.COMPUTE, {
+  .addBuffer(parameterBufferBuilder.buffer, GPUShaderStage.COMPUTE, {
     type: "uniform",
   })
-  .addBuffer(objectsBuffer, GPUShaderStage.COMPUTE, {
+  .addBuffer(objectsBufferBuilder.buffer, GPUShaderStage.COMPUTE, {
     type: "read-only-storage",
     hasDynamicOffset: false,
   })
-  .addBuffer(nodeBuffer, GPUShaderStage.COMPUTE, {
+  .addBuffer(nodeBufferBuilder.buffer, GPUShaderStage.COMPUTE, {
     type: "read-only-storage",
     hasDynamicOffset: false,
   })
-  .addBuffer(objectIndicesBuffer, GPUShaderStage.COMPUTE, {
+  .addBuffer(objectIndicesBufferBuilder.buffer, GPUShaderStage.COMPUTE, {
     type: "read-only-storage",
     hasDynamicOffset: false,
   })

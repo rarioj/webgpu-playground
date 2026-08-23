@@ -61,7 +61,7 @@ const { buffer: statueBuffer } = webgpu
   .addVertexAttribute("float32x2") // u, v
   .build();
 
-const { builder: uniformBufferBuilder, buffer: uniformBuffer } = webgpu
+const uniformBufferBuilder = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
   .loadBufferData(new Float32Array(16 * 2)) // 4x4 matrix * 2 types (view, projection)
@@ -70,7 +70,7 @@ const { builder: uniformBufferBuilder, buffer: uniformBuffer } = webgpu
 const triangleCount = 10;
 const tileCount = 256;
 const statueCount = 1;
-const { builder: objectBufferBuilder, buffer: objectBuffer } = webgpu
+const objectBufferBuilder = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
   .loadBufferData(new Float32Array(16 * (triangleCount + tileCount + statueCount))) // 4x4 matrix * (10 triangles + 256 tiles + 1 statue)
@@ -82,8 +82,8 @@ const scene = new Scene();
 
 const camera = new CameraObject({ width: canvas.width, height: canvas.height });
 camera.setPosition(-7, -0.5, 0.5);
-camera.viewMatrix = uniformBufferBuilder.dataPointer(0, 16);
-camera.projectionMatrix = uniformBufferBuilder.dataPointer(16, 32);
+camera.viewMatrix = uniformBufferBuilder.mapData(0, 16);
+camera.projectionMatrix = uniformBufferBuilder.mapData(16, 32);
 camera.updateProjectionMatrix();
 camera.addUpdateCallback(() => {
   camera.updateOrthonormalVectors();
@@ -96,7 +96,7 @@ let pointerIndex = 0;
 for (let i = -5; i < 5; i++) {
   const model = new BaseObject();
   model.setPosition(2, i, 0.5);
-  model.modelMatrix = objectBufferBuilder.dataPointer(pointerIndex * 16, pointerIndex * 16 + 16);
+  model.modelMatrix = objectBufferBuilder.mapData(pointerIndex * 16, pointerIndex * 16 + 16);
   model.addUpdateCallback(() => {
     model.updateModelMatrix();
     model.eulers[2]++;
@@ -109,12 +109,12 @@ for (let i = -8; i < 8; i++) {
   for (let j = -8; j < 8; j++) {
     const model = new BaseObject();
     model.setPosition(i, j, 0);
-    model.modelMatrix = objectBufferBuilder.dataPointer(pointerIndex * 16, pointerIndex * 16 + 16);
+    model.modelMatrix = objectBufferBuilder.mapData(pointerIndex * 16, pointerIndex * 16 + 16);
     model.updateModelMatrix();
     pointerIndex++;
   }
 }
-statue.modelMatrix = objectBufferBuilder.dataPointer(pointerIndex * 16, pointerIndex * 16 + 16);
+statue.modelMatrix = objectBufferBuilder.mapData(pointerIndex * 16, pointerIndex * 16 + 16);
 statue.addUpdateCallback(() => {
   statue.updateModelMatrix();
   statue.eulers[2]++;
@@ -140,8 +140,8 @@ const { bindGroup: fragmentBindGroup, bindGroupLayout: fragmentBindGroupLayout }
 
 const { bindGroup: vertexBindGroup, bindGroupLayout: vertexBindGroupLayout } = webgpu
   .setupBindGroup()
-  .addBuffer(uniformBuffer, GPUShaderStage.VERTEX)
-  .addBuffer(objectBuffer, GPUShaderStage.VERTEX, {
+  .addBuffer(uniformBufferBuilder.buffer, GPUShaderStage.VERTEX)
+  .addBuffer(objectBufferBuilder.buffer, GPUShaderStage.VERTEX, {
     type: "read-only-storage",
     hasDynamicOffset: false,
   })

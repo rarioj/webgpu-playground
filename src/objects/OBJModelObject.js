@@ -1,7 +1,7 @@
 import { BaseObject } from "./BaseObject.js";
 import { BoundingVolumeHierarchy } from "../modules/BoundingVolumeHierarchy.js";
 
-import { vec3, vec4, mat4 } from "../external/wgpu-matrix.js";
+import { vec4, mat4 } from "../external/wgpu-matrix.js";
 
 /**
  * @typedef {Object} OBJModelCache

@@ -1,16 +1,13 @@
+import { WebGPU } from "./WebGPU.js";
+
 /**
  * @classdesc
  */
 export class WebGPUPipeline {
   /**
-   * @type {boolean}
+   * @type {WebGPU}
    */
-  debug;
-
-  /**
-   * @type {GPUDevice}
-   */
-  device;
+  webgpu;
 
   /**
    * @type {GPUShaderModule}
@@ -33,17 +30,21 @@ export class WebGPUPipeline {
   computePipelineDescriptor;
 
   /**
+   * @type {GPUPipelineLayout}
+   */
+  pipelineLayout;
+
+  /**
    * @type {GPURenderPipeline|GPUComputePipeline}
    */
   pipeline;
 
   /**
-   * @param {GPUDevice} device
+   * @param {WebGPU} webgpu
    * @param {string} [label]
    */
-  constructor(device, label = "Unlabelled") {
-    this.debug = false;
-    this.device = device;
+  constructor(webgpu, label = "Unlabelled") {
+    this.webgpu = webgpu;
     this.shaderModule = undefined;
     this.pipelineLayoutDescriptor = {
       label: `${label} (GPUPipelineLayout)`,
@@ -60,6 +61,7 @@ export class WebGPUPipeline {
       layout: undefined,
       compute: undefined,
     };
+    this.pipelineLayout = undefined;
     this.pipeline = undefined;
   }
 
@@ -70,6 +72,7 @@ export class WebGPUPipeline {
   setLayout(pipelineLayout) {
     this.renderPipelineDescriptor.layout = pipelineLayout;
     this.computePipelineDescriptor.layout = pipelineLayout;
+    this.pipelineLayout = pipelineLayout;
     return this;
   }
 
@@ -96,8 +99,8 @@ export class WebGPUPipeline {
 
     /** @type {GPUShaderModuleDescriptor} */
     const finalShaderModuleDescriptor = { ...{ code: finalCode }, ...shaderModuleDescriptor };
-    this.debug && console.debug("GPUShaderModuleDescriptor", finalShaderModuleDescriptor);
-    this.shaderModule = this.device.createShaderModule(finalShaderModuleDescriptor);
+    this.webgpu.debug && console.debug("GPUShaderModuleDescriptor", finalShaderModuleDescriptor);
+    this.shaderModule = this.webgpu.device.createShaderModule(finalShaderModuleDescriptor);
 
     return this;
   }
@@ -159,17 +162,20 @@ export class WebGPUPipeline {
   /**
    * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createPipelineLayout|GPUDevice: createPipelineLayout() method}
    * @param {GPUPipelineLayoutDescriptor} [overridePipelineLayoutDescriptor]
+   * @returns {WebGPUPipeline}
    */
   createPipelineLayout(overridePipelineLayoutDescriptor = {}) {
     if (!this.renderPipelineDescriptor.layout && !this.computePipelineDescriptor.layout) {
       /** @type {GPUPipelineLayoutDescriptor} */
       const finalPipelineLayoutDescriptor = { ...this.pipelineLayoutDescriptor, ...overridePipelineLayoutDescriptor };
-      this.debug && console.debug("GPUPipelineLayoutDescriptor", finalPipelineLayoutDescriptor);
+      this.webgpu.debug && console.debug("GPUPipelineLayoutDescriptor", finalPipelineLayoutDescriptor);
 
-      const pipelineLayout = this.device.createPipelineLayout(finalPipelineLayoutDescriptor);
+      const pipelineLayout = this.webgpu.device.createPipelineLayout(finalPipelineLayoutDescriptor);
       this.renderPipelineDescriptor.layout = pipelineLayout;
       this.computePipelineDescriptor.layout = pipelineLayout;
+      this.pipelineLayout = pipelineLayout;
     }
+    return this;
   }
 
   /**
@@ -179,7 +185,7 @@ export class WebGPUPipeline {
    * @param {GPUPipelineLayoutDescriptor} [options.overridePipelineLayoutDescriptor]
    * @param {GPURenderPipelineDescriptor} [options.overrideRenderPipelineDescriptor]
    * @param {GPUComputePipelineDescriptor} [options.overrideComputePipelineDescriptor]
-   * @returns {{builder: WebGPUPipeline, pipelineLayout: GPUPipelineLayout, pipeline: GPURenderPipeline|GPUComputePipeline}}
+   * @returns {WebGPUPipeline}
    */
   build(options = {}) {
     const { overridePipelineLayoutDescriptor = {}, overrideRenderPipelineDescriptor = {}, overrideComputePipelineDescriptor = {} } = options;
@@ -188,20 +194,18 @@ export class WebGPUPipeline {
     if (this.renderPipelineDescriptor?.vertex) {
       /** @type {GPURenderPipelineDescriptor} */
       const finalRenderPipelineDescriptor = { ...this.renderPipelineDescriptor, ...overrideRenderPipelineDescriptor };
-      this.debug && console.debug("GPURenderPipelineDescriptor", finalRenderPipelineDescriptor);
-      this.pipeline = this.device.createRenderPipeline(finalRenderPipelineDescriptor);
-
-      return { builder: this, pipelineLayout: this.renderPipelineDescriptor.layout, pipeline: this.pipeline };
+      this.webgpu.debug && console.debug("GPURenderPipelineDescriptor", finalRenderPipelineDescriptor);
+      this.pipeline = this.webgpu.device.createRenderPipeline(finalRenderPipelineDescriptor);
     } else if (this.computePipelineDescriptor?.compute) {
       /** @type {GPUComputePipelineDescriptor} */
       const finalComputePipelineDescriptor = { ...this.computePipelineDescriptor, ...overrideComputePipelineDescriptor };
-      this.debug && console.debug("GPUComputePipelineDescriptor", finalComputePipelineDescriptor);
-      this.pipeline = this.device.createComputePipeline(finalComputePipelineDescriptor);
-
-      return { builder: this, pipelineLayout: this.computePipelineDescriptor.layout, pipeline: this.pipeline };
+      this.webgpu.debug && console.debug("GPUComputePipelineDescriptor", finalComputePipelineDescriptor);
+      this.pipeline = this.webgpu.device.createComputePipeline(finalComputePipelineDescriptor);
     } else {
       throw new Error("Unable to create a GPU pipeline object due to invalid/incomplete descriptor");
     }
+
+    return this;
   }
 
   /**
@@ -211,7 +215,7 @@ export class WebGPUPipeline {
    * @param {GPUPipelineLayoutDescriptor} [options.overridePipelineLayoutDescriptor]
    * @param {GPURenderPipelineDescriptor} [options.overrideRenderPipelineDescriptor]
    * @param {GPUComputePipelineDescriptor} [options.overrideComputePipelineDescriptor]
-   * @returns {Promise.<{builder: WebGPUPipeline, pipelineLayout: GPUPipelineLayout, pipeline: GPURenderPipeline|GPUComputePipeline}>}
+   * @returns {Promise.<WebGPUPipeline>}
    */
   async buildAsync(options = {}) {
     const { overridePipelineLayoutDescriptor = {}, overrideRenderPipelineDescriptor = {}, overrideComputePipelineDescriptor = {} } = options;
@@ -220,19 +224,17 @@ export class WebGPUPipeline {
     if (this.renderPipelineDescriptor?.vertex) {
       /** @type {GPURenderPipelineDescriptor} */
       const finalRenderPipelineDescriptor = { ...this.renderPipelineDescriptor, ...overrideRenderPipelineDescriptor };
-      this.debug && console.debug("GPURenderPipelineDescriptor", finalRenderPipelineDescriptor);
-      this.pipeline = await this.device.createRenderPipelineAsync(finalRenderPipelineDescriptor);
-
-      return { builder: this, pipelineLayout: this.renderPipelineDescriptor.layout, pipeline: this.pipeline };
+      this.webgpu.debug && console.debug("GPURenderPipelineDescriptor", finalRenderPipelineDescriptor);
+      this.pipeline = await this.webgpu.device.createRenderPipelineAsync(finalRenderPipelineDescriptor);
     } else if (this.computePipelineDescriptor?.compute) {
       /** @type {GPUComputePipelineDescriptor} */
       const finalComputePipelineDescriptor = { ...this.computePipelineDescriptor, ...overrideComputePipelineDescriptor };
-      this.debug && console.debug("GPUComputePipelineDescriptor", finalComputePipelineDescriptor);
-      this.pipeline = await this.device.createComputePipelineAsync(finalComputePipelineDescriptor);
-
-      return { builder: this, pipelineLayout: this.computePipelineDescriptor.layout, pipeline: this.pipeline };
+      this.webgpu.debug && console.debug("GPUComputePipelineDescriptor", finalComputePipelineDescriptor);
+      this.pipeline = await this.webgpu.device.createComputePipelineAsync(finalComputePipelineDescriptor);
     } else {
       throw new Error("Unable to create a GPU pipeline object due to invalid/incomplete descriptor");
     }
+
+    return this;
   }
 }

@@ -50,13 +50,13 @@ try {
 
   const renderData = [];
 
-  const { builder: colorOffsetBufferBuilder, buffer: colorOffsetBuffer } = webgpu
+  const colorOffsetBufferBuilder = webgpu
     .setupBuffer("Static storage for color and offset")
     .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
     .loadBufferData(new Float32Array((4 + 2 + 2) * OBJECT_COUNT)) // color: vec4<f32> + offset: vec2<f32> + 2 padding
     .build();
 
-  const { builder: scaleBufferBuilder, buffer: scaleBuffer } = webgpu
+  const scaleBufferBuilder = webgpu
     .setupBuffer("Changing storage for scale")
     .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
     .loadBufferData(new Float32Array(2 * OBJECT_COUNT)) // scale: vec2<f32>
@@ -67,15 +67,15 @@ try {
       ? createCircleGeometry({ radius: 0.5, innerRadius: 0.25, in3d: false, useTexture: false, useNormal: false, indexed: false })
       : createTriangleGeometry({ in3d: false, useTexture: false, useNormal: false, indexed: false });
   const vertexCount = vertexData.length / 2; // only x, y (no z, no texture, no normal)
-  const { builder: vertexBufferBuilder, buffer: vertexBuffer } = webgpu
+  const { buffer: vertexBuffer } = webgpu
     .setupBuffer("Vertex buffer")
     .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
     .loadBufferData(vertexData)
     .build();
 
   for (let i = 0; i < OBJECT_COUNT; i++) {
-    colorOffsetBufferBuilder.data.set([Math.random(), Math.random(), Math.random(), 1], i * 8 + 0); // color
-    colorOffsetBufferBuilder.data.set([getRandom(-1.0, 1.0), getRandom(-1.0, 1.0)], i * 8 + 4); // offset
+    colorOffsetBufferBuilder.setData([Math.random(), Math.random(), Math.random(), 1], i * 8 + 0); // color
+    colorOffsetBufferBuilder.setData([getRandom(-1.0, 1.0), getRandom(-1.0, 1.0)], i * 8 + 4); // offset
     renderData.push(getRandom(0.2, 0.6));
   }
   colorOffsetBufferBuilder.writeDataToBuffer();
@@ -83,8 +83,8 @@ try {
   const { bindGroup } = webgpu
     .setupBindGroup("Uniform")
     .setLayout(pipeline.getBindGroupLayout(0))
-    .addBuffer(colorOffsetBuffer)
-    .addBuffer(scaleBuffer)
+    .addBuffer(colorOffsetBufferBuilder.buffer)
+    .addBuffer(scaleBufferBuilder.buffer)
     .addBuffer(vertexBuffer)
     .build();
 
@@ -109,7 +109,7 @@ try {
     const encoderBuilder = webgpu.setupEncoder().beginRenderPass(renderPassDescriptor).setPipeline(pipeline);
 
     for (let i = 0; i < OBJECT_COUNT; i++) {
-      scaleBufferBuilder.data.set([renderData[i] / aspect, renderData[i]], i * 2);
+      scaleBufferBuilder.setData([renderData[i] / aspect, renderData[i]], i * 2);
     }
     scaleBufferBuilder.writeDataToBuffer();
 

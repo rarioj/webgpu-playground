@@ -1,3 +1,4 @@
+import { WebGPU } from "./WebGPU.js";
 import { WebGPUTexture } from "./WebGPUTexture.js";
 
 /**
@@ -5,14 +6,9 @@ import { WebGPUTexture } from "./WebGPUTexture.js";
  */
 export class WebGPUDepthStencil {
   /**
-   * @type {boolean}
+   * @type {WebGPU}
    */
-  debug;
-
-  /**
-   * @type {GPUDevice}
-   */
-  device;
+  webgpu;
 
   /**
    * @type {WebGPUTexture}
@@ -30,12 +26,11 @@ export class WebGPUDepthStencil {
   attachment;
 
   /**
-   * @param {GPUDevice} device
+   * @param {WebGPU} webgpu
    * @param {WebGPUTexture} textureBuilder
    */
-  constructor(device, textureBuilder) {
-    this.debug = false;
-    this.device = device;
+  constructor(webgpu, textureBuilder) {
+    this.webgpu = webgpu;
     this.textureBuilder = textureBuilder;
     this.state = undefined;
     this.attachment = undefined;
@@ -48,9 +43,7 @@ export class WebGPUDepthStencil {
    * @returns {WebGPUDepthStencil}
    */
   setTextureSize(width, height, depthOrArrayLayers = 1) {
-    this.textureBuilder.textureDescriptor.size.width = width;
-    this.textureBuilder.textureDescriptor.size.height = height;
-    this.textureBuilder.textureDescriptor.size.depthOrArrayLayers = depthOrArrayLayers;
+    this.textureBuilder.setTextureSize(width, height, depthOrArrayLayers);
     return this;
   }
 
@@ -58,7 +51,7 @@ export class WebGPUDepthStencil {
    * @param {Object} [options]
    * @param {GPUTextureDescriptor} [options.overrideTextureDescriptor]
    * @param {GPUTextureViewDescriptor} [options.overrideTextureViewDescriptor]
-   * @returns {{builder: WebGPUDepthStencil, texture: GPUTexture, textureView: GPUTextureView, state: GPUDepthStencilState, attachment: GPURenderPassDepthStencilAttachment}}
+   * @returns {WebGPUDepthStencil}
    */
   build(options = {}) {
     const { overrideTextureDescriptor = {}, overrideTextureViewDescriptor = {} } = options;
@@ -84,13 +77,6 @@ export class WebGPUDepthStencil {
     };
 
     this.attachment.view = this.textureBuilder.textureView;
-
-    return {
-      builder: this,
-      texture: this.textureBuilder.texture,
-      textureView: this.textureBuilder.textureView,
-      state: this.state,
-      attachment: this.attachment,
-    };
+    return this;
   }
 }

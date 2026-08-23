@@ -93,11 +93,7 @@ try {
     true,
   );
 
-  const {
-    builder: textureBuilder,
-    texture,
-    sampler,
-  } = webgpu
+  const textureBuilder = webgpu
     .setupTexture(`Raw texture ${textureLabel}`)
     .setTextureUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST)
     .setTextureFormat("rgba8unorm")
@@ -134,7 +130,7 @@ try {
   /** @type {{bindGroup: GPUBindGroup, buffer: GPUBuffer}[]} */
   const objectInfos = [];
   for (let i = 0; i < 16; i++) {
-    const { builder: bufferBuilder, buffer } = webgpu
+    const bufferBuilder = webgpu
       .setupBuffer("Uniforms for Quad")
       .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
       .loadBufferData(new Float32Array(16)) // 4x4 matrix
@@ -146,17 +142,23 @@ try {
     object.setScale(1, 50, 1);
     object.addUpdateCallback(() => {
       object.updateModelMatrix();
-      bufferBuilder.data.set(getModelViewProjectionMatrix(object.modelMatrix, camera.viewMatrix, camera.projectionMatrix));
+      bufferBuilder.setData(getModelViewProjectionMatrix(object.modelMatrix, camera.viewMatrix, camera.projectionMatrix));
       bufferBuilder.writeDataToBuffer();
     });
     scene.addObject(object);
 
-    const { bindGroup } = webgpu.setupBindGroup().setLayout(pipeline.getBindGroupLayout(0)).addTexture(texture).addSampler(sampler).addBuffer(buffer).build();
-    objectInfos.push({ bindGroup, buffer });
+    const { bindGroup } = webgpu
+      .setupBindGroup()
+      .setLayout(pipeline.getBindGroupLayout(0))
+      .addTexture(textureBuilder.texture)
+      .addSampler(textureBuilder.sampler)
+      .addBuffer(bufferBuilder.buffer)
+      .build();
+    objectInfos.push({ bindGroup, buffer: bufferBuilder.buffer });
   }
 
   function updateObjectInfos() {
-    const sampler = textureBuilder.createSampler({
+    textureBuilder.createSampler({
       addressModeU: tweak.addressModeU,
       addressModeV: tweak.addressModeV,
       addressModeW: tweak.addressModeW,
@@ -169,8 +171,8 @@ try {
       const { bindGroup } = webgpu
         .setupBindGroup()
         .setLayout(pipeline.getBindGroupLayout(0))
-        .addTexture(texture)
-        .addSampler(sampler)
+        .addTexture(textureBuilder.texture)
+        .addSampler(textureBuilder.sampler)
         .addBuffer(objectInfos[i].buffer)
         .build();
       objectInfos[i].bindGroup = bindGroup;

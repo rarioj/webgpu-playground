@@ -41,7 +41,7 @@ try {
   );
 
   const { textureView: shadowDepthTextureView, sampler: shadowDepthSampler } = webgpu
-    .setupTexture(undefined, "Shadow depth texture")
+    .setupTexture("Shadow depth texture")
     .setTextureSize(4096, 4096)
     .setTextureUsage(GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING)
     .setTextureFormat("depth32float")
@@ -85,27 +85,27 @@ try {
     .setUsage(GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST)
     .build();
 
-  const { builder: modelViewBufferBuilder, buffer: modelViewBuffer } = webgpu
+  const modelViewBufferBuilder = webgpu
     .setupBuffer("Model view matrices")
     .loadBufferData(new Float32Array(4 * 4 * OBJECT_COUNT)) // 4x4 matrix * number of objects
     .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
     .build();
-  const { builder: cameraProjectionBufferBuilder, buffer: cameraProjectionBuffer } = webgpu
+  const cameraProjectionBufferBuilder = webgpu
     .setupBuffer("Camera projection matrix")
     .loadBufferData(new Float32Array(4 * 4)) // 4x4 matrix
     .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
     .build();
-  const { builder: lightProjectionBufferBuilder, buffer: lightProjectionBuffer } = webgpu
+  const lightProjectionBufferBuilder = webgpu
     .setupBuffer("Light projection matrix")
     .loadBufferData(new Float32Array(4 * 4)) // 4x4 matrix
     .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
     .build();
-  const { builder: colorBufferBuilder, buffer: colorBuffer } = webgpu
+  const colorBufferBuilder = webgpu
     .setupBuffer("Object color")
     .loadBufferData(new Float32Array(4 * OBJECT_COUNT)) // 4 (rgba) * number of objects
     .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
     .build();
-  const { builder: lightBufferBuilder, buffer: lightBuffer } = webgpu
+  const lightBufferBuilder = webgpu
     .setupBuffer("Generic light")
     .loadBufferData(new Float32Array(4)) // vec4
     .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
@@ -122,7 +122,7 @@ try {
     camera.updateOrthonormalVectors();
     camera.updateViewMatrix();
     camera.move();
-    cameraProjectionBufferBuilder.data.set(getViewProjectionMatrix(camera.viewMatrix, camera.projectionMatrix));
+    cameraProjectionBufferBuilder.setData(getViewProjectionMatrix(camera.viewMatrix, camera.projectionMatrix));
   });
   scene.addObject(camera);
 
@@ -138,7 +138,7 @@ try {
     far: 200,
     orthographic: true,
   });
-  light.position = lightBufferBuilder.dataPointer();
+  light.position = lightBufferBuilder.mapData();
   light.setPosition(0, 0, 50);
   light.setEulers(0, -45, 0);
   light.updateProjectionMatrix();
@@ -148,7 +148,7 @@ try {
     light.eulers[2] %= 360;
     light.updateOrthonormalVectors();
     light.updateViewMatrix();
-    lightProjectionBufferBuilder.data.set(getViewProjectionMatrix(light.viewMatrix, light.projectionMatrix));
+    lightProjectionBufferBuilder.setData(getViewProjectionMatrix(light.viewMatrix, light.projectionMatrix));
   });
   scene.addObject(light);
 
@@ -159,8 +159,8 @@ try {
   pole.setEulers(90, 0, 0);
   pole.setScale(2, 30, 2);
   pole.updateModelMatrix();
-  modelViewBufferBuilder.data.set(pole.modelMatrix, objectCount * 16);
-  colorBufferBuilder.data.set([0.75, 0.75, 0.75, 1.0], objectCount * 4);
+  modelViewBufferBuilder.setData(pole.modelMatrix, objectCount * 16);
+  colorBufferBuilder.setData([0.75, 0.75, 0.75, 1.0], objectCount * 4);
   scene.addObject(pole);
   objectCount++;
 
@@ -169,8 +169,8 @@ try {
   floor.setEulers(90, 0, 0);
   floor.setScale(150, 0.5, 150);
   floor.updateModelMatrix();
-  modelViewBufferBuilder.data.set(floor.modelMatrix, objectCount * 16);
-  colorBufferBuilder.data.set([1.0, 1.0, 1.0, 1.0], objectCount * 4);
+  modelViewBufferBuilder.setData(floor.modelMatrix, objectCount * 16);
+  colorBufferBuilder.setData([1.0, 1.0, 1.0, 1.0], objectCount * 4);
   scene.addObject(floor);
   objectCount++;
 
@@ -196,9 +196,9 @@ try {
       if (stuff.position[2] < -15.5) {
         stuff.tmpGravity = 0;
       }
-      modelViewBufferBuilder.data.set(stuff.modelMatrix, stuff.tmpIndex * 16);
+      modelViewBufferBuilder.setData(stuff.modelMatrix, stuff.tmpIndex * 16);
     });
-    colorBufferBuilder.data.set([Math.random(), Math.random(), Math.random(), 1.0], objectCount * 4);
+    colorBufferBuilder.setData([Math.random(), Math.random(), Math.random(), 1.0], objectCount * 4);
     scene.addObject(stuff);
   }
   colorBufferBuilder.writeDataToBuffer();
@@ -257,16 +257,16 @@ try {
   const { bindGroup: shaderVertexBindGroup } = webgpu
     .setupBindGroup("Shader vertex bind group")
     .setLayout(renderPipeline.getBindGroupLayout(0))
-    .addBuffer(modelViewBuffer)
-    .addBuffer(cameraProjectionBuffer)
-    .addBuffer(lightProjectionBuffer)
-    .addBuffer(colorBuffer)
+    .addBuffer(modelViewBufferBuilder.buffer)
+    .addBuffer(cameraProjectionBufferBuilder.buffer)
+    .addBuffer(lightProjectionBufferBuilder.buffer)
+    .addBuffer(colorBufferBuilder.buffer)
     .build();
 
   const { bindGroup: shaderFragmentBindGroup } = webgpu
     .setupBindGroup("Shader fragment bind group")
     .setLayout(renderPipeline.getBindGroupLayout(1))
-    .addBuffer(lightBuffer)
+    .addBuffer(lightBufferBuilder.buffer)
     .addTexture(shadowDepthTextureView)
     .addSampler(shadowDepthSampler)
     .build();
@@ -274,8 +274,8 @@ try {
   const { bindGroup: shadowVertexBindGroup } = webgpu
     .setupBindGroup("Shadow vertex bind group")
     .setLayout(shadowPipeline.getBindGroupLayout(0))
-    .addBuffer(modelViewBuffer)
-    .addBuffer(lightProjectionBuffer)
+    .addBuffer(modelViewBufferBuilder.buffer)
+    .addBuffer(lightProjectionBufferBuilder.buffer)
     .build();
 
   //// Renderer

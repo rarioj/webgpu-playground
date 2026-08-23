@@ -41,7 +41,7 @@ try {
     true,
   );
 
-  const { state: depthStencilState, attachment: depthStencilAttachment } = webgpu.setupDepthStencil().setTextureSize(canvas.width, canvas.height).build();
+  const depthStencilBuilder = webgpu.setupDepthStencil().setTextureSize(canvas.width, canvas.height);
 
   //// Buffers
 
@@ -75,29 +75,29 @@ try {
     .setUsage(GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST)
     .build();
 
-  const { builder: modelViewBufferBuilder, buffer: modelViewBuffer } = webgpu
+  const modelViewBufferBuilder = webgpu
     .setupBuffer("Model view matrices")
     .loadBufferData(new Float32Array(4 * 4 * OBJECT_COUNT)) // 4x4 matrix * number of objects
     .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
     .build();
-  const { builder: projectionBufferBuilder, buffer: projectionBuffer } = webgpu
+  const projectionBufferBuilder = webgpu
     .setupBuffer("Projection matrix")
     .loadBufferData(new Float32Array(4 * 4)) // 4x4 matrix
     .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
     .build();
-  const { builder: colorBufferBuilder, buffer: colorBuffer } = webgpu
+  const colorBufferBuilder = webgpu
     .setupBuffer("Object color")
     .loadBufferData(new Float32Array(4 * OBJECT_COUNT)) // 4 (rgba) * number of objects
     .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
     .build();
 
-  const { builder: ambientLightBufferBuilder, buffer: ambientLightBuffer } = webgpu
+  const ambientLightBufferBuilder = webgpu
     .setupBuffer("Ambient light")
     .loadBufferData(new Float32Array([AMBIENT_LIGHT_INTENSITY]))
     .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
     .build();
 
-  const { builder: pointLightBufferBuilder, buffer: pointLightBuffer } = webgpu
+  const pointLightBufferBuilder = webgpu
     .setupBuffer("Point light")
     .loadBufferData(new Float32Array(8)) // vec4 + configuration
     .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
@@ -106,7 +106,7 @@ try {
   pointLightBufferBuilder.data[4] = POINT_LIGHT_INTENSITY;
   pointLightBufferBuilder.data[5] = POINT_LIGHT_RADIUS;
 
-  const { builder: directionalLightBufferBuilder, buffer: directionalLightBuffer } = webgpu
+  const directionalLightBufferBuilder = webgpu
     .setupBuffer("Directional light")
     .loadBufferData(new Float32Array(8)) // vec4 + configuration
     .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
@@ -123,7 +123,7 @@ try {
     camera.updateOrthonormalVectors();
     camera.updateViewMatrix();
     camera.move();
-    projectionBufferBuilder.data.set(getViewProjectionMatrix(camera.viewMatrix, camera.projectionMatrix));
+    projectionBufferBuilder.setData(getViewProjectionMatrix(camera.viewMatrix, camera.projectionMatrix));
   });
   scene.addObject(camera);
 
@@ -136,8 +136,8 @@ try {
     stuff.setEulers(getRandom(-90, 90), getRandom(-90, 90), getRandom(-90, 90));
     stuff.setScale(scale, scale, scale);
     stuff.updateModelMatrix();
-    modelViewBufferBuilder.data.set(stuff.modelMatrix, i * 16);
-    colorBufferBuilder.data.set([Math.random(), Math.random(), Math.random(), 1.0], i * 4);
+    modelViewBufferBuilder.setData(stuff.modelMatrix, i * 16);
+    colorBufferBuilder.setData([Math.random(), Math.random(), Math.random(), 1.0], i * 4);
     scene.addObject(stuff);
   }
   modelViewBufferBuilder.writeDataToBuffer();
@@ -154,6 +154,12 @@ try {
     ambientLightBufferBuilder.writeDataToBuffer();
     pointLightBufferBuilder.writeDataToBuffer();
     directionalLightBufferBuilder.writeDataToBuffer();
+  });
+
+  depthStencilBuilder.build();
+  webgpu.observeCanvasResize(canvas, (width, height) => {
+    camera.resize(width, height);
+    depthStencilBuilder.setTextureSize(width, height).build();
   });
 
   //// Light controls
@@ -183,7 +189,7 @@ try {
       topology: "triangle-list",
       cullMode: "back",
     })
-    .setRenderDepthStencil(depthStencilState)
+    .setRenderDepthStencil(depthStencilBuilder.state)
     .buildAsync();
 
   //// Bind groups
@@ -191,17 +197,17 @@ try {
   const { bindGroup } = webgpu
     .setupBindGroup("Uniform bind group")
     .setLayout(pipeline.getBindGroupLayout(0))
-    .addBuffer(modelViewBuffer)
-    .addBuffer(projectionBuffer)
-    .addBuffer(colorBuffer)
+    .addBuffer(modelViewBufferBuilder.buffer)
+    .addBuffer(projectionBufferBuilder.buffer)
+    .addBuffer(colorBufferBuilder.buffer)
     .build();
 
   const { bindGroup: lightBindGroup } = webgpu
     .setupBindGroup("Lighting bind group")
     .setLayout(pipeline.getBindGroupLayout(1))
-    .addBuffer(ambientLightBuffer)
-    .addBuffer(pointLightBuffer)
-    .addBuffer(directionalLightBuffer)
+    .addBuffer(ambientLightBufferBuilder.buffer)
+    .addBuffer(pointLightBufferBuilder.buffer)
+    .addBuffer(directionalLightBufferBuilder.buffer)
     .build();
 
   //// Renderer
@@ -216,7 +222,7 @@ try {
         storeOp: "store",
       },
     ],
-    depthStencilAttachment,
+    depthStencilAttachment: depthStencilBuilder.attachment,
   };
 
   function frame() {

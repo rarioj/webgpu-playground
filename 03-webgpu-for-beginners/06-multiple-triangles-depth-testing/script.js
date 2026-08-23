@@ -42,14 +42,14 @@ const { buffer: triangleBuffer, vertexBufferLayout: triangleBufferLayout } = web
   .addVertexAttribute("float32x2") // u, v
   .build();
 
-const { builder: uniformBufferBuilder, buffer: uniformBuffer } = webgpu
+const uniformBufferBuilder = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
   .loadBufferData(new Float32Array(16 * 2)) // 4x4 matrix * 2 types (view, projection)
   .build();
 
 const objectCount = 10;
-const { builder: objectBufferBuilder, buffer: objectBuffer } = webgpu
+const objectBufferBuilder = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
   .loadBufferData(new Float32Array(16 * objectCount)) // 4x4 matrix * 10 triangles
@@ -61,8 +61,8 @@ const scene = new Scene();
 
 const camera = new CameraObject({ width: canvas.width, height: canvas.height });
 camera.setPosition(-7, -0.5, 0);
-camera.viewMatrix = uniformBufferBuilder.dataPointer(0, 16);
-camera.projectionMatrix = uniformBufferBuilder.dataPointer(16, 32);
+camera.viewMatrix = uniformBufferBuilder.mapData(0, 16);
+camera.projectionMatrix = uniformBufferBuilder.mapData(16, 32);
 camera.updateProjectionMatrix();
 camera.addUpdateCallback(() => {
   camera.updateOrthonormalVectors();
@@ -74,7 +74,7 @@ scene.addObject(camera);
 for (let i = -5; i < 5; i++) {
   const model = new BaseObject();
   model.setPosition(2, i, 0.5);
-  model.modelMatrix = objectBufferBuilder.dataPointer((i + 5) * 16, (i + 5) * 16 + 16);
+  model.modelMatrix = objectBufferBuilder.mapData((i + 5) * 16, (i + 5) * 16 + 16);
   model.addUpdateCallback(() => {
     model.updateModelMatrix();
     model.eulers[2]++;
@@ -94,13 +94,13 @@ scene.addUpdateEvent(() => {
 
 const { bindGroup, bindGroupLayout } = webgpu
   .setupBindGroup()
-  .addBuffer(uniformBuffer, GPUShaderStage.VERTEX)
+  .addBuffer(uniformBufferBuilder.buffer, GPUShaderStage.VERTEX)
   .addTexture(textureView, GPUShaderStage.FRAGMENT, {
     sampleType: "float",
     viewDimension: "2d-array",
   })
   .addSampler(sampler, GPUShaderStage.FRAGMENT)
-  .addBuffer(objectBuffer, GPUShaderStage.VERTEX, {
+  .addBuffer(objectBufferBuilder.buffer, GPUShaderStage.VERTEX, {
     type: "read-only-storage",
     hasDynamicOffset: false,
   })

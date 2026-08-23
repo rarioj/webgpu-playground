@@ -62,7 +62,7 @@ const { buffer: triangleBuffer, vertexBufferLayout: triangleBufferLayout } = web
   .addVertexAttribute("float32x2") // u, v
   .build();
 
-const { builder: uniformBuilder, buffer: uniformBuffer } = webgpu
+const uniformBuilder = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
   .loadBufferData(new Float32Array(16 * 3)) // 4x4 matrix * 3 types (model, view, projection)
@@ -71,7 +71,7 @@ const { builder: uniformBuilder, buffer: uniformBuffer } = webgpu
 //// Scene objects
 
 const model = new BaseObject();
-model.modelMatrix = uniformBuilder.dataPointer(0, 16);
+model.modelMatrix = uniformBuilder.mapData(0, 16);
 model.addUpdateCallback(() => {
   model.updateModelMatrix();
   model.eulers[2]++;
@@ -81,8 +81,8 @@ model.addUpdateCallback(() => {
 
 const camera = new CameraObject({ width: canvas.width, height: canvas.height });
 camera.setPosition(-2.5, 0, 0);
-camera.viewMatrix = uniformBuilder.dataPointer(16, 32);
-camera.projectionMatrix = uniformBuilder.dataPointer(32, 48);
+camera.viewMatrix = uniformBuilder.mapData(16, 32);
+camera.projectionMatrix = uniformBuilder.mapData(32, 48);
 camera.updateOrthonormalVectors();
 camera.updateViewMatrix();
 camera.updateProjectionMatrix();
@@ -91,7 +91,7 @@ camera.updateProjectionMatrix();
 
 const { bindGroup, bindGroupLayout } = webgpu
   .setupBindGroup()
-  .addBuffer(uniformBuffer, GPUShaderStage.VERTEX)
+  .addBuffer(uniformBuilder.buffer, GPUShaderStage.VERTEX)
   .addTexture(textureView, GPUShaderStage.FRAGMENT)
   .addSampler(sampler, GPUShaderStage.FRAGMENT)
   .build();

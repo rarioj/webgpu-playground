@@ -1,3 +1,5 @@
+import { WebGPU } from "./WebGPU.js";
+
 /**
  * @classdesc
  */
@@ -44,14 +46,9 @@ export class WebGPUBuffer {
   };
 
   /**
-   * @type {boolean}
+   * @type {WebGPU}
    */
-  debug;
-
-  /**
-   * @type {GPUDevice}
-   */
-  device;
+  webgpu;
 
   /**
    * @type {GPUBufferDescriptor}
@@ -85,12 +82,11 @@ export class WebGPUBuffer {
 
   /**
    *
-   * @param {GPUDevice} device
+   * @param {WebGPU} webgpu
    * @param {string} [label]
    */
-  constructor(device, label = "Unlabelled") {
-    this.debug = false;
-    this.device = device;
+  constructor(webgpu, label = "Unlabelled") {
+    this.webgpu = webgpu;
     this.bufferDescriptor = {
       label: `${label} (GPUBuffer)`,
       size: 0,
@@ -137,6 +133,17 @@ export class WebGPUBuffer {
   }
 
   /**
+   * @param {number} [bufferOffset]
+   * @param {number} [dataOffset]
+   * @param {number} [size]
+   * @returns {WebGPUBuffer}
+   */
+  writeDataToBuffer(bufferOffset = 0, dataOffset = undefined, size = undefined) {
+    this.webgpu.device.queue.writeBuffer(this.buffer, bufferOffset, this.data, dataOffset, size);
+    return this;
+  }
+
+  /**
    * @param {GPUVertexFormat} vertexFormat
    * @param {number} [shaderLocation]
    * @returns {WebGPUBuffer}
@@ -178,27 +185,27 @@ export class WebGPUBuffer {
    * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBuffer|GPUDevice: createBuffer() method}
    * @param {Object} [options]
    * @param {GPUBufferDescriptor} [options.overrideBufferDescriptor]
-   * @returns {{builder: WebGPUBuffer, buffer: GPUBuffer, vertexBufferLayout?: GPUVertexBufferLayout, arrayVertexBufferLayout?: GPUVertexBufferLayout[]}}
+   * @returns {WebGPUBuffer}
    */
   build(options = {}) {
     const { overrideBufferDescriptor = {} } = options;
 
     /** @type {GPUBufferDescriptor} */
     const finalBufferDescriptor = { ...this.bufferDescriptor, ...overrideBufferDescriptor };
-    this.debug && console.debug("GPUBufferDescriptor", finalBufferDescriptor);
-    this.buffer = this.device.createBuffer(finalBufferDescriptor);
+    this.webgpu.debug && console.debug("GPUBufferDescriptor", finalBufferDescriptor);
+    this.buffer = this.webgpu.device.createBuffer(finalBufferDescriptor);
 
     if (this.vertexBufferLayout.arrayStride === 0) {
       this.vertexBufferLayout = undefined;
     } else {
       this.arrayVertexBufferLayout.push(this.vertexBufferLayout);
-      this.debug && console.debug("GPUVertexBufferLayout", this.vertexBufferLayout);
+      this.webgpu.debug && console.debug("GPUVertexBufferLayout", this.vertexBufferLayout);
     }
 
     if (this.arrayVertexBufferLayout.length === 0) {
       this.arrayVertexBufferLayout = undefined;
     } else {
-      this.debug && console.debug("GPUVertexBufferLayout[]", this.arrayVertexBufferLayout);
+      this.webgpu.debug && console.debug("GPUVertexBufferLayout[]", this.arrayVertexBufferLayout);
     }
 
     if (this.data) {
@@ -208,14 +215,15 @@ export class WebGPUBuffer {
       this.buffer.unmap();
     }
 
-    return { builder: this, buffer: this.buffer, vertexBufferLayout: this.vertexBufferLayout, arrayVertexBufferLayout: this.arrayVertexBufferLayout };
+    return this;
   }
 
   /**
    * @param {number} [begin]
    * @param {number} [end]
+   * @returns {Int16Array|Uint16Array|Int32Array|Uint32Array|Float32Array}
    */
-  dataPointer(begin = 0, end = undefined) {
+  mapData(begin = 0, end = undefined) {
     if (this.data) {
       return this.data.subarray(begin, end);
     }
@@ -223,13 +231,11 @@ export class WebGPUBuffer {
   }
 
   /**
-   * @param {number} [bufferOffset]
-   * @param {number} [dataOffset]
-   * @param {number} [size]
-   * @returns {WebGPUBuffer}
+   * @param {ArrayLike} array
+   * @param {number} [offset]
    */
-  writeDataToBuffer(bufferOffset = 0, dataOffset = undefined, size = undefined) {
-    this.device.queue.writeBuffer(this.buffer, bufferOffset, this.data, dataOffset, size);
+  setData(array, offset = 0) {
+    this.data.set(array, offset);
     return this;
   }
 }

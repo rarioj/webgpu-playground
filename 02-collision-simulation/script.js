@@ -49,7 +49,7 @@ for (let i = 0; i < NUM_BALLS; i++) {
   inputStates[i * 6 + 4] = getRandom(-100, 100); // velocity.x
   inputStates[i * 6 + 5] = getRandom(-100, 100); // velocity.y
 }
-const { builder: inputBufferBuilder, buffer: inputBuffer } = webgpu
+const inputBufferBuilder = webgpu
   .setupBuffer("Input buffer")
   .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
   .loadBufferData(inputStates)
@@ -77,7 +77,7 @@ const { buffer: sceneBuffer } = webgpu
 
 const { bindGroup, bindGroupLayout } = webgpu
   .setupBindGroup("Bind group")
-  .addBuffer(inputBuffer, GPUShaderStage.COMPUTE, { type: "read-only-storage" })
+  .addBuffer(inputBufferBuilder.buffer, GPUShaderStage.COMPUTE, { type: "read-only-storage" })
   .addBuffer(outputBuffer, GPUShaderStage.COMPUTE, { type: "storage" })
   .addBuffer(sceneBuffer, GPUShaderStage.COMPUTE, { type: "read-only-storage" })
   .build();

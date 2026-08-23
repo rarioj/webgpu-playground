@@ -39,7 +39,7 @@ const { textureView: cubemapView, sampler: cubemapSampler } = webgpu
 
 //// Buffers and scene
 
-const { builder: parameterBufferBuilder, buffer: parameterBuffer } = webgpu
+const parameterBufferBuilder = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
   .loadBufferData(new Float32Array(16))
@@ -47,27 +47,27 @@ const { builder: parameterBufferBuilder, buffer: parameterBuffer } = webgpu
 
 const relativePos = NUM_BUBBLES < 100 ? 20 : NUM_BUBBLES < 200 ? 40 : NUM_BUBBLES < 300 ? 60 : 80;
 const camera = new CameraObject({ width: canvas.width, height: canvas.height });
-camera.position = parameterBufferBuilder.dataPointer(0, 3);
-camera.forward = parameterBufferBuilder.dataPointer(4, 7);
-camera.scaledRight = parameterBufferBuilder.dataPointer(8, 11);
+camera.position = parameterBufferBuilder.mapData(0, 3);
+camera.forward = parameterBufferBuilder.mapData(4, 7);
+camera.scaledRight = parameterBufferBuilder.mapData(8, 11);
 parameterBufferBuilder.data[11] = MAX_BOUNCES;
-camera.scaledUp = parameterBufferBuilder.dataPointer(12, 15);
+camera.scaledUp = parameterBufferBuilder.mapData(12, 15);
 parameterBufferBuilder.data[15] = NUM_BUBBLES;
 camera.setPosition(-relativePos * 4, 0, 0);
 camera.updateProjectionMatrix();
 
 const fpc = new FirstPersonControl(camera, context.canvas, { debug: true, moveSpeed: 0.4, orientSpeed: 0.25, flipY: true });
 
-const { builder: sphereIndicesBufferBuilder, buffer: sphereIndicesBuffer } = webgpu
+const sphereIndicesBufferBuilder = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
   .loadBufferData(new Uint32Array(NUM_BUBBLES))
   .build();
 
 const bvh = new BoundingVolumeHierarchy();
-bvh.indices = sphereIndicesBufferBuilder.dataPointer();
+bvh.indices = sphereIndicesBufferBuilder.mapData();
 
-const { builder: spheresBufferBuilder, buffer: spheresBuffer } = webgpu
+const spheresBufferBuilder = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
   .loadBufferData(new Float32Array(8 * NUM_BUBBLES))
@@ -90,13 +90,13 @@ for (let i = 0; i < NUM_BUBBLES; i++) {
 }
 bvh.build();
 
-const { builder: nodeBufferBuilder, buffer: nodeBuffer } = webgpu
+const nodeBufferBuilder = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
   .loadBufferData(new Float32Array(8 * bvh.assigned))
   .build();
 for (let i = 0; i < bvh.assigned; i++) {
-  nodeBufferBuilder.data.set(bvh.outputNodes[i].data, i * 8);
+  nodeBufferBuilder.setData(bvh.outputNodes[i].data, i * 8);
 }
 
 camera.addUpdateCallback(() => {
@@ -120,18 +120,18 @@ const raytracerBindGroupBuilder = webgpu
     format: "rgba8unorm",
     viewDimension: "2d",
   })
-  .addBuffer(parameterBuffer, GPUShaderStage.COMPUTE, {
+  .addBuffer(parameterBufferBuilder.buffer, GPUShaderStage.COMPUTE, {
     type: "uniform",
   })
-  .addBuffer(spheresBuffer, GPUShaderStage.COMPUTE, {
+  .addBuffer(spheresBufferBuilder.buffer, GPUShaderStage.COMPUTE, {
     type: "read-only-storage",
     hasDynamicOffset: false,
   })
-  .addBuffer(nodeBuffer, GPUShaderStage.COMPUTE, {
+  .addBuffer(nodeBufferBuilder.buffer, GPUShaderStage.COMPUTE, {
     type: "read-only-storage",
     hasDynamicOffset: false,
   })
-  .addBuffer(sphereIndicesBuffer, GPUShaderStage.COMPUTE, {
+  .addBuffer(sphereIndicesBufferBuilder.buffer, GPUShaderStage.COMPUTE, {
     type: "read-only-storage",
     hasDynamicOffset: false,
   })

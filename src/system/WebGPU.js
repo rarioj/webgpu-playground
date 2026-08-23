@@ -25,19 +25,14 @@ export class WebGPU {
   device;
 
   /**
-   * @type {GPUQueue}
-   */
-  queue;
-
-  /**
    * @type {GPUCanvasContext[]}
    */
   contexts;
 
   /**
-   * @type {Map.<HTMLCanvasElement, function(): void>}
+   * @type {Map.<HTMLCanvasElement, function(number, number): void>}
    */
-  canvasResizeCallbacks;
+  canvasResizeEvents;
 
   /**
    * @type {ResizeObserver}
@@ -103,9 +98,8 @@ export class WebGPU {
     this.debug = false;
     this.adapter = adapter;
     this.device = device;
-    this.queue = device.queue;
     this.contexts = [];
-    this.canvasResizeCallbacks = undefined;
+    this.canvasResizeEvents = undefined;
     this.canvasResizeObserver = undefined;
   }
 
@@ -133,12 +127,12 @@ export class WebGPU {
 
   /**
    * @param {HTMLCanvasElement} canvas
-   * @param {function(): void} [callback]
+   * @param {function(number, number): void} [callback]
    * @param {number} [scale]
    */
   observeCanvasResize(canvas, callback = undefined, scale = 1) {
-    if (!this.canvasResizeCallbacks) {
-      this.canvasResizeCallbacks = new Map();
+    if (!this.canvasResizeEvents) {
+      this.canvasResizeEvents = new Map();
     }
     if (!this.canvasResizeObserver) {
       this.canvasResizeObserver = new ResizeObserver((entries) => {
@@ -148,15 +142,15 @@ export class WebGPU {
           const height = entry.devicePixelContentBoxSize ? entry.devicePixelContentBoxSize[0].blockSize : Math.round(entry.contentBoxSize[0].blockSize * dpr);
           entry.target.width = Math.max(1, Math.min((width * scale) | 0, this.device.limits.maxTextureDimension2D));
           entry.target.height = Math.max(1, Math.min((height * scale) | 0, this.device.limits.maxTextureDimension2D));
-          if (this.canvasResizeCallbacks.has(entry.target)) {
-            const callback = this.canvasResizeCallbacks.get(entry.target);
+          if (this.canvasResizeEvents.has(entry.target)) {
+            const callback = this.canvasResizeEvents.get(entry.target);
             callback(entry.target.width, entry.target.height);
           }
         }
       });
     }
     if (callback) {
-      this.canvasResizeCallbacks.set(canvas, callback);
+      this.canvasResizeEvents.set(canvas, callback);
     }
     this.canvasResizeObserver.observe(canvas);
   }
@@ -166,9 +160,7 @@ export class WebGPU {
    * @returns {WebGPUTexture}
    */
   setupTexture(label = "Unlabelled") {
-    const builder = new WebGPUTexture(this.device, label);
-    builder.debug = this.debug;
-    return builder;
+    return new WebGPUTexture(this, label);
   }
 
   /**
@@ -176,10 +168,7 @@ export class WebGPU {
    * @returns {WebGPUDepthStencil}
    */
   setupDepthStencil(label = "Unlabelled") {
-    const textureBuilder = new WebGPUTexture(this.device, label);
-    const builder = new WebGPUDepthStencil(this.device, textureBuilder);
-    builder.debug = this.debug;
-    return builder;
+    return new WebGPUDepthStencil(this, new WebGPUTexture(this, label));
   }
 
   /**
@@ -187,9 +176,7 @@ export class WebGPU {
    * @returns {WebGPUBuffer}
    */
   setupBuffer(label = "Unlabelled") {
-    const builder = new WebGPUBuffer(this.device, label);
-    builder.debug = this.debug;
-    return builder;
+    return new WebGPUBuffer(this, label);
   }
 
   /**
@@ -197,9 +184,7 @@ export class WebGPU {
    * @returns {WebGPUBindGroup}
    */
   setupBindGroup(label = "Unlabelled") {
-    const builder = new WebGPUBindGroup(this.device, label);
-    builder.debug = this.debug;
-    return builder;
+    return new WebGPUBindGroup(this, label);
   }
 
   /**
@@ -207,9 +192,7 @@ export class WebGPU {
    * @returns {WebGPUPipeline}
    */
   setupPipeline(label = "Unlabelled") {
-    const builder = new WebGPUPipeline(this.device, label);
-    builder.debug = this.debug;
-    return builder;
+    return new WebGPUPipeline(this, label);
   }
 
   /**
@@ -217,8 +200,6 @@ export class WebGPU {
    * @returns {WebGPUEncoder}
    */
   setupEncoder(label = "Unlabelled") {
-    const proxy = new WebGPUEncoder(this.device, label);
-    proxy.debug = this.debug;
-    return proxy;
+    return new WebGPUEncoder(this, label);
   }
 }

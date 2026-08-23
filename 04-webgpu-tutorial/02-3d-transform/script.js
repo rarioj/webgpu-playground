@@ -55,7 +55,7 @@ try {
     .addVertexAttribute("float32x2") // u, v
     .build();
 
-  const { builder: mvpBufferBuilder, buffer: mvpBuffer } = webgpu
+  const mvpBufferBuilder = webgpu
     .setupBuffer("MVP matrices")
     .loadBufferData(new Float32Array(4 * 4 * 4)) // 4x4 matrix of 4-bytes float
     .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
@@ -77,7 +77,7 @@ try {
     cube.eulers[2]++;
     cube.eulers[2] = cube.eulers[2] % 360;
     const mvpMatrix = getModelViewProjectionMatrix(cube.modelMatrix, camera.viewMatrix, camera.projectionMatrix);
-    mvpBufferBuilder.data.set(mvpMatrix);
+    mvpBufferBuilder.setData(mvpMatrix);
   });
   scene.addObject(cube);
 
@@ -102,7 +102,7 @@ try {
 
   //// Bind groups
 
-  const { bindGroup } = webgpu.setupBindGroup("Uniform bind group").setLayout(pipeline.getBindGroupLayout(0)).addBuffer(mvpBuffer).build();
+  const { bindGroup } = webgpu.setupBindGroup("Uniform bind group").setLayout(pipeline.getBindGroupLayout(0)).addBuffer(mvpBufferBuilder.buffer).build();
 
   //// Renderer
 

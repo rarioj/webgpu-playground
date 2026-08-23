@@ -32,7 +32,7 @@ try {
 
   const assets = await loadAssets(config.resources, true);
 
-  const { builder: depthStencilBuilder } = webgpu.setupDepthStencil().setTextureSize(canvas.width, canvas.height).build();
+  const depthStencilBuilder = webgpu.setupDepthStencil().setTextureSize(canvas.width, canvas.height).build();
 
   //// Buffers and scene
 
@@ -45,7 +45,7 @@ try {
     .addVertexAttribute("float32x2") // u, v
     .build();
 
-  const { builder: mvpBufferBuilder, buffer: mvpBuffer } = webgpu
+  const mvpBufferBuilder = webgpu
     .setupBuffer("MVP matrices")
     .loadBufferData(new Float32Array(4 * 4 * 4)) // 4x4 matrix of 4-bytes float
     .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
@@ -67,7 +67,7 @@ try {
     cube.eulers[2]++;
     cube.eulers[2] = cube.eulers[2] % 360;
     const mvpMatrix = getModelViewProjectionMatrix(cube.modelMatrix, camera.viewMatrix, camera.projectionMatrix);
-    mvpBufferBuilder.data.set(mvpMatrix);
+    mvpBufferBuilder.setData(mvpMatrix);
   });
   scene.addObject(cube);
 
@@ -253,7 +253,7 @@ try {
       inputStates[i * 6 + 4] = getRandom(-25, 25); // velocity.x
       inputStates[i * 6 + 5] = getRandom(-25, 25); // velocity.y
     }
-    const { builder: inputBufferBuilder, buffer: inputBuffer } = webgpu
+    const inputBufferBuilder = webgpu
       .setupBuffer("Input buffer")
       .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
       .loadBufferData(inputStates)
@@ -275,7 +275,7 @@ try {
       .build();
     const { bindGroup, bindGroupLayout } = webgpu
       .setupBindGroup("Bind group")
-      .addBuffer(inputBuffer, GPUShaderStage.COMPUTE, { type: "read-only-storage" })
+      .addBuffer(inputBufferBuilder.buffer, GPUShaderStage.COMPUTE, { type: "read-only-storage" })
       .addBuffer(outputBuffer, GPUShaderStage.COMPUTE, { type: "storage" })
       .addBuffer(sceneBuffer, GPUShaderStage.COMPUTE, { type: "read-only-storage" })
       .build();
@@ -286,7 +286,17 @@ try {
       .setComputeShader({ entryPoint: "main" })
       .buildAsync();
 
-    return { BUFFER_SIZE, inputBufferBuilder, inputBuffer, outputBuffer, stagingBuffer, sceneBuffer, bindGroup, bindGroupLayout, pipeline };
+    return {
+      BUFFER_SIZE,
+      inputBufferBuilder,
+      inputBuffer: inputBufferBuilder.buffer,
+      outputBuffer,
+      stagingBuffer,
+      sceneBuffer,
+      bindGroup,
+      bindGroupLayout,
+      pipeline,
+    };
   }
 
   const { canvas: canvasGPU } =
@@ -314,7 +324,7 @@ try {
 
   //// Textures and bind groups
 
-  const { bindGroup } = webgpu.setupBindGroup("Uniform bind group").setLayout(pipeline.getBindGroupLayout(0)).addBuffer(mvpBuffer).build();
+  const { bindGroup } = webgpu.setupBindGroup("Uniform bind group").setLayout(pipeline.getBindGroupLayout(0)).addBuffer(mvpBufferBuilder.buffer).build();
 
   let texture = null;
   let textureView = null;
@@ -322,7 +332,7 @@ try {
   let bindGroupTexture = null;
 
   if (textureType === "video") {
-    sampler = webgpu.setupTexture().createSampler();
+    ({ sampler } = webgpu.setupTexture().createSampler());
   } else if (textureType === "image") {
     ({ texture, textureView, sampler } = webgpu
       .setupTexture()

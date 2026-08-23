@@ -51,13 +51,13 @@ const { textureView: screenView, sampler: screenSampler } = webgpu
 
 //// Buffers
 
-const { builder: parameterBufferBuilder, buffer: parameterBuffer } = webgpu
+const parameterBufferBuilder = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST)
   .loadBufferData(new Float32Array(16))
   .build();
 
-const { builder: spheresBufferBuilder, buffer: spheresBuffer } = webgpu
+const spheresBufferBuilder = webgpu
   .setupBuffer()
   .setUsage(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
   .loadBufferData(new Float32Array(8 * NUM_SPHERES))
@@ -68,10 +68,10 @@ const { builder: spheresBufferBuilder, buffer: spheresBuffer } = webgpu
 const relativePos = NUM_SPHERES < 100 ? 10 : NUM_SPHERES < 200 ? 20 : NUM_SPHERES < 300 ? 30 : 40;
 
 const camera = new CameraObject({ width: canvas.width, height: canvas.height });
-camera.position = parameterBufferBuilder.dataPointer(0, 3);
-camera.forward = parameterBufferBuilder.dataPointer(4, 7);
-camera.right = parameterBufferBuilder.dataPointer(8, 11);
-camera.up = parameterBufferBuilder.dataPointer(12, 15);
+camera.position = parameterBufferBuilder.mapData(0, 3);
+camera.forward = parameterBufferBuilder.mapData(4, 7);
+camera.right = parameterBufferBuilder.mapData(8, 11);
+camera.up = parameterBufferBuilder.mapData(12, 15);
 parameterBufferBuilder.data[15] = NUM_SPHERES;
 camera.setPosition(-relativePos * 2, 0, 0);
 camera.updateOrthonormalVectors();
@@ -107,10 +107,10 @@ const { bindGroup: raytracerBindGroup, bindGroupLayout: raytracerBindGroupLayout
     format: "rgba8unorm",
     viewDimension: "2d",
   })
-  .addBuffer(parameterBuffer, GPUShaderStage.COMPUTE, {
+  .addBuffer(parameterBufferBuilder.buffer, GPUShaderStage.COMPUTE, {
     type: "uniform",
   })
-  .addBuffer(spheresBuffer, GPUShaderStage.COMPUTE, {
+  .addBuffer(spheresBufferBuilder.buffer, GPUShaderStage.COMPUTE, {
     type: "read-only-storage",
     hasDynamicOffset: false,
   })

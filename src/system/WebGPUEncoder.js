@@ -1,16 +1,13 @@
+import { WebGPU } from "./WebGPU.js";
+
 /**
  * @classdesc
  */
 export class WebGPUEncoder {
   /**
-   * @type {boolean}
+   * @type {WebGPU}
    */
-  debug;
-
-  /**
-   * @type {GPUDevice}
-   */
-  device;
+  webgpu;
 
   /**
    * @type {GPUCommandEncoder}
@@ -28,13 +25,12 @@ export class WebGPUEncoder {
   proxy;
 
   /**
-   * @param {GPUDevice} device
+   * @param {WebGPU} webgpu
    * @param {string} [label]
    */
-  constructor(device, label = "Unlabelled") {
-    this.debug = false;
-    this.device = device;
-    this.commandEncoder = this.device.createCommandEncoder({
+  constructor(webgpu, label = "Unlabelled") {
+    this.webgpu = webgpu;
+    this.commandEncoder = this.webgpu.device.createCommandEncoder({
       label: `${label} (GPUCommandEncoder)`,
     });
     this.passEncoder = undefined;
@@ -84,13 +80,13 @@ export class WebGPUEncoder {
   }
 
   /**
-   * @param {function} [callback]
+   * @param {function(): void} [callback]
    */
   submitCommandBuffer(callback = undefined) {
-    this.device.queue.submit([this.commandEncoder.finish()]);
+    this.webgpu.device.queue.submit([this.commandEncoder.finish()]);
     if (callback) {
-      this.device.queue.onSubmittedWorkDone().then(callback);
+      this.webgpu.device.queue.onSubmittedWorkDone().then(callback);
     }
-    return this.device.queue;
+    return this.webgpu.device.queue;
   }
 }

@@ -1,16 +1,13 @@
+import { WebGPU } from "./WebGPU.js";
+
 /**
  * @classdesc
  */
 export class WebGPUTexture {
   /**
-   * @type {boolean}
+   * @type {WebGPU}
    */
-  debug;
-
-  /**
-   * @type {GPUDevice}
-   */
-  device;
+  webgpu;
 
   /**
    * @type {GPUTextureDescriptor}
@@ -53,12 +50,11 @@ export class WebGPUTexture {
   sampler;
 
   /**
-   * @param {GPUDevice} device
+   * @param {WebGPU} webgpu
    * @param {string} [label]
    */
-  constructor(device, label = "Unlabelled") {
-    this.debug = false;
-    this.device = device;
+  constructor(webgpu, label = "Unlabelled") {
+    this.webgpu = webgpu;
     this.textureDescriptor = {
       label: `${label} (GPUTexture)`,
       format: "bgra8unorm",
@@ -228,27 +224,27 @@ export class WebGPUTexture {
   /**
    * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUTexture/createView|GPUTexture: createView() method}
    * @param {GPUTextureViewDescriptor} [textureViewDescriptor]
-   * @returns {GPUTextureView}
+   * @returns {WebGPUTexture}
    */
   createView(textureViewDescriptor = {}) {
     /** @type {GPUTextureViewDescriptor} */
     const finalTextureViewDescriptor = { ...this.textureViewDescriptor, ...textureViewDescriptor };
-    this.debug && console.debug("GPUTextureViewDescriptor", finalTextureViewDescriptor);
-
-    return this.texture.createView(finalTextureViewDescriptor);
+    this.webgpu.debug && console.debug("GPUTextureViewDescriptor", finalTextureViewDescriptor);
+    this.textureView = this.texture.createView(finalTextureViewDescriptor);
+    return this;
   }
 
   /**
    * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createSampler|GPUDevice: createSampler() method}
    * @param {GPUSamplerDescriptor} [samplerDescriptor]
-   * @returns {GPUSampler}
+   * @returns {WebGPUTexture}
    */
   createSampler(samplerDescriptor = {}) {
     /** @type {GPUSamplerDescriptor} */
     const finalSamplerDescriptor = { ...this.samplerDescriptor, ...samplerDescriptor };
-    this.debug && console.debug("GPUSamplerDescriptor", finalSamplerDescriptor);
-
-    return this.device.createSampler(finalSamplerDescriptor);
+    this.webgpu.debug && console.debug("GPUSamplerDescriptor", finalSamplerDescriptor);
+    this.sampler = this.webgpu.device.createSampler(finalSamplerDescriptor);
+    return this;
   }
 
   /**
@@ -261,7 +257,7 @@ export class WebGPUTexture {
    * @param {GPUTextureDescriptor} [options.overrideTextureDescriptor]
    * @param {GPUTextureViewDescriptor} [options.overrideTextureViewDescriptor]
    * @param {GPUSamplerDescriptor} [options.overrideSamplerDescriptor]
-   * @returns {{builder: WebGPUTexture, texture: GPUTexture, textureView: GPUTextureView, sampler?: GPUSampler}}
+   * @returns {WebGPUTexture}
    */
   build(options = {}) {
     const {
@@ -274,18 +270,18 @@ export class WebGPUTexture {
 
     /** @type {GPUTextureDescriptor} */
     const finalTextureDescriptor = { ...this.textureDescriptor, ...overrideTextureDescriptor };
-    this.debug && console.debug("GPUTextureDescriptor", finalTextureDescriptor);
+    this.webgpu.debug && console.debug("GPUTextureDescriptor", finalTextureDescriptor);
     if (this.texture instanceof GPUTexture) {
       this.texture.destroy();
     }
-    this.texture = this.device.createTexture(finalTextureDescriptor);
+    this.texture = this.webgpu.device.createTexture(finalTextureDescriptor);
 
     if (this.bitmapData) {
       Object.entries(this.bitmapData).forEach(([group, member], groupIndex) => {
         member.entries.forEach((bitmap, entryIndex) => {
           const mIndex = finalTextureDescriptor.mipLevelCount > 1 ? entryIndex : 0;
           const zIndex = finalTextureDescriptor.mipLevelCount > 1 ? groupIndex : entryIndex;
-          this.device.queue.copyExternalImageToTexture(
+          this.webgpu.device.queue.copyExternalImageToTexture(
             { source: bitmap },
             { texture: this.texture, mipLevel: mIndex, origin: { x: 0, y: 0, z: zIndex } },
             { width: bitmap.width, height: bitmap.height },
@@ -297,7 +293,7 @@ export class WebGPUTexture {
     if (this.textureData) {
       Object.entries(this.textureData).forEach(([group, member], groupIndex) => {
         member.entries.forEach((texture, entryIndex) => {
-          this.device.queue.writeTexture(
+          this.webgpu.device.queue.writeTexture(
             { texture: this.texture, mipLevel: entryIndex },
             texture.data,
             { bytesPerRow: texture.width * Float32Array.BYTES_PER_ELEMENT },
@@ -308,13 +304,12 @@ export class WebGPUTexture {
     }
 
     if (createView) {
-      this.textureView = this.createView(overrideTextureViewDescriptor);
+      this.createView(overrideTextureViewDescriptor);
     }
-
     if (createSampler) {
-      this.sampler = this.createSampler(overrideSamplerDescriptor);
+      this.createSampler(overrideSamplerDescriptor);
     }
 
-    return { builder: this, texture: this.texture, textureView: this.textureView, sampler: this.sampler };
+    return this;
   }
 }

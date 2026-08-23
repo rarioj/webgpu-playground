@@ -134,8 +134,7 @@ function render() {
   const computeBindGroup = step % 2 === 0 ? bindGroupA : bindGroupB;
   const renderBindGroup = step % 2 === 0 ? bindGroupB : bindGroupA;
 
-  /** @type {GPUCommandBuffer} */
-  const commandBuffer = webgpu
+  webgpu
     .setupEncoder("Game board")
 
     .beginComputePass()
