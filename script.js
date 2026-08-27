@@ -30,7 +30,7 @@ document.getElementById("theme-toggle").appendChild(button);
 const page = getQueryValue("page", false);
 const available = Object.hasOwn(pages, page);
 const path = page && available ? `./${page}` : ".";
-const markdown = await loadAssets([{ name: "content", url: `${path}/INDEX.md`, type: "text" }], true);
+const markdown = await loadAssets([{ name: "content", url: `${path}/INDEX.md`, type: "text" }]);
 const converter = new showdown.Converter({ openLinksInNewWindow: false, tasklists: true, parseImgDimensions: true });
 
 const main = document.querySelector("main");

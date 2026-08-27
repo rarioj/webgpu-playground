@@ -16,18 +16,18 @@ const context = webgpu.createCanvasContext(canvas);
 
 //// Assets and textures
 
-const assets = await loadAssets(assetArray, true);
+const assets = await loadAssets(assetArray);
 
 const { textureView: cubemapView, sampler: cubemapSampler } = webgpu
   .setupTexture("Cubemap")
   .setTextureUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT)
-  .loadBitmapData([assets.cubemap_px, assets.cubemap_nx, assets.cubemap_py, assets.cubemap_ny, assets.cubemap_pz, assets.cubemap_nz])
+  .loadImageTexture([assets.cubemap_px, assets.cubemap_nx, assets.cubemap_py, assets.cubemap_ny, assets.cubemap_pz, assets.cubemap_nz])
   .build({ createSampler: true, overrideTextureViewDescriptor: { dimension: "cube" } });
 
 const { textureView: imageView, sampler: imageSampler } = webgpu
   .setupTexture("Images")
   .setTextureUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT)
-  .loadBitmapData(assets.image, true)
+  .loadImageTexture(assets.image, { enableMips: true })
   .build({ overrideSamplerDescriptor: { maxAnisotropy: 4 } });
 
 const depthStencilBuilder = webgpu.setupDepthStencil().setTextureSize(canvas.width, canvas.height).build();

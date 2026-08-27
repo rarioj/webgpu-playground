@@ -22,12 +22,12 @@ const context = webgpu.createCanvasContext(canvas);
 
 //// Assets
 
-const assets = await loadAssets(assetArray, true);
+const assets = await loadAssets(assetArray);
 
 const { textureView, sampler } = webgpu
   .setupTexture()
   .setTextureUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT)
-  .loadBitmapData(assets.image)
+  .loadImageTexture(assets.image)
   .build();
 
 const { state: depthStencilState, attachment: depthStencilAttachment } = webgpu.setupDepthStencil().setTextureSize(canvas.width, canvas.height).build();

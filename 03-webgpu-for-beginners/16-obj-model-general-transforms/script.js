@@ -17,7 +17,7 @@ const context = webgpu.createCanvasContext(canvas, { format: "bgra8unorm" });
 
 //// Assets
 
-const assets = await loadAssets(config.resources, true);
+const assets = await loadAssets(config.resources);
 
 const screenTextureBuilder = webgpu
   .setupTexture("Screen texture")
@@ -27,7 +27,7 @@ const screenTextureBuilder = webgpu
 const { textureView: cubemapView, sampler: cubemapSampler } = webgpu
   .setupTexture("Cubemap texture")
   .setTextureUsage(GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING)
-  .loadBitmapData(assets.skyImages)
+  .loadImageTexture(assets.skyImages)
   .build({ overrideTextureViewDescriptor: { dimension: "cube" } });
 
 //// Buffers and scene

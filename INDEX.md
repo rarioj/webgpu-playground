@@ -53,6 +53,7 @@ Not in any particular order.
 - [Tweakpane](https://tweakpane.github.io/) • Compact pane library for fine-tuning parameters and monitoring value changes.
 - [Cube Map Converter](https://labs.xo3d.co.uk/cube-map-converter/) by XO3D LABS.
 - [Desmos](https://www.desmos.com/) • Beautiful free math.
+- [miniray](https://hugodaniel.com/pages/miniray/) • WGSL Minifier - Compress your WebGPU shaders.
 
 ### Assets
 

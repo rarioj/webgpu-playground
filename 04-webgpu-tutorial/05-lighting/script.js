@@ -30,16 +30,13 @@ try {
 
   //// Assets
 
-  const assets = await loadAssets(
-    [
-      {
-        name: "shaderCode",
-        url: `./${getQueryValue("page")}/shaders/shader.wgsl`,
-        type: "text",
-      },
-    ],
-    true,
-  );
+  const assets = await loadAssets([
+    {
+      name: "shaderCode",
+      url: `./${getQueryValue("page")}/shaders/shader.wgsl`,
+      type: "text",
+    },
+  ]);
 
   const depthStencilBuilder = webgpu.setupDepthStencil().setTextureSize(canvas.width, canvas.height);
 
@@ -254,6 +251,6 @@ try {
 
   frame();
 } catch (error) {
-  createModalElement("🛑 Error", error, { container: document.querySelector("main") });
+  createModalElement("🚫 Error", error, { container: document.querySelector("main"), closeButton: false });
   console.error(error);
 }

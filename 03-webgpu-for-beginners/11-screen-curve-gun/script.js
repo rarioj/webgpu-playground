@@ -23,24 +23,24 @@ const context = webgpu.createCanvasContext(canvas);
 
 //// Assets and textures
 
-const assets = await loadAssets(config.assetArray, true);
+const assets = await loadAssets(config.assetArray);
 
 const { textureView: cubemapView, sampler: cubemapSampler } = webgpu
   .setupTexture("Cubemap")
   .setTextureUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT)
-  .loadBitmapData(assets.skyImages)
+  .loadImageTexture(assets.skyImages)
   .build({ createSampler: true, overrideTextureViewDescriptor: { dimension: "cube" } });
 
 const { textureView: imageView, sampler: imageSampler } = webgpu
   .setupTexture("Images")
   .setTextureUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT)
-  .loadBitmapData(assets.assetImages, true)
+  .loadImageTexture(assets.assetImages, { enableMips: true })
   .build({ overrideSamplerDescriptor: { maxAnisotropy: 4 } });
 
 const { textureView: hudView, sampler: hudSampler } = webgpu
   .setupTexture("HUD")
   .setTextureUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT)
-  .loadBitmapData([assets.hudImage])
+  .loadImageTexture([assets.hudImage])
   .build();
 
 const { textureView: strobeLightView, sampler: strobeLightSampler } = webgpu
@@ -58,7 +58,7 @@ const { textureView: weaponView, sampler: weaponSampler } = webgpu
 const { textureView: gunSkinView, sampler: gunSkinSampler } = webgpu
   .setupTexture("Gun")
   .setTextureUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT)
-  .loadBitmapData([assets.gunImage])
+  .loadImageTexture([assets.gunImage])
   .build({ overrideSamplerDescriptor: { maxAnisotropy: 4 } });
 
 const { state: depthStencilState, attachment: depthStencilAttachment } = webgpu.setupDepthStencil().setTextureSize(canvas.width, canvas.height).build();

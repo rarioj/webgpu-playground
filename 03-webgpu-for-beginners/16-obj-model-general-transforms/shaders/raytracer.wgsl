@@ -89,9 +89,7 @@ fn hitRayTriangle(ray: Ray, triangle: ObjectStructure, tMin: f32, tMax: f32, old
     var systemMatrix: mat3x3<f32> = mat3x3<f32>(ray.direction, triangle.cornerA - triangle.cornerB, triangle.cornerA - triangle.cornerC);
     // Manual calculation due to wgsl-analyzer extension bug
     // let denominator: f32 = determinant(systemMatrix);
-    let denominator: f32 = systemMatrix[0][0] * (systemMatrix[1][1] * systemMatrix[2][2] - systemMatrix[1][2] * systemMatrix[2][1]) -
-                            systemMatrix[0][1] * (systemMatrix[1][0] * systemMatrix[2][2] - systemMatrix[1][2] * systemMatrix[2][0]) +
-                            systemMatrix[0][2] * (systemMatrix[1][0] * systemMatrix[2][1] - systemMatrix[1][1] * systemMatrix[2][0]);
+    let denominator: f32 = systemMatrix[0][0] * (systemMatrix[1][1] * systemMatrix[2][2] - systemMatrix[1][2] * systemMatrix[2][1]) - systemMatrix[0][1] * (systemMatrix[1][0] * systemMatrix[2][2] - systemMatrix[1][2] * systemMatrix[2][0]) + systemMatrix[0][2] * (systemMatrix[1][0] * systemMatrix[2][1] - systemMatrix[1][1] * systemMatrix[2][0]);
     if abs(denominator) < 0.000001 {
         return newState;
     }
@@ -100,9 +98,7 @@ fn hitRayTriangle(ray: Ray, triangle: ObjectStructure, tMin: f32, tMax: f32, old
     systemMatrix = mat3x3<f32>(ray.direction, triangle.cornerA - ray.origin, triangle.cornerA - triangle.cornerC);
     // Manual calculation due to wgsl-analyzer extension bug
     // let uHorizontal: f32 = determinant(systemMatrix) / denominator;
-    let uHorizontal: f32 = (systemMatrix[0][0] * (systemMatrix[1][1] * systemMatrix[2][2] - systemMatrix[1][2] * systemMatrix[2][1]) -
-                            systemMatrix[0][1] * (systemMatrix[1][0] * systemMatrix[2][2] - systemMatrix[1][2] * systemMatrix[2][0]) +
-                            systemMatrix[0][2] * (systemMatrix[1][0] * systemMatrix[2][1] - systemMatrix[1][1] * systemMatrix[2][0])) / denominator;
+    let uHorizontal: f32 = (systemMatrix[0][0] * (systemMatrix[1][1] * systemMatrix[2][2] - systemMatrix[1][2] * systemMatrix[2][1]) - systemMatrix[0][1] * (systemMatrix[1][0] * systemMatrix[2][2] - systemMatrix[1][2] * systemMatrix[2][0]) + systemMatrix[0][2] * (systemMatrix[1][0] * systemMatrix[2][1] - systemMatrix[1][1] * systemMatrix[2][0])) / denominator;
     if uHorizontal < 0.0 || uHorizontal > 1.0 {
         return newState;
     }
@@ -111,9 +107,7 @@ fn hitRayTriangle(ray: Ray, triangle: ObjectStructure, tMin: f32, tMax: f32, old
     systemMatrix = mat3x3<f32>(ray.direction, triangle.cornerA - triangle.cornerB, triangle.cornerA - ray.origin);
     // Manual calculation due to wgsl-analyzer extension bug
     // let vVertical: f32 = determinant(systemMatrix) / denominator;
-    let vVertical: f32 = (systemMatrix[0][0] * (systemMatrix[1][1] * systemMatrix[2][2] - systemMatrix[1][2] * systemMatrix[2][1]) -
-                            systemMatrix[0][1] * (systemMatrix[1][0] * systemMatrix[2][2] - systemMatrix[1][2] * systemMatrix[2][0]) +
-                            systemMatrix[0][2] * (systemMatrix[1][0] * systemMatrix[2][1] - systemMatrix[1][1] * systemMatrix[2][0])) / denominator;
+    let vVertical: f32 = (systemMatrix[0][0] * (systemMatrix[1][1] * systemMatrix[2][2] - systemMatrix[1][2] * systemMatrix[2][1]) - systemMatrix[0][1] * (systemMatrix[1][0] * systemMatrix[2][2] - systemMatrix[1][2] * systemMatrix[2][0]) + systemMatrix[0][2] * (systemMatrix[1][0] * systemMatrix[2][1] - systemMatrix[1][1] * systemMatrix[2][0])) / denominator;
     if vVertical < 0.0 || uHorizontal + vVertical > 1.0 {
         return newState;
     }
@@ -122,9 +116,7 @@ fn hitRayTriangle(ray: Ray, triangle: ObjectStructure, tMin: f32, tMax: f32, old
     systemMatrix = mat3x3<f32>(triangle.cornerA - ray.origin, triangle.cornerA - triangle.cornerB, triangle.cornerA - triangle.cornerC);
     // Manual calculation due to wgsl-analyzer extension bug
     // let tValue: f32 = determinant(systemMatrix) / denominator;
-    let tValue: f32 = (systemMatrix[0][0] * (systemMatrix[1][1] * systemMatrix[2][2] - systemMatrix[1][2] * systemMatrix[2][1]) -
-                        systemMatrix[0][1] * (systemMatrix[1][0] * systemMatrix[2][2] - systemMatrix[1][2] * systemMatrix[2][0]) +
-                        systemMatrix[0][2] * (systemMatrix[1][0] * systemMatrix[2][1] - systemMatrix[1][1] * systemMatrix[2][0])) / denominator;
+    let tValue: f32 = (systemMatrix[0][0] * (systemMatrix[1][1] * systemMatrix[2][2] - systemMatrix[1][2] * systemMatrix[2][1]) - systemMatrix[0][1] * (systemMatrix[1][0] * systemMatrix[2][2] - systemMatrix[1][2] * systemMatrix[2][0]) + systemMatrix[0][2] * (systemMatrix[1][0] * systemMatrix[2][1] - systemMatrix[1][1] * systemMatrix[2][0])) / denominator;
 
     if tValue > tMin && tValue < tMax {
         let newNormal: vec3<f32> = (1.0 - uHorizontal - vVertical) * triangle.normalA + uHorizontal * triangle.normalB + vVertical * triangle.normalC;
@@ -196,7 +188,8 @@ fn rayTrace(ray: Ray) -> RenderState {
             }
         } else {
             for (var i: u32 = 0u; i < primitiveCount; i++) {
-                let objectInstance: ObjectStructure = objects.objects[u32(indexLookup.objectIndices[i + leftChild])];
+                let objectIndex: u32 = u32(indexLookup.objectIndices[i + leftChild]);
+                let objectInstance: ObjectStructure = objects.objects[objectIndex];
                 var newState: RenderState = hitRayTriangle(ray, objectInstance, 0.001, nearestHit, renderState);
                 if newState.hit {
                     nearestHit = newState.t;

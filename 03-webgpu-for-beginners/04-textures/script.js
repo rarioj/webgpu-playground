@@ -20,26 +20,23 @@ const context = webgpu.createCanvasContext(canvas);
 
 //// Assets
 
-const assets = await loadAssets(
-  [
-    {
-      name: "shader",
-      url: `./${getQueryValue("page")}/shaders/shader.wgsl`,
-      type: "text",
-    },
-    {
-      name: "image",
-      url: `./assets/images/50-1024.webp`,
-      type: "bitmap",
-    },
-  ],
-  true,
-);
+const assets = await loadAssets([
+  {
+    name: "shader",
+    url: `./${getQueryValue("page")}/shaders/shader.wgsl`,
+    type: "text",
+  },
+  {
+    name: "image",
+    url: `./assets/images/50-1024.webp`,
+    type: "bitmap",
+  },
+]);
 
 const { textureView, sampler } = webgpu
   .setupTexture()
   .setTextureUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT)
-  .loadBitmapData([assets.image])
+  .loadImageTexture([assets.image])
   .build();
 
 //// Buffers

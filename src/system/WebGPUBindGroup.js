@@ -143,17 +143,15 @@ export class WebGPUBindGroup {
     const { overrideBindGroupLayoutDescriptor = {}, overrideBindGroupDescriptor = {} } = options;
 
     if (!this.bindGroupDescriptor.layout) {
-      /** @type {GPUBindGroupLayoutDescriptor} */
-      const finalBindGroupLayoutDescriptor = { ...this.bindGroupLayoutDescriptor, ...overrideBindGroupLayoutDescriptor };
-      this.webgpu.debug && console.debug("GPUBindGroupLayoutDescriptor", finalBindGroupLayoutDescriptor);
-      this.bindGroupDescriptor.layout = this.webgpu.device.createBindGroupLayout(finalBindGroupLayoutDescriptor);
+      this.bindGroupLayoutDescriptor = { ...this.bindGroupLayoutDescriptor, ...overrideBindGroupLayoutDescriptor };
+      this.webgpu.debug && console.debug("GPUBindGroupLayoutDescriptor", this.bindGroupLayoutDescriptor);
+      this.bindGroupDescriptor.layout = this.webgpu.device.createBindGroupLayout(this.bindGroupLayoutDescriptor);
       this.bindGroupLayout = this.bindGroupDescriptor.layout;
     }
 
-    /** @type {GPUBindGroupDescriptor} */
-    const finalBindGroupDescriptor = { ...this.bindGroupDescriptor, ...overrideBindGroupDescriptor };
-    this.webgpu.debug && console.debug("GPUBindGroupDescriptor", finalBindGroupDescriptor);
-    this.bindGroup = this.webgpu.device.createBindGroup(finalBindGroupDescriptor);
+    this.bindGroupDescriptor = { ...this.bindGroupDescriptor, ...overrideBindGroupDescriptor };
+    this.webgpu.debug && console.debug("GPUBindGroupDescriptor", this.bindGroupDescriptor);
+    this.bindGroup = this.webgpu.device.createBindGroup(this.bindGroupDescriptor);
 
     return this;
   }

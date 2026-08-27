@@ -41,3 +41,4 @@ pages["05-webgpu-fundamentals/03-interstage-variables"] = ["script"];
 pages["05-webgpu-fundamentals/04-uniforms-storage-buffers"] = ["script"];
 pages["05-webgpu-fundamentals/05-vertex-buffers"] = ["script"];
 pages["05-webgpu-fundamentals/06-textures"] = ["script"];
+pages["05-webgpu-fundamentals/07-loading-images"] = ["script"];

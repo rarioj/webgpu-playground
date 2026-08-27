@@ -27,6 +27,6 @@ try {
   const article = document.querySelector("article");
   article.innerHTML = content;
 } catch (error) {
-  createModalElement("🛑 Error", error, { container: document.querySelector("main") });
+  createModalElement("🚫 Error", error, { container: document.querySelector("main"), closeButton: false });
   console.error(error);
 }

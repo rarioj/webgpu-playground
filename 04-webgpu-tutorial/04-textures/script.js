@@ -30,7 +30,7 @@ try {
 
   //// Assets
 
-  const assets = await loadAssets(config.resources, true);
+  const assets = await loadAssets(config.resources);
 
   const depthStencilBuilder = webgpu.setupDepthStencil().setTextureSize(canvas.width, canvas.height).build();
 
@@ -112,7 +112,7 @@ try {
       : { undefined };
   if (video instanceof HTMLVideoElement) {
     const canvasHelp = document.createElement("p");
-    canvasHelp.innerHTML = `Click on the canvas to start the video texture. See: <a href="https://webkit.org/blog/6784/new-video-policies-for-ios/">New &lt;video&gt; Policies for iOS</a>`;
+    canvasHelp.innerHTML = `Click on the canvas to start the video texture!`;
     document.querySelector("article").prepend(canvasHelp);
 
     canvas.addEventListener("click", async () => {
@@ -171,9 +171,12 @@ try {
           width: 150,
           height: 150,
           forceDPR: 1,
+          noWrapper: true,
           style: {
+            height: "150px",
             outline: "1px solid black",
             verticalAlign: "top",
+            width: "150px",
           },
         })
       : { undefined };
@@ -306,9 +309,12 @@ try {
           width: 150,
           height: 150,
           forceDPR: 1,
+          noWrapper: true,
           style: {
+            height: "150px",
             outline: "1px solid black",
             verticalAlign: "top",
+            width: "150px",
           },
         })
       : { undefined };
@@ -337,7 +343,7 @@ try {
     ({ texture, textureView, sampler } = webgpu
       .setupTexture()
       .setTextureUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT)
-      .loadBitmapData([assets.image])
+      .loadImageTexture([assets.image])
       .build());
     ({ bindGroup: bindGroupTexture } = webgpu
       .setupBindGroup("Image texture bind group")
@@ -452,6 +458,6 @@ try {
 
   frame();
 } catch (error) {
-  createModalElement("🛑 Error", error, { container: document.querySelector("main") });
+  createModalElement("🚫 Error", error, { container: document.querySelector("main"), closeButton: false });
   console.error(error);
 }

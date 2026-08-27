@@ -29,21 +29,18 @@ createTweakElement("Perform.", "", { readonly: true });
 
 //// Assets
 
-const assets = await loadAssets(
-  [
-    {
-      name: "shaderCode",
-      url: `./${getQueryValue("page")}/shaders/shader.wgsl`,
-      type: "text",
-    },
-    {
-      name: "raytracerCode",
-      url: `./${getQueryValue("page")}/shaders/raytracer.wgsl`,
-      type: "text",
-    },
-  ],
-  true,
-);
+const assets = await loadAssets([
+  {
+    name: "shaderCode",
+    url: `./${getQueryValue("page")}/shaders/shader.wgsl`,
+    type: "text",
+  },
+  {
+    name: "raytracerCode",
+    url: `./${getQueryValue("page")}/shaders/raytracer.wgsl`,
+    type: "text",
+  },
+]);
 
 const { textureView: screenView, sampler: screenSampler } = webgpu
   .setupTexture()

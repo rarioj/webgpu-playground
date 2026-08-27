@@ -18,16 +18,13 @@ const context = webgpu.createCanvasContext(canvas);
 
 //// Assets
 
-const assets = await loadAssets(
-  [
-    {
-      name: "shader",
-      url: `./${getQueryValue("page")}/shaders/shader.wgsl`,
-      type: "text",
-    },
-  ],
-  true,
-);
+const assets = await loadAssets([
+  {
+    name: "shader",
+    url: `./${getQueryValue("page")}/shaders/shader.wgsl`,
+    type: "text",
+  },
+]);
 
 //// Buffers
 

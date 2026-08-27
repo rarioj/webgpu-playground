@@ -10,6 +10,7 @@ import { createProgressBarElement, createModalElement } from "./elements.js";
  * @property {string} url
  * @property {"text"|"blob"|"bitmap"} type
  * @property {string} [group]
+ * @property {Object} [options]
  */
 
 /**
@@ -26,11 +27,15 @@ const SUPPORTED_ASSET_TYPES = {
 };
 
 /**
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/Window/createImageBitmap|Window: createImageBitmap() method}
  * @param {AssetDescriptor[]} assets
- * @param {boolean} [unpackOneItem]
+ * @param {Object} [options]
+ * @param {boolean} [options.unpackOneItem]
  * @returns {Promise.<Object.<string, AssetResource|AssetResource[]>>}
  */
-export async function loadAssets(assets, unpackOneItem = false) {
+export async function loadAssets(assets, options = {}) {
+  const { unpackOneItem = true } = options;
+
   let downloaded = 0;
 
   const { wrapper, label, progress } = createProgressBarElement({
@@ -43,6 +48,7 @@ export async function loadAssets(assets, unpackOneItem = false) {
   try {
     for (let i = 0; i < assets.length; i++) {
       const group = assets[i].group || "__default__";
+      const options = assets[i].options || {};
       const data = await fetch(assets[i].url)
         .then((response) => {
           label.ariaBusy = true;
@@ -57,7 +63,7 @@ export async function loadAssets(assets, unpackOneItem = false) {
           downloaded++;
           progress.value = (downloaded / assets.length) * 100;
           if (assets[i].type === "bitmap") {
-            return await createImageBitmap(resource);
+            return await createImageBitmap(resource, options);
           }
           return resource;
         })
@@ -71,7 +77,7 @@ export async function loadAssets(assets, unpackOneItem = false) {
       resources[assets[i].name].push({ group, data });
     }
   } catch (error) {
-    createModalElement("🚫 Load Asset", error, { closable: false });
+    createModalElement("🚫 Error", error, { closeButton: false });
     console.error(error);
   }
 

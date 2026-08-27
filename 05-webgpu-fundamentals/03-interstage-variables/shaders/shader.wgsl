@@ -32,7 +32,7 @@ fn fragmentChecker(input: OutputFragment) -> @location(0) vec4<f32> {
     let col1: vec4<f32> = vec4<f32>(1.0, 1.0, 1.0, 1.0);
     let col2: vec4<f32> = vec4<f32>(0.5, 0.5, 0.5, 1.0);
     let grid: vec2<u32> = vec2<u32>(input.position.xy) / u32(32);
-    let checker: bool = (grid.x + grid.y) % 2 == 1;
+    let checker: bool = (grid.x + grid.y) % 2u == 1u;
 
     return select(col1, col2, checker);
 }

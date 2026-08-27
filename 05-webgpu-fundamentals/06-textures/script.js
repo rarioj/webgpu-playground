@@ -7,7 +7,6 @@ import { CameraObject } from "../../src/objects/CameraObject.js";
 import { Scene } from "../../src/modules/Scene.js";
 import { FirstPersonControl } from "../../src/modules/FirstPersonControl.js";
 import { getModelViewProjectionMatrix } from "../../src/utilities/matrices.js";
-import { generateMipmaps } from "./functions.js";
 
 function createCheckerMipmap() {
   const context = document.createElement("canvas").getContext("2d", { willReadFrequently: true });
@@ -39,31 +38,35 @@ function createBlendedMipmap() {
   const y = [255, 231, 0, 255];
   const g = [58, 181, 75, 255];
   const a = [38, 123, 167, 255];
-  const data = new Uint8Array(
-    [
-      [w, r, r, r, r, r, r, a, a, r, r, r, r, r, r, w],
-      [w, w, r, r, r, r, r, a, a, r, r, r, r, r, w, w],
-      [w, w, w, r, r, r, r, a, a, r, r, r, r, w, w, w],
-      [w, w, w, w, r, r, r, a, a, r, r, r, w, w, w, w],
-      [w, w, w, w, w, r, r, a, a, r, r, w, w, w, w, w],
-      [w, w, w, w, w, w, r, a, a, r, w, w, w, w, w, w],
-      [w, w, w, w, w, w, w, a, a, w, w, w, w, w, w, w],
-      [b, b, b, b, b, b, b, b, a, y, y, y, y, y, y, y],
-      [b, b, b, b, b, b, b, g, y, y, y, y, y, y, y, y],
-      [w, w, w, w, w, w, w, g, g, w, w, w, w, w, w, w],
-      [w, w, w, w, w, w, r, g, g, r, w, w, w, w, w, w],
-      [w, w, w, w, w, r, r, g, g, r, r, w, w, w, w, w],
-      [w, w, w, w, r, r, r, g, g, r, r, r, w, w, w, w],
-      [w, w, w, r, r, r, r, g, g, r, r, r, r, w, w, w],
-      [w, w, r, r, r, r, r, g, g, r, r, r, r, r, w, w],
-      [w, r, r, r, r, r, r, g, g, r, r, r, r, r, r, w],
-    ].flat(2),
-  );
-  return generateMipmaps(data, 16);
+  return {
+    data: new Uint8Array(
+      [
+        [w, r, r, r, r, r, r, a, a, r, r, r, r, r, r, w],
+        [w, w, r, r, r, r, r, a, a, r, r, r, r, r, w, w],
+        [w, w, w, r, r, r, r, a, a, r, r, r, r, w, w, w],
+        [w, w, w, w, r, r, r, a, a, r, r, r, w, w, w, w],
+        [w, w, w, w, w, r, r, a, a, r, r, w, w, w, w, w],
+        [w, w, w, w, w, w, r, a, a, r, w, w, w, w, w, w],
+        [w, w, w, w, w, w, w, a, a, w, w, w, w, w, w, w],
+        [b, b, b, b, b, b, b, b, a, y, y, y, y, y, y, y],
+        [b, b, b, b, b, b, b, g, y, y, y, y, y, y, y, y],
+        [w, w, w, w, w, w, w, g, g, w, w, w, w, w, w, w],
+        [w, w, w, w, w, w, r, g, g, r, w, w, w, w, w, w],
+        [w, w, w, w, w, r, r, g, g, r, r, w, w, w, w, w],
+        [w, w, w, w, r, r, r, g, g, r, r, r, w, w, w, w],
+        [w, w, w, r, r, r, r, g, g, r, r, r, r, w, w, w],
+        [w, w, r, r, r, r, r, g, g, r, r, r, r, r, w, w],
+        [w, r, r, r, r, r, r, g, g, r, r, r, r, r, r, w],
+      ].flat(2),
+    ),
+    width: 16,
+    height: 16,
+    group: "__default__",
+  };
 }
 
 const textureLabel = getQueryValue("pattern", "blended") === "blended" ? "blended" : "checker";
-const textureData = textureLabel === "blended" ? createBlendedMipmap() : createCheckerMipmap();
+const textureData = textureLabel === "blended" ? [createBlendedMipmap()] : createCheckerMipmap();
 
 try {
   //// Initialisation
@@ -82,23 +85,22 @@ try {
 
   //// Assets
 
-  const assets = await loadAssets(
-    [
-      {
-        name: "shaderCode",
-        url: `./${getQueryValue("page")}/shaders/shader.wgsl`,
-        type: "text",
-      },
-    ],
-    true,
-  );
+  const assets = await loadAssets([
+    {
+      name: "shaderCode",
+      url: `./${getQueryValue("page")}/shaders/shader.wgsl`,
+      type: "text",
+    },
+  ]);
 
   const textureBuilder = webgpu
     .setupTexture(`Raw texture ${textureLabel}`)
     .setTextureUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST)
     .setTextureFormat("rgba8unorm")
-    .loadTextureData(textureData, true)
+    .loadArrayTexture(textureData, { enableMips: true })
     .build();
+
+  const depthStencilBuilder = webgpu.setupDepthStencil().setTextureSize(canvas.width, canvas.height).build();
 
   //// Pipelines
 
@@ -108,6 +110,7 @@ try {
     .useShaderCode(assets.shaderCode.data)
     .setVertexShader()
     .setFragmentShader({ targets: [{ format }] })
+    .setRenderDepthStencil(depthStencilBuilder.state)
     .buildAsync();
 
   //// Bind groups
@@ -181,7 +184,6 @@ try {
 
   const addressModeOptions = { options: { repeat: "repeat", "mirror-repeat": "mirror-repeat", "clamp-to-edge": "clamp-to-edge" } };
   const filterOptions = { options: { linear: "linear", nearest: "nearest" } };
-  let needsUpdate = false;
   const tweak = createTweakElement("addressModeU", "repeat", addressModeOptions, updateObjectInfos);
   createTweakElement("addressModeV", "repeat", addressModeOptions, updateObjectInfos);
   createTweakElement("addressModeW", "repeat", addressModeOptions, updateObjectInfos);
@@ -205,6 +207,7 @@ try {
             storeOp: "store",
           },
         ],
+        depthStencilAttachment: depthStencilBuilder.attachment,
       })
       .setPipeline(pipeline);
 
@@ -218,6 +221,6 @@ try {
   }
   requestAnimationFrame(render);
 } catch (error) {
-  createModalElement("🛑 Error", error, { container: document.querySelector("main") });
+  createModalElement("🚫 Error", error, { container: document.querySelector("main"), closeButton: false });
   console.error(error);
 }

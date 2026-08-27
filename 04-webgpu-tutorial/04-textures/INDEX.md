@@ -13,6 +13,7 @@
 
 - [Learn WebGPU #6.1 Textures Introduction](https://www.youtube.com/watch?v=keos8tJFuy4)
 - [Learn WebGPU #6.2 Textures Demos](https://www.youtube.com/watch?v=9zcmpe4H8_k)
+- [New &lt;video&gt; Policies for iOS](https://webkit.org/blog/6784/new-video-policies-for-ios/)
 
 ##### Credits
 

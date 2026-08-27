@@ -24,21 +24,18 @@ const context = webgpu.createCanvasContext(canvas);
 
 //// Assets
 
-const assets = await loadAssets(
-  [
-    {
-      name: "render",
-      url: `./${getQueryValue("page")}/shaders/render.wgsl`,
-      type: "text",
-    },
-    {
-      name: "simulation",
-      url: `./${getQueryValue("page")}/shaders/simulation.wgsl`,
-      type: "text",
-    },
-  ],
-  true,
-);
+const assets = await loadAssets([
+  {
+    name: "render",
+    url: `./${getQueryValue("page")}/shaders/render.wgsl`,
+    type: "text",
+  },
+  {
+    name: "simulation",
+    url: `./${getQueryValue("page")}/shaders/simulation.wgsl`,
+    type: "text",
+  },
+]);
 
 //// Buffers
 

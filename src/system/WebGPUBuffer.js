@@ -190,10 +190,9 @@ export class WebGPUBuffer {
   build(options = {}) {
     const { overrideBufferDescriptor = {} } = options;
 
-    /** @type {GPUBufferDescriptor} */
-    const finalBufferDescriptor = { ...this.bufferDescriptor, ...overrideBufferDescriptor };
-    this.webgpu.debug && console.debug("GPUBufferDescriptor", finalBufferDescriptor);
-    this.buffer = this.webgpu.device.createBuffer(finalBufferDescriptor);
+    this.bufferDescriptor = { ...this.bufferDescriptor, ...overrideBufferDescriptor };
+    this.webgpu.debug && console.debug("GPUBufferDescriptor", this.bufferDescriptor);
+    this.buffer = this.webgpu.device.createBuffer(this.bufferDescriptor);
 
     if (this.vertexBufferLayout.arrayStride === 0) {
       this.vertexBufferLayout = undefined;

@@ -27,16 +27,13 @@ const context = canvas.getContext("2d");
 
 //// Assets
 
-const assets = await loadAssets(
-  [
-    {
-      name: "compute",
-      url: `./${getQueryValue("page")}/shaders/compute.wgsl`,
-      type: "text",
-    },
-  ],
-  true,
-);
+const assets = await loadAssets([
+  {
+    name: "compute",
+    url: `./${getQueryValue("page")}/shaders/compute.wgsl`,
+    type: "text",
+  },
+]);
 
 //// Buffers
 
