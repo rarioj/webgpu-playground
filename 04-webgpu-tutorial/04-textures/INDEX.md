@@ -7,7 +7,7 @@
 [Drawing Canvas](./index.html?page=04-webgpu-tutorial/04-textures&texture=canvasDraw) •
 [Other GPU Canvas](./index.html?page=04-webgpu-tutorial/04-textures&texture=canvasGPU)
 
-**†**: Requires HTTPS.
+**†**: Requires HTTP.
 
 ##### Learning
 

@@ -160,11 +160,16 @@ try {
     objectInfos.push({ bindGroup, buffer: bufferBuilder.buffer });
   }
 
+  const addressModeOptions = { options: { repeat: "repeat", "mirror-repeat": "mirror-repeat", "clamp-to-edge": "clamp-to-edge" } };
+  const filterOptions = { options: { linear: "linear", nearest: "nearest" } };
+  const tweak = createTweakElement("addressModeV", "repeat", addressModeOptions, updateObjectInfos);
+  createTweakElement("magFilter", "linear", filterOptions, updateObjectInfos);
+  createTweakElement("minFilter", "linear", filterOptions, updateObjectInfos);
+  createTweakElement("mipmapFilter", "linear", filterOptions, updateObjectInfos);
+
   function updateObjectInfos() {
     textureBuilder.createSampler({
-      addressModeU: tweak.addressModeU,
       addressModeV: tweak.addressModeV,
-      addressModeW: tweak.addressModeW,
       magFilter: tweak.magFilter,
       minFilter: tweak.minFilter,
       mipmapFilter: tweak.mipmapFilter,
@@ -181,15 +186,6 @@ try {
       objectInfos[i].bindGroup = bindGroup;
     }
   }
-
-  const addressModeOptions = { options: { repeat: "repeat", "mirror-repeat": "mirror-repeat", "clamp-to-edge": "clamp-to-edge" } };
-  const filterOptions = { options: { linear: "linear", nearest: "nearest" } };
-  const tweak = createTweakElement("addressModeU", "repeat", addressModeOptions, updateObjectInfos);
-  createTweakElement("addressModeV", "repeat", addressModeOptions, updateObjectInfos);
-  createTweakElement("addressModeW", "repeat", addressModeOptions, updateObjectInfos);
-  createTweakElement("magFilter", "linear", filterOptions, updateObjectInfos);
-  createTweakElement("minFilter", "linear", filterOptions, updateObjectInfos);
-  createTweakElement("mipmapFilter", "linear", filterOptions, updateObjectInfos);
 
   //// Renderer
 

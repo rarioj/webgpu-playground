@@ -42,3 +42,4 @@ pages["05-webgpu-fundamentals/04-uniforms-storage-buffers"] = ["script"];
 pages["05-webgpu-fundamentals/05-vertex-buffers"] = ["script"];
 pages["05-webgpu-fundamentals/06-textures"] = ["script"];
 pages["05-webgpu-fundamentals/07-loading-images"] = ["script"];
+pages["05-webgpu-fundamentals/08-external-video"] = ["script"];

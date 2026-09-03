@@ -329,34 +329,17 @@ export function createVideoElement(sources, options = {}) {
   video.width = width;
   video.height = height;
   video.autoplay = autoplay;
-  if (autoplay) {
-    video.toggleAttribute("autoplay", autoplay);
-  }
   video.muted = muted;
-  if (muted) {
-    video.toggleAttribute("muted", muted);
-  }
   video.loop = loop;
-  if (loop) {
-    video.toggleAttribute("loop", loop);
-  }
   video.playsInline = playsInline;
-  if (playsInline) {
-    video.toggleAttribute("playsinline", playsInline);
-    video.toggleAttribute("webkit-playsinline", playsInline);
-  }
   video.controls = controls;
-  if (controls) {
-    video.toggleAttribute("controls", controls);
-  }
   video.preload = "auto";
-  video.setAttribute("preload", "auto");
   Object.assign(video.style, style);
 
   for (let i = 0; i < sources.length; i++) {
     const source = document.createElement("source");
-    source.type = sources[i].type;
-    source.src = sources[i].src;
+    source.type = sources[i].type || "";
+    source.src = sources[i].src || "";
     video.appendChild(source);
   }
 

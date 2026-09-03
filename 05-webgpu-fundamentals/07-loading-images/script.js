@@ -10,7 +10,7 @@ import { getModelViewProjectionMatrix } from "../../src/utilities/matrices.js";
 
 const texture = getQueryValue("texture", "image1");
 const imagePath = texture === "image2" ? `./${getQueryValue("page")}/tile.webp` : `./${getQueryValue("page")}/Ff.webp`;
-const videoPath = texture === "video2" ? "./assets/videos/pug-dog-screen-nature-texture.mp4" : "./assets/videos/nature-froest-autumn-autumn-forest.mp4";
+const videoPath = texture === "video2" ? "./assets/videos/advent-christmas-time-cat.mp4" : "./assets/videos/nature-froest-autumn-autumn-forest.mp4";
 
 try {
   //// Initialisation
