@@ -35,8 +35,6 @@ try {
     },
   ]);
 
-  const textureBuilder = webgpu.setupTexture("Sampler generator");
-
   const canvasHelp = document.createElement("p");
   canvasHelp.innerHTML =
     videoTexture === "video"
@@ -61,12 +59,12 @@ try {
 
   if (videoTexture === "video") {
     canvas.addEventListener("click", async () => {
-      await video.play().then(() => {
-        if (!videoIsPlaying) {
+      if (!videoIsPlaying) {
+        await video.play().then(() => {
           requestAnimationFrame(render);
           videoIsPlaying = true;
-        }
-      });
+        });
+      }
     });
   } else {
     canvas.addEventListener("click", async () => {
@@ -75,10 +73,8 @@ try {
           const videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
           video.srcObject = videoStream;
           await video.play().then(() => {
-            if (!videoIsPlaying) {
-              requestAnimationFrame(render);
-              videoIsPlaying = true;
-            }
+            requestAnimationFrame(render);
+            videoIsPlaying = true;
           });
         } catch (error) {
           throw new Error(error);
@@ -86,6 +82,8 @@ try {
       }
     });
   }
+
+  const textureBuilder = webgpu.setupTexture().loadExternalTexture(video);
 
   const depthStencilBuilder = webgpu.setupDepthStencil().setTextureSize(canvas.width, canvas.height).build();
 
@@ -168,12 +166,12 @@ try {
     });
 
     for (let i = 0; i < objectInfos.length; i++) {
-      const texture = webgpu.device.importExternalTexture({ source: video });
+      textureBuilder.createExternalTexture();
 
       const { bindGroup } = webgpu
         .setupBindGroup()
         .setLayout(pipeline.getBindGroupLayout(0))
-        .addTexture(texture)
+        .addTexture(textureBuilder.texture)
         .addSampler(textureBuilder.sampler)
         .addBuffer(objectInfos[i])
         .build();

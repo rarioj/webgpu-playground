@@ -332,37 +332,33 @@ try {
 
   const { bindGroup } = webgpu.setupBindGroup("Uniform bind group").setLayout(pipeline.getBindGroupLayout(0)).addBuffer(mvpBufferBuilder.buffer).build();
 
-  let texture = null;
-  let textureView = null;
-  let sampler = null;
-  let bindGroupTexture = null;
+  const textureBuilder = webgpu.setupTexture();
+  const bindGroupTextureBuilder = webgpu.setupBindGroup();
 
   if (textureType === "video") {
-    ({ sampler } = webgpu.setupTexture().createSampler());
+    textureBuilder.loadExternalTexture(video).createSampler();
+    bindGroupTextureBuilder.setLayout(pipeline.getBindGroupLayout(1)).addTexture(null, GPUShaderStage.FRAGMENT).addSampler(null, GPUShaderStage.FRAGMENT);
   } else if (textureType === "image") {
-    ({ texture, textureView, sampler } = webgpu
-      .setupTexture()
+    textureBuilder
       .setTextureUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT)
       .loadImageTexture([assets.image])
-      .build());
-    ({ bindGroup: bindGroupTexture } = webgpu
-      .setupBindGroup("Image texture bind group")
+      .build();
+    bindGroupTextureBuilder
       .setLayout(pipeline.getBindGroupLayout(1))
-      .addTexture(textureView, GPUShaderStage.FRAGMENT)
-      .addSampler(sampler, GPUShaderStage.FRAGMENT)
-      .build());
+      .addTexture(textureBuilder.textureView, GPUShaderStage.FRAGMENT)
+      .addSampler(textureBuilder.sampler, GPUShaderStage.FRAGMENT)
+      .build();
   } else if (textureType === "canvasDraw" || textureType === "canvasGPU") {
-    ({ texture, textureView, sampler } = webgpu
-      .setupTexture()
+    textureBuilder
       .setTextureSize(150, 150)
       .setTextureUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT)
-      .build());
-    ({ bindGroup: bindGroupTexture } = webgpu
-      .setupBindGroup("Image texture bind group")
+      .loadImageTexture([{ group: "__default__", data: textureType === "canvasDraw" ? canvasDraw : canvasGPU }])
+      .build();
+    bindGroupTextureBuilder
       .setLayout(pipeline.getBindGroupLayout(1))
-      .addTexture(textureView, GPUShaderStage.FRAGMENT)
-      .addSampler(sampler, GPUShaderStage.FRAGMENT)
-      .build());
+      .addTexture(textureBuilder.textureView, GPUShaderStage.FRAGMENT)
+      .addSampler(textureBuilder.sampler, GPUShaderStage.FRAGMENT)
+      .build();
   }
 
   //// Renderer
@@ -390,17 +386,10 @@ try {
     scene.play();
 
     if (textureType === "video" && videoIsPlaying) {
-      textureView = webgpu.device.importExternalTexture({ source: video });
-      ({ bindGroup: bindGroupTexture } = webgpu
-        .setupBindGroup("Video texture bind group")
-        .setLayout(pipeline.getBindGroupLayout(1))
-        .addTexture(textureView, GPUShaderStage.FRAGMENT)
-        .addSampler(sampler, GPUShaderStage.FRAGMENT)
-        .build());
-    } else if (textureType === "canvasDraw") {
-      webgpu.device.queue.copyExternalImageToTexture({ source: canvasDraw }, { texture }, [canvasDraw.width, canvasDraw.height]);
-    } else if (textureType === "canvasGPU") {
-      webgpu.device.queue.copyExternalImageToTexture({ source: canvasGPU }, { texture }, [canvasGPU.width, canvasGPU.height]);
+      textureBuilder.createExternalTexture();
+      bindGroupTextureBuilder.setResource(0, textureBuilder.texture).setResource(1, textureBuilder.sampler).build();
+    } else if (textureType === "canvasDraw" || textureType === "canvasGPU") {
+      textureBuilder.build({ createTexture: false, createView: false, createSampler: true });
     }
 
     if (textureType === "canvasGPU") {
@@ -416,7 +405,7 @@ try {
         .setPipeline(pipeline)
         .setVertexBuffer(0, vertexBuffer)
         .setBindGroup(0, bindGroup)
-        .setBindGroup(1, bindGroupTexture)
+        .setBindGroup(1, bindGroupTextureBuilder.bindGroup)
         .draw(cubeVertexData.vertices.length / 5, 1)
         .end()
         .submitCommandBuffer();
@@ -435,7 +424,7 @@ try {
           .setPipeline(pipeline)
           .setVertexBuffer(0, vertexBuffer)
           .setBindGroup(0, bindGroup)
-          .setBindGroup(1, bindGroupTexture)
+          .setBindGroup(1, bindGroupTextureBuilder.bindGroup)
           .draw(cubeVertexData.vertices.length / 5, 1)
           .end()
           .submitCommandBuffer();
@@ -447,7 +436,7 @@ try {
         .setPipeline(pipeline)
         .setVertexBuffer(0, vertexBuffer)
         .setBindGroup(0, bindGroup)
-        .setBindGroup(1, bindGroupTexture)
+        .setBindGroup(1, bindGroupTextureBuilder.bindGroup)
         .draw(cubeVertexData.vertices.length / 5, 1)
         .end()
         .submitCommandBuffer();

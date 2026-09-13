@@ -25,6 +25,11 @@ export class WebGPUTexture {
   samplerDescriptor;
 
   /**
+   * @type {GPUExternalTextureDescriptor}
+   */
+  externalTextureDescriptor;
+
+  /**
    * @type {Object.<string, {maxWidth: number, maxHeight: number, entries: (ImageBitmap|HTMLCanvasElement|HTMLVideoElement)[]}>}
    */
   imageTextureData;
@@ -35,7 +40,7 @@ export class WebGPUTexture {
   arrayTextureData;
 
   /**
-   * @type {GPUTexture}
+   * @type {GPUTexture|GPUExternalTexture}
    */
   texture;
 
@@ -76,6 +81,9 @@ export class WebGPUTexture {
       magFilter: "linear",
       minFilter: "linear",
       mipmapFilter: "linear",
+    };
+    this.externalTextureDescriptor = {
+      label: `${label} (GPUExternalTexture)`,
     };
     this.imageTextureData = undefined;
     this.arrayTextureData = undefined;
@@ -240,7 +248,17 @@ export class WebGPUTexture {
   }
 
   /**
-   *
+   * @param {HTMLVideoElement|VideoFrame} source
+   * @param {PredefinedColorSpace} [colorSpace]
+   * @returns {WebGPUTexture}
+   */
+  loadExternalTexture(source, colorSpace = "srgb") {
+    this.externalTextureDescriptor.source = source;
+    this.externalTextureDescriptor.colorSpace = colorSpace;
+    return this;
+  }
+
+  /**
    * @param {number} [baseArrayLayer]
    */
   generateImageTextureMips(baseArrayLayer = 0) {
@@ -345,6 +363,18 @@ export class WebGPUTexture {
   }
 
   /**
+   * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/importExternalTexture|GPUDevice: importExternalTexture() method}
+   * @param {GPUExternalTextureDescriptor} [externalTextureDescriptor]
+   * @returns {WebGPUTexture}
+   */
+  createExternalTexture(externalTextureDescriptor = {}) {
+    this.externalTextureDescriptor = { ...this.externalTextureDescriptor, ...externalTextureDescriptor };
+    this.webgpu.debug && console.debug("GPUExternalTextureDescriptor", this.externalTextureDescriptor);
+    this.texture = this.webgpu.device.importExternalTexture(this.externalTextureDescriptor);
+    return this;
+  }
+
+  /**
    * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUTexture/createView|GPUTexture: createView() method}
    * @param {GPUTextureViewDescriptor} [textureViewDescriptor]
    * @returns {WebGPUTexture}
@@ -376,6 +406,7 @@ export class WebGPUTexture {
    * @param {boolean} [options.createView]
    * @param {boolean} [options.createSampler]
    * @param {GPUTextureDescriptor} [options.overrideTextureDescriptor]
+   * @param {GPUExternalTextureDescriptor} [options.overrideExternalTextureDescriptor]
    * @param {GPUTextureViewDescriptor} [options.overrideTextureViewDescriptor]
    * @param {GPUSamplerDescriptor} [options.overrideSamplerDescriptor]
    * @returns {WebGPUTexture}
@@ -386,12 +417,17 @@ export class WebGPUTexture {
       createView = true,
       createSampler = true,
       overrideTextureDescriptor = {},
+      overrideExternalTextureDescriptor = {},
       overrideTextureViewDescriptor = {},
       overrideSamplerDescriptor = {},
     } = options;
 
     if (createTexture) {
-      this.createTexture(overrideTextureDescriptor);
+      if (this.externalTextureDescriptor.source) {
+        this.createExternalTexture(overrideExternalTextureDescriptor);
+      } else {
+        this.createTexture(overrideTextureDescriptor);
+      }
     }
 
     if (createSampler) {

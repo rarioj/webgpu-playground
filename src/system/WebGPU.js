@@ -68,6 +68,14 @@ export class WebGPU {
       throw new Error("Unable to request WebGPU adapter");
     }
 
+    if (Array.isArray(deviceDescriptor.requiredFeatures)) {
+      for (let i = 0; i < deviceDescriptor.requiredFeatures.length; i++) {
+        if (!adapter.features.has(deviceDescriptor.requiredFeatures[i])) {
+          throw new Error(`Requested adapter feature is not available: ${deviceDescriptor.requiredFeatures[i]}`);
+        }
+      }
+    }
+
     /** @type {GPUDeviceDescriptor} */
     const defaultDeviceDescriptor = {
       requiredFeatures: ["core-features-and-limits"],
